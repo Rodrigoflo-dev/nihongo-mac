@@ -1,0 +1,482 @@
+[
+  {
+    "id": 1,
+    "character": "一",
+    "meaning_es": "uno",
+    "meaning_en": "one",
+    "onyomi": ["イチ", "イツ"],
+    "kunyomi": ["ひと"],
+    "stroke_count": 1,
+    "grade": 1,
+    "frequency": 2,
+    "examples": [
+      { "jp": "一つ", "reading": "ひとつ", "meaning": "uno (cosa)" },
+      { "jp": "一月", "reading": "いちがつ", "meaning": "enero" }
+    ],
+    "mnemonic": "Una línea horizontal. El número uno."
+  },
+  {
+    "id": 2,
+    "character": "二",
+    "meaning_es": "dos",
+    "meaning_en": "two",
+    "onyomi": ["ニ"],
+    "kunyomi": ["ふた"],
+    "stroke_count": 2,
+    "grade": 1,
+    "frequency": 9,
+    "examples": [
+      { "jp": "二つ", "reading": "ふたつ", "meaning": "dos (cosas)" },
+      { "jp": "二月", "reading": "にがつ", "meaning": "febrero" }
+    ],
+    "mnemonic": "Dos líneas paralelas."
+  },
+  {
+    "id": 3,
+    "character": "三",
+    "meaning_es": "tres",
+    "meaning_en": "three",
+    "onyomi": ["サン"],
+    "kunyomi": ["みっ"],
+    "stroke_count": 3,
+    "grade": 1,
+    "frequency": 35,
+    "examples": [
+      { "jp": "三つ", "reading": "みっつ", "meaning": "tres" },
+      { "jp": "三月", "reading": "さんがつ", "meaning": "marzo" }
+    ],
+    "mnemonic": "Tres líneas. El número tres."
+  },
+  {
+    "id": 4,
+    "character": "四",
+    "meaning_es": "cuatro",
+    "meaning_en": "four",
+    "onyomi": ["シ"],
+    "kunyomi": ["よん", "よっ"],
+    "stroke_count": 5,
+    "grade": 1,
+    "frequency": 86,
+    "examples": [
+      { "jp": "四つ", "reading": "よっつ", "meaning": "cuatro" },
+      { "jp": "四月", "reading": "しがつ", "meaning": "abril" }
+    ],
+    "mnemonic": "Una boca (口) con piernas dentro: cuatro."
+  },
+  {
+    "id": 5,
+    "character": "五",
+    "meaning_es": "cinco",
+    "meaning_en": "five",
+    "onyomi": ["ゴ"],
+    "kunyomi": ["いつ"],
+    "stroke_count": 4,
+    "grade": 1,
+    "frequency": 89,
+    "examples": [
+      { "jp": "五つ", "reading": "いつつ", "meaning": "cinco" },
+      { "jp": "五月", "reading": "ごがつ", "meaning": "mayo" }
+    ],
+    "mnemonic": "Recuerda la forma: un cinco angular."
+  },
+  {
+    "id": 6,
+    "character": "六",
+    "meaning_es": "seis",
+    "meaning_en": "six",
+    "onyomi": ["ロク"],
+    "kunyomi": ["むっ"],
+    "stroke_count": 4,
+    "grade": 1,
+    "frequency": 235,
+    "examples": [
+      { "jp": "六つ", "reading": "むっつ", "meaning": "seis" },
+      { "jp": "六月", "reading": "ろくがつ", "meaning": "junio" }
+    ],
+    "mnemonic": "Un techo con dos patas."
+  },
+  {
+    "id": 7,
+    "character": "七",
+    "meaning_es": "siete",
+    "meaning_en": "seven",
+    "onyomi": ["シチ"],
+    "kunyomi": ["なな"],
+    "stroke_count": 2,
+    "grade": 1,
+    "frequency": 215,
+    "examples": [
+      { "jp": "七つ", "reading": "ななつ", "meaning": "siete" },
+      { "jp": "七月", "reading": "しちがつ", "meaning": "julio" }
+    ],
+    "mnemonic": "Como un 7 invertido."
+  },
+  {
+    "id": 8,
+    "character": "八",
+    "meaning_es": "ocho",
+    "meaning_en": "eight",
+    "onyomi": ["ハチ"],
+    "kunyomi": ["やっ"],
+    "stroke_count": 2,
+    "grade": 1,
+    "frequency": 100,
+    "examples": [
+      { "jp": "八つ", "reading": "やっつ", "meaning": "ocho" },
+      { "jp": "八月", "reading": "はちがつ", "meaning": "agosto" }
+    ],
+    "mnemonic": "Dos trazos divergentes como un abanico."
+  },
+  {
+    "id": 9,
+    "character": "九",
+    "meaning_es": "nueve",
+    "meaning_en": "nine",
+    "onyomi": ["キュウ", "ク"],
+    "kunyomi": ["ここの"],
+    "stroke_count": 2,
+    "grade": 1,
+    "frequency": 220,
+    "examples": [
+      { "jp": "九つ", "reading": "ここのつ", "meaning": "nueve" },
+      { "jp": "九月", "reading": "くがつ", "meaning": "septiembre" }
+    ],
+    "mnemonic": "Curva como un 9 estilizado."
+  },
+  {
+    "id": 10,
+    "character": "十",
+    "meaning_es": "diez",
+    "meaning_en": "ten",
+    "onyomi": ["ジュウ"],
+    "kunyomi": ["とお"],
+    "stroke_count": 2,
+    "grade": 1,
+    "frequency": 38,
+    "examples": [
+      { "jp": "十", "reading": "じゅう", "meaning": "diez" },
+      { "jp": "十月", "reading": "じゅうがつ", "meaning": "octubre" }
+    ],
+    "mnemonic": "Una cruz: diez."
+  },
+  {
+    "id": 11,
+    "character": "日",
+    "meaning_es": "día / sol",
+    "meaning_en": "day / sun",
+    "onyomi": ["ニチ", "ジツ"],
+    "kunyomi": ["ひ", "び", "か"],
+    "stroke_count": 4,
+    "grade": 1,
+    "frequency": 1,
+    "examples": [
+      { "jp": "日本", "reading": "にほん", "meaning": "Japón" },
+      { "jp": "毎日", "reading": "まいにち", "meaning": "todos los días" },
+      { "jp": "今日", "reading": "きょう", "meaning": "hoy" }
+    ],
+    "mnemonic": "Un sol estilizado dentro de un marco."
+  },
+  {
+    "id": 12,
+    "character": "月",
+    "meaning_es": "mes / luna",
+    "meaning_en": "month / moon",
+    "onyomi": ["ゲツ", "ガツ"],
+    "kunyomi": ["つき"],
+    "stroke_count": 4,
+    "grade": 1,
+    "frequency": 23,
+    "examples": [
+      { "jp": "月曜日", "reading": "げつようび", "meaning": "lunes" },
+      { "jp": "今月", "reading": "こんげつ", "meaning": "este mes" }
+    ],
+    "mnemonic": "Una luna creciente con sombras."
+  },
+  {
+    "id": 13,
+    "character": "火",
+    "meaning_es": "fuego",
+    "meaning_en": "fire",
+    "onyomi": ["カ"],
+    "kunyomi": ["ひ"],
+    "stroke_count": 4,
+    "grade": 1,
+    "frequency": 581,
+    "examples": [
+      { "jp": "火曜日", "reading": "かようび", "meaning": "martes" },
+      { "jp": "花火", "reading": "はなび", "meaning": "fuegos artificiales" }
+    ],
+    "mnemonic": "Llamas elevándose."
+  },
+  {
+    "id": 14,
+    "character": "水",
+    "meaning_es": "agua",
+    "meaning_en": "water",
+    "onyomi": ["スイ"],
+    "kunyomi": ["みず"],
+    "stroke_count": 4,
+    "grade": 1,
+    "frequency": 178,
+    "examples": [
+      { "jp": "水曜日", "reading": "すいようび", "meaning": "miércoles" },
+      { "jp": "お水", "reading": "おみず", "meaning": "agua" }
+    ],
+    "mnemonic": "Un río fluyendo con gotas a los lados."
+  },
+  {
+    "id": 15,
+    "character": "木",
+    "meaning_es": "árbol / madera",
+    "meaning_en": "tree / wood",
+    "onyomi": ["モク", "ボク"],
+    "kunyomi": ["き"],
+    "stroke_count": 4,
+    "grade": 1,
+    "frequency": 348,
+    "examples": [
+      { "jp": "木曜日", "reading": "もくようび", "meaning": "jueves" },
+      { "jp": "木", "reading": "き", "meaning": "árbol" }
+    ],
+    "mnemonic": "Un árbol con tronco, ramas y raíces."
+  },
+  {
+    "id": 16,
+    "character": "金",
+    "meaning_es": "oro / dinero",
+    "meaning_en": "gold / money",
+    "onyomi": ["キン", "コン"],
+    "kunyomi": ["かね"],
+    "stroke_count": 8,
+    "grade": 1,
+    "frequency": 89,
+    "examples": [
+      { "jp": "金曜日", "reading": "きんようび", "meaning": "viernes" },
+      { "jp": "お金", "reading": "おかね", "meaning": "dinero" }
+    ],
+    "mnemonic": "Tejado sobre un rey: el metal valioso."
+  },
+  {
+    "id": 17,
+    "character": "土",
+    "meaning_es": "tierra / suelo",
+    "meaning_en": "earth / soil",
+    "onyomi": ["ド", "ト"],
+    "kunyomi": ["つち"],
+    "stroke_count": 3,
+    "grade": 1,
+    "frequency": 252,
+    "examples": [
+      { "jp": "土曜日", "reading": "どようび", "meaning": "sábado" },
+      { "jp": "土", "reading": "つち", "meaning": "tierra" }
+    ],
+    "mnemonic": "Cruz plantada en el suelo."
+  },
+  {
+    "id": 18,
+    "character": "人",
+    "meaning_es": "persona",
+    "meaning_en": "person",
+    "onyomi": ["ジン", "ニン"],
+    "kunyomi": ["ひと"],
+    "stroke_count": 2,
+    "grade": 1,
+    "frequency": 5,
+    "examples": [
+      { "jp": "日本人", "reading": "にほんじん", "meaning": "japonés" },
+      { "jp": "人", "reading": "ひと", "meaning": "persona" }
+    ],
+    "mnemonic": "Dos piernas: una persona caminando."
+  },
+  {
+    "id": 19,
+    "character": "今",
+    "meaning_es": "ahora",
+    "meaning_en": "now",
+    "onyomi": ["コン", "キン"],
+    "kunyomi": ["いま"],
+    "stroke_count": 4,
+    "grade": 2,
+    "frequency": 49,
+    "examples": [
+      { "jp": "今日", "reading": "きょう", "meaning": "hoy" },
+      { "jp": "今", "reading": "いま", "meaning": "ahora" }
+    ],
+    "mnemonic": "Un techo sobre un momento presente."
+  },
+  {
+    "id": 20,
+    "character": "時",
+    "meaning_es": "tiempo / hora",
+    "meaning_en": "time / hour",
+    "onyomi": ["ジ"],
+    "kunyomi": ["とき"],
+    "stroke_count": 10,
+    "grade": 2,
+    "frequency": 28,
+    "examples": [
+      { "jp": "時間", "reading": "じかん", "meaning": "tiempo" },
+      { "jp": "何時", "reading": "なんじ", "meaning": "qué hora" }
+    ],
+    "mnemonic": "Sol (日) junto a un templo: medir el tiempo."
+  },
+  {
+    "id": 21,
+    "character": "私",
+    "meaning_es": "yo",
+    "meaning_en": "I / private",
+    "onyomi": ["シ"],
+    "kunyomi": ["わたし"],
+    "stroke_count": 7,
+    "grade": 6,
+    "frequency": 367,
+    "examples": [
+      { "jp": "私", "reading": "わたし", "meaning": "yo" },
+      { "jp": "私立", "reading": "しりつ", "meaning": "privado" }
+    ],
+    "mnemonic": "Yo como persona privada: la espiga personal."
+  },
+  {
+    "id": 22,
+    "character": "山",
+    "meaning_es": "montaña",
+    "meaning_en": "mountain",
+    "onyomi": ["サン"],
+    "kunyomi": ["やま"],
+    "stroke_count": 3,
+    "grade": 1,
+    "frequency": 122,
+    "examples": [
+      { "jp": "富士山", "reading": "ふじさん", "meaning": "monte Fuji" },
+      { "jp": "山", "reading": "やま", "meaning": "montaña" }
+    ],
+    "mnemonic": "Tres picos de montaña."
+  },
+  {
+    "id": 23,
+    "character": "川",
+    "meaning_es": "río",
+    "meaning_en": "river",
+    "onyomi": ["セン"],
+    "kunyomi": ["かわ"],
+    "stroke_count": 3,
+    "grade": 1,
+    "frequency": 173,
+    "examples": [
+      { "jp": "川", "reading": "かわ", "meaning": "río" }
+    ],
+    "mnemonic": "Tres líneas verticales: corrientes de agua."
+  },
+  {
+    "id": 24,
+    "character": "本",
+    "meaning_es": "libro / origen",
+    "meaning_en": "book / origin",
+    "onyomi": ["ホン"],
+    "kunyomi": ["もと"],
+    "stroke_count": 5,
+    "grade": 1,
+    "frequency": 10,
+    "examples": [
+      { "jp": "本", "reading": "ほん", "meaning": "libro" },
+      { "jp": "日本", "reading": "にほん", "meaning": "Japón" }
+    ],
+    "mnemonic": "Un árbol con una marca en la base: la raíz."
+  },
+  {
+    "id": 25,
+    "character": "見",
+    "meaning_es": "ver",
+    "meaning_en": "see",
+    "onyomi": ["ケン"],
+    "kunyomi": ["み"],
+    "stroke_count": 7,
+    "grade": 1,
+    "frequency": 67,
+    "examples": [
+      { "jp": "見る", "reading": "みる", "meaning": "ver" },
+      { "jp": "意見", "reading": "いけん", "meaning": "opinión" }
+    ],
+    "mnemonic": "Un ojo (目) sobre piernas: ver con cuidado."
+  },
+  {
+    "id": 26,
+    "character": "行",
+    "meaning_es": "ir",
+    "meaning_en": "go",
+    "onyomi": ["コウ", "ギョウ"],
+    "kunyomi": ["い", "ゆ"],
+    "stroke_count": 6,
+    "grade": 2,
+    "frequency": 25,
+    "examples": [
+      { "jp": "行く", "reading": "いく", "meaning": "ir" },
+      { "jp": "銀行", "reading": "ぎんこう", "meaning": "banco" }
+    ],
+    "mnemonic": "Una intersección: por aquí se va."
+  },
+  {
+    "id": 27,
+    "character": "食",
+    "meaning_es": "comer / comida",
+    "meaning_en": "eat / food",
+    "onyomi": ["ショク"],
+    "kunyomi": ["た", "く"],
+    "stroke_count": 9,
+    "grade": 2,
+    "frequency": 215,
+    "examples": [
+      { "jp": "食べる", "reading": "たべる", "meaning": "comer" },
+      { "jp": "食堂", "reading": "しょくどう", "meaning": "cafetería" }
+    ],
+    "mnemonic": "Tejado sobre la cocina."
+  },
+  {
+    "id": 28,
+    "character": "飲",
+    "meaning_es": "beber",
+    "meaning_en": "drink",
+    "onyomi": ["イン"],
+    "kunyomi": ["の"],
+    "stroke_count": 12,
+    "grade": 3,
+    "frequency": 1063,
+    "examples": [
+      { "jp": "飲む", "reading": "のむ", "meaning": "beber" },
+      { "jp": "飲み物", "reading": "のみもの", "meaning": "bebida" }
+    ],
+    "mnemonic": "Comida (食) con alguien bostezando: tomar líquido."
+  },
+  {
+    "id": 29,
+    "character": "学",
+    "meaning_es": "estudiar / aprender",
+    "meaning_en": "study / learn",
+    "onyomi": ["ガク"],
+    "kunyomi": ["まな"],
+    "stroke_count": 8,
+    "grade": 1,
+    "frequency": 63,
+    "examples": [
+      { "jp": "学校", "reading": "がっこう", "meaning": "escuela" },
+      { "jp": "学生", "reading": "がくせい", "meaning": "estudiante" }
+    ],
+    "mnemonic": "Niño bajo un tejado: aprende."
+  },
+  {
+    "id": 30,
+    "character": "校",
+    "meaning_es": "escuela",
+    "meaning_en": "school",
+    "onyomi": ["コウ"],
+    "kunyomi": [],
+    "stroke_count": 10,
+    "grade": 1,
+    "frequency": 290,
+    "examples": [
+      { "jp": "学校", "reading": "がっこう", "meaning": "escuela" },
+      { "jp": "高校", "reading": "こうこう", "meaning": "secundaria" }
+    ],
+    "mnemonic": "Árbol y cruce: institución de enseñanza."
+  }
+]
