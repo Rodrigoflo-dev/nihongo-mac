@@ -54,6 +54,11 @@ const MIGRATIONS: &[(u32, &str, &str)] = &[
         "010_auth",
         include_str!("../../migrations/010_auth.sql"),
     ),
+    (
+        11,
+        "011_reseed_kanji",
+        include_str!("../../migrations/011_reseed_kanji.sql"),
+    ),
 ];
 
 /// Run all pending migrations against the connection.
