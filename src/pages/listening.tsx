@@ -229,6 +229,11 @@ function DialogueView({
               </Button>
             ))}
           </div>
+          {play.ttsError ? (
+            <p className="max-w-sm rounded-lg bg-warning/10 px-3 py-2 text-xs leading-relaxed text-warning">
+              {play.ttsError}
+            </p>
+          ) : null}
         </div>
       </div>
 

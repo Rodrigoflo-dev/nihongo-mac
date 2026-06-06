@@ -1,6 +1,7 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 
 import { AppLayout } from "@/components/layout/app-layout";
+import { LockGate } from "@/components/layout/lock-gate";
 import { OnboardingGate } from "@/components/layout/onboarding-gate";
 import DashboardPage from "@/pages/dashboard";
 import GrammarPage from "@/pages/grammar";
@@ -25,6 +26,7 @@ import StatsPage from "@/pages/stats";
 function App() {
   return (
     <BrowserRouter>
+      <LockGate>
       <OnboardingGate>
         <Routes>
           <Route path="/welcome" element={<OnboardingPage />} />
@@ -51,6 +53,7 @@ function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </OnboardingGate>
+      </LockGate>
     </BrowserRouter>
   );
 }

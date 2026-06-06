@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { StrokeTrainer } from "@/components/kanji/stroke-trainer";
 import type { KanjiSrs } from "@/lib/api";
 
 interface ReviewCardProps {
@@ -88,6 +89,14 @@ export function ReviewCard({ srs, revealed }: ReviewCardProps) {
                   {kanji.mnemonic}
                 </p>
               ) : null}
+
+              <Separator />
+              <div className="grid place-items-center gap-3">
+                <p className="text-xs uppercase tracking-widest text-muted-foreground">
+                  Orden de trazos · practica escribiéndolo
+                </p>
+                <StrokeTrainer char={kanji.character} size={200} />
+              </div>
             </motion.div>
           ) : null}
         </AnimatePresence>

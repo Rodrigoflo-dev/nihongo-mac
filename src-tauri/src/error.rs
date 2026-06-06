@@ -20,9 +20,6 @@ pub enum AppError {
     #[error("invalid input: {0}")]
     InvalidInput(String),
 
-    #[error("ai provider error: {0}")]
-    AiProvider(String),
-
     #[error("other: {0}")]
     Other(String),
 }

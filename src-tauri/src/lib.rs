@@ -26,6 +26,7 @@ fn db_health(db: tauri::State<'_, DbState>) -> AppResult<i64> {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_notification::init())
         .setup(|app| {
             if cfg!(debug_assertions) {
                 app.handle().plugin(
@@ -44,6 +45,10 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             app_version,
             db_health,
+            // auth (local login)
+            commands::auth::auth_status,
+            commands::auth::set_credentials,
+            commands::auth::verify_pin,
             // user
             commands::user::get_user_profile,
             commands::user::update_user_profile,
@@ -93,20 +98,12 @@ pub fn run() {
             // listening
             commands::listening::list_listening,
             commands::listening::get_listening_dialogue,
-            commands::listening::play_japanese_tts,
             commands::listening::complete_listening_dialogue,
             // journal
             commands::journal::list_journal,
             commands::journal::create_journal_entry,
             commands::journal::delete_journal_entry,
-            commands::journal::set_claude_api_key,
-            commands::journal::clear_claude_api_key,
-            commands::journal::has_claude_api_key,
-            commands::journal::get_ai_backend_config,
-            commands::journal::update_ai_backend,
-            commands::journal::test_ollama,
             // notifications
-            commands::notifications::send_notification,
             commands::notifications::check_reminder_due,
             commands::notifications::open_mic_settings,
         ])

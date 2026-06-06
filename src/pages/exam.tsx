@@ -31,6 +31,7 @@ export default function ExamPage() {
   const [correctCount, setCorrectCount] = useState(0);
   const [startedAt, setStartedAt] = useState<number>(() => Date.now());
   const [completion, setCompletion] = useState<UnitExamResult | null>(null);
+  const [confirmingExit, setConfirmingExit] = useState(false);
 
   const activities = useMemo(() => exam?.activities ?? [], [exam]);
   const current = activities[step];
@@ -126,11 +127,7 @@ export default function ExamPage() {
     setStep((s) => s + 1);
   };
 
-  const handleExit = () => {
-    if (window.confirm("¿Salir del examen? No se guardará el progreso.")) {
-      navigate("/learn");
-    }
-  };
+  const handleExit = () => setConfirmingExit(true);
 
   const progress = ((step + 1) / total) * 100;
 
@@ -150,7 +147,7 @@ export default function ExamPage() {
   return (
     <div className="relative flex h-screen w-screen flex-col overflow-hidden bg-background text-foreground">
       <MeshBackground />
-      <div className="absolute inset-x-0 top-0 z-10 h-7" data-tauri-drag-region />
+      <div className="absolute left-20 right-0 top-0 z-10 h-7" data-tauri-drag-region />
 
       <header className="relative z-10 flex items-center gap-4 px-8 pt-10">
         <Button variant="ghost" size="sm" onClick={handleExit}>
@@ -210,6 +207,39 @@ export default function ExamPage() {
           </Button>
         </div>
       </footer>
+
+      {confirmingExit ? (
+        <div className="absolute inset-0 z-50 grid place-items-center bg-background/70 backdrop-blur-sm">
+          <div className="mx-8 w-full max-w-sm rounded-2xl glass-strong p-6 text-center">
+            <p className="font-jp text-[10px] tracking-[0.4em] text-warning">
+              試験
+            </p>
+            <h2 className="mt-2 text-xl font-semibold">
+              ¿Salir del examen?
+            </h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Si sales ahora, este intento no cuenta. Puedes volver a
+              empezar desde el curso.
+            </p>
+            <div className="mt-6 flex gap-2">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => setConfirmingExit(false)}
+              >
+                Cancelar
+              </Button>
+              <Button
+                variant="destructive"
+                className="flex-1"
+                onClick={() => navigate("/learn")}
+              >
+                <X className="size-3.5" /> Salir
+              </Button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

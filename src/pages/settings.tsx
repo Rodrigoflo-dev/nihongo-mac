@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { AiBackendCard } from "@/components/journal/ai-backend-card";
 import { PageHeader } from "@/components/layout/page-header";
 import { useTheme } from "@/providers/theme-provider";
 import { useUpdateUserProfile, useUserProfile } from "@/hooks/use-user-profile";
@@ -115,8 +114,6 @@ export default function SettingsPage() {
           </div>
         </CardContent>
       </Card>
-
-      <AiBackendCard />
     </div>
   );
 }

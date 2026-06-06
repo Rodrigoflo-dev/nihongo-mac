@@ -1,6 +1,6 @@
 [package]
 name = "nihongo"
-version = "0.1.0"
+version = "1.0.0"
 description = "Personal Japanese learning desktop app"
 authors = ["Rodrigo Flores"]
 license = "MIT"
@@ -15,8 +15,9 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 tauri-build = { version = "2.6.2", features = [] }
 
 [dependencies]
-tauri = { version = "2.11.2", features = ["macos-private-api"] }
+tauri = { version = "2.11.2", features = [] }
 tauri-plugin-log = "2"
+tauri-plugin-notification = "2"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 log = "0.4"
@@ -28,7 +29,7 @@ tokio = { version = "1", features = ["full"] }
 rusqlite = { version = "0.32", features = ["bundled", "chrono", "serde_json"] }
 parking_lot = "0.12"
 rand = "0.8"
-reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
+sha2 = "0.10"
 
 [profile.release]
 panic = "abort"

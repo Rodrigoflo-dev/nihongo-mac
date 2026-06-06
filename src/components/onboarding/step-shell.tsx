@@ -42,10 +42,11 @@ export function StepShell({
   const progress = ((step + 1) / total) * 100;
 
   return (
-    <div className="relative grid h-screen w-screen place-items-center bg-background text-foreground">
+    <div className="relative h-screen w-screen overflow-y-auto bg-background text-foreground">
       <MeshBackground />
-      <div className="absolute inset-x-0 top-0 h-7" data-tauri-drag-region />
+      <div className="absolute left-20 right-0 top-0 z-10 h-7" data-tauri-drag-region />
 
+      <div className="relative z-10 flex min-h-full items-center justify-center py-16">
       <div className="w-full max-w-xl px-8">
         <div className="mb-10">
           <Progress value={progress} className="h-1" />
@@ -100,6 +101,7 @@ export function StepShell({
             {primaryLoading ? "…" : primaryLabel}
           </Button>
         </div>
+      </div>
       </div>
     </div>
   );

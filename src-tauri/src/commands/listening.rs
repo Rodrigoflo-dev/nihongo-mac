@@ -1,5 +1,3 @@
-use std::process::Command;
-
 use chrono::Utc;
 use rusqlite::{params, Connection};
 use tauri::State;
@@ -89,31 +87,9 @@ fn read_dialogue(conn: &Connection, id: i64) -> AppResult<ListeningDialogue> {
     .map_err(|e| AppError::Database(format!("read dialogue {id}: {e}")))
 }
 
-/// Use the macOS `say` command to synthesize Japanese speech. Voice options:
-/// Kyoko (female), Otoya (male). Rate is words-per-minute (default 175).
-#[tauri::command]
-pub async fn play_japanese_tts(text: String, voice: Option<String>, rate: Option<i32>) -> AppResult<()> {
-    let voice = voice.unwrap_or_else(|| "Kyoko".to_string());
-    let rate = rate.unwrap_or(170).clamp(80, 240);
-
-    tokio::task::spawn_blocking(move || {
-        let status = Command::new("say")
-            .arg("-v")
-            .arg(&voice)
-            .arg("-r")
-            .arg(rate.to_string())
-            .arg("--")
-            .arg(&text)
-            .status()
-            .map_err(|e| AppError::Other(format!("could not spawn `say`: {e}")))?;
-        if !status.success() {
-            return Err(AppError::Other(format!("`say` exited with {}", status)));
-        }
-        Ok(())
-    })
-    .await
-    .map_err(|e| AppError::Other(format!("tts join error: {e}")))?
-}
+// Japanese text-to-speech is now handled entirely in the frontend via the
+// WebView's Web Speech API (see src/lib/tts.ts). The previous macOS `say`
+// implementation did not work on Windows (no audio + a stray console window).
 
 #[derive(serde::Deserialize)]
 #[serde(rename_all = "camelCase")]

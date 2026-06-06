@@ -44,6 +44,16 @@ const MIGRATIONS: &[(u32, &str, &str)] = &[
         "008_exams_and_minigames",
         include_str!("../../migrations/008_exams_and_minigames.sql"),
     ),
+    (
+        9,
+        "009_beta_reset",
+        include_str!("../../migrations/009_beta_reset.sql"),
+    ),
+    (
+        10,
+        "010_auth",
+        include_str!("../../migrations/010_auth.sql"),
+    ),
 ];
 
 /// Run all pending migrations against the connection.

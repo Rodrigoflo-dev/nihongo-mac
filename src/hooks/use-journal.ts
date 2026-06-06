@@ -10,34 +10,6 @@ export function useJournalEntries() {
   });
 }
 
-export function useHasClaudeKey() {
-  return useQuery({
-    queryKey: ["claude-key-set"],
-    queryFn: () => api.hasClaudeApiKey(),
-    staleTime: 1000 * 60,
-  });
-}
-
-export function useSetClaudeKey() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (key: string) => api.setClaudeApiKey(key),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["claude-key-set"] });
-    },
-  });
-}
-
-export function useClearClaudeKey() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: () => api.clearClaudeApiKey(),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["claude-key-set"] });
-    },
-  });
-}
-
 export function useCreateJournalEntry() {
   const qc = useQueryClient();
   return useMutation({

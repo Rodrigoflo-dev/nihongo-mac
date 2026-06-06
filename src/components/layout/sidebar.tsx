@@ -100,7 +100,6 @@ export function Sidebar() {
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.45, ease: [0.21, 1.02, 0.73, 1] }}
       className="relative z-10 flex h-full w-64 flex-col gap-5 border-r border-sidebar-border/60 bg-sidebar/40 px-3 pt-12 pb-4 backdrop-blur-xl"
-      data-tauri-drag-region
     >
       {/* Brand */}
       <div className="px-3" data-tauri-no-drag>

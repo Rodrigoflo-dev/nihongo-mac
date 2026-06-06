@@ -161,6 +161,11 @@ export default function SpeakingPage() {
               <Volume2 className="size-4" />
               {play.isPending ? "Reproduciendo…" : "Escuchar nativa"}
             </Button>
+            {play.ttsError ? (
+              <p className="mx-auto mt-3 max-w-sm rounded-lg bg-warning/10 px-3 py-2 text-xs leading-relaxed text-warning">
+                {play.ttsError}
+              </p>
+            ) : null}
           </div>
 
           {/* Recorder */}

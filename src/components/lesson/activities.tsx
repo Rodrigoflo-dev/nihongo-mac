@@ -2,7 +2,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import {
   Check,
-  Eraser,
   ExternalLink,
   Info,
   Keyboard,
@@ -18,10 +17,38 @@ import { toKana, toRomaji } from "wanakana";
 
 import { Button } from "@/components/ui/button";
 import { JapaneseKeyboard } from "@/components/lesson/japanese-keyboard";
+import { StrokeTrainer } from "@/components/kanji/stroke-trainer";
 import { usePlayTts } from "@/hooks/use-listening";
 import { api } from "@/lib/api";
 import type { Activity } from "@/lib/api";
 import { cn } from "@/lib/utils";
+
+/**
+ * Generate a romaji hint to show below quiz options, but only when it adds
+ * value. Skip if the option is pure ASCII (already romaji) or pure kanji
+ * with no kana to anchor the reading.
+ */
+function romajiHint(text: string): string | null {
+  const hasKana = /[぀-ヿ]/.test(text);
+  if (!hasKana) return null;
+  try {
+    const romaji = toRomaji(text);
+    if (!romaji || romaji === text) return null;
+    return romaji;
+  } catch {
+    return null;
+  }
+}
+
+/** Inline warning shown under a play button when TTS fails (e.g. no JP voice). */
+function TtsErrorNote({ message }: { message: string | null }) {
+  if (!message) return null;
+  return (
+    <p className="mx-auto mt-3 max-w-sm rounded-lg bg-warning/10 px-3 py-2 text-xs leading-relaxed text-warning">
+      {message}
+    </p>
+  );
+}
 
 function ModeTab({
   active,
@@ -259,12 +286,16 @@ function IntroVocab({
           <Volume2 className="size-4" />
           Escuchar
         </Button>
+        <TtsErrorNote message={play.ttsError} />
         {activity.example ? (
           <div className="mt-6 rounded-xl bg-accent/30 p-4 text-left">
             <p className="text-[10px] uppercase tracking-widest text-muted-foreground">
               Ejemplo
             </p>
             <p className="mt-1 font-jp text-lg">{activity.example}</p>
+            <p className="mt-1 font-mono text-xs text-muted-foreground">
+              {toRomaji(activity.example)}
+            </p>
           </div>
         ) : null}
       </div>
@@ -362,6 +393,7 @@ function QuizActivity({
         <div className="mt-7 grid gap-3">
           {shuffled.map((opt, idx) => {
             const isPicked = selectedShuffled === idx;
+            const romaji = romajiHint(opt.text);
             return (
               <button
                 key={`${activity.id}-${idx}`}
@@ -371,7 +403,7 @@ function QuizActivity({
                   onAnswer(opt.isCorrect);
                 }}
                 className={cn(
-                  "rounded-xl border bg-card/60 px-5 py-3.5 text-left text-base transition-all",
+                  "rounded-xl border bg-card/60 px-5 py-3 text-left transition-all",
                   "hover:border-primary/40 hover:bg-accent/30",
                   isPicked &&
                     !verified &&
@@ -381,7 +413,12 @@ function QuizActivity({
                   verified && !opt.isCorrect && !isPicked && "opacity-60"
                 )}
               >
-                <span className="font-jp">{opt.text}</span>
+                <div className="font-jp text-base">{opt.text}</div>
+                {romaji ? (
+                  <div className="mt-0.5 font-mono text-[11px] text-muted-foreground">
+                    {romaji}
+                  </div>
+                ) : null}
               </button>
             );
           })}
@@ -474,6 +511,7 @@ function ListeningActivity({
             </Button>
           ))}
         </div>
+        <TtsErrorNote message={play.ttsError} />
       </div>
 
       <div className="rounded-3xl glass p-6">
@@ -481,6 +519,7 @@ function ListeningActivity({
         <div className="mt-4 grid gap-3">
           {shuffled.map((opt, idx) => {
             const isPicked = selectedShuffled === idx;
+            const romaji = romajiHint(opt.text);
             return (
               <button
                 key={`${activity.id}-${idx}`}
@@ -490,7 +529,7 @@ function ListeningActivity({
                   onAnswer(opt.isCorrect);
                 }}
                 className={cn(
-                  "rounded-xl border bg-card/60 px-5 py-3 text-left text-sm transition-all",
+                  "rounded-xl border bg-card/60 px-5 py-3 text-left transition-all",
                   "hover:border-primary/40 hover:bg-accent/30",
                   isPicked &&
                     !verified &&
@@ -500,7 +539,12 @@ function ListeningActivity({
                   verified && !opt.isCorrect && !isPicked && "opacity-60"
                 )}
               >
-                {opt.text}
+                <div className="text-sm">{opt.text}</div>
+                {romaji ? (
+                  <div className="mt-0.5 font-mono text-[10px] text-muted-foreground">
+                    {romaji}
+                  </div>
+                ) : null}
               </button>
             );
           })}
@@ -698,6 +742,7 @@ function SpeakingActivity({
           <Volume2 className="size-4" />
           {play.isPending ? "Sonando…" : "Escuchar nativa"}
         </Button>
+        <TtsErrorNote message={play.ttsError} />
       </div>
 
       <div className="grid grid-cols-2 gap-3">
@@ -741,9 +786,7 @@ function SpeakingActivity({
             </div>
           ) : null}
         </button>
-        <button
-          disabled={!recordedUrl}
-          onClick={() => audioRef.current?.play()}
+        <div
           className={cn(
             "flex flex-col items-center gap-2 rounded-2xl glass p-5 transition-all",
             !recordedUrl && "opacity-50"
@@ -759,13 +802,15 @@ function SpeakingActivity({
           >
             <Play className="size-6" />
           </div>
-          <p className="text-xs font-medium">Escuchar mi voz</p>
+          <p className="text-xs font-medium">Tu grabación</p>
           {recordedDuration ? (
             <p className="text-[10px] tabular-nums text-muted-foreground">
-              {recordedDuration.toFixed(1)}s grabados
+              {recordedDuration.toFixed(1)}s
             </p>
-          ) : null}
-        </button>
+          ) : (
+            <p className="text-[10px] text-muted-foreground">Sin grabar aún</p>
+          )}
+        </div>
       </div>
 
       {/* Tip when recording but no signal — likely wrong input device */}
@@ -776,14 +821,27 @@ function SpeakingActivity({
         </p>
       ) : null}
 
+      {/* Prominent native player with controls — most reliable playback path */}
       {recordedUrl ? (
-        <audio
-          ref={audioRef}
-          src={recordedUrl}
-          preload="auto"
-          controls
-          className="w-full"
-        />
+        <div className="space-y-2 rounded-2xl glass p-4">
+          <p className="text-[10px] uppercase tracking-widest text-muted-foreground">
+            ▶ Tu voz grabada — pulsa play para escucharte
+          </p>
+          <audio
+            ref={audioRef}
+            src={recordedUrl}
+            preload="auto"
+            controls
+            controlsList="nodownload"
+            className="w-full"
+            onError={() => {
+              console.error("Audio playback failed for", recordedUrl);
+            }}
+          />
+          <p className="text-[10px] text-muted-foreground">
+            Compara con la "Escuchar nativa" arriba para ajustar tu pronunciación.
+          </p>
+        </div>
       ) : null}
 
       {permError ? (
@@ -817,7 +875,7 @@ function SpeakingActivity({
 }
 
 // ---------------------------------------------------------------------------
-// 7. Write kanji — canvas drawing
+// 7. Write kanji — animated stroke order + writing practice (hanzi-writer)
 // ---------------------------------------------------------------------------
 
 function WriteKanjiActivity({
@@ -827,128 +885,19 @@ function WriteKanjiActivity({
   activity: Extract<Activity, { kind: "write_kanji" }>;
   onComplete: () => void;
 }) {
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const [hasStrokes, setHasStrokes] = useState(false);
-  const drawingRef = useRef(false);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    const container = containerRef.current;
-    if (!canvas || !container) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-    const size = container.clientWidth;
-    canvas.width = size * 2;
-    canvas.height = size * 2;
-    canvas.style.width = `${size}px`;
-    canvas.style.height = `${size}px`;
-    ctx.scale(2, 2);
-    ctx.lineCap = "round";
-    ctx.lineJoin = "round";
-    ctx.lineWidth = 12;
-    ctx.strokeStyle =
-      getComputedStyle(document.documentElement).getPropertyValue("--color-foreground") ||
-      "#000";
-  }, []);
-
-  const point = (e: React.MouseEvent | React.TouchEvent) => {
-    const canvas = canvasRef.current!;
-    const rect = canvas.getBoundingClientRect();
-    if ("touches" in e && e.touches.length > 0) {
-      return {
-        x: e.touches[0].clientX - rect.left,
-        y: e.touches[0].clientY - rect.top,
-      };
-    }
-    const m = e as React.MouseEvent;
-    return { x: m.clientX - rect.left, y: m.clientY - rect.top };
-  };
-
-  const startDraw = (e: React.MouseEvent | React.TouchEvent) => {
-    e.preventDefault();
-    const canvas = canvasRef.current!;
-    const ctx = canvas.getContext("2d")!;
-    drawingRef.current = true;
-    const p = point(e);
-    ctx.beginPath();
-    ctx.moveTo(p.x, p.y);
-  };
-  const draw = (e: React.MouseEvent | React.TouchEvent) => {
-    if (!drawingRef.current) return;
-    e.preventDefault();
-    const canvas = canvasRef.current!;
-    const ctx = canvas.getContext("2d")!;
-    const p = point(e);
-    ctx.lineTo(p.x, p.y);
-    ctx.stroke();
-    if (!hasStrokes) setHasStrokes(true);
-  };
-  const endDraw = () => {
-    drawingRef.current = false;
-  };
-
-  const clearCanvas = () => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    setHasStrokes(false);
-  };
-
   return (
     <ActivityShell eyebrow="Escribe el kanji" jp="書いてみよう">
       <div className="rounded-3xl glass-strong p-8">
-        <div className="grid grid-cols-2 items-start gap-6">
-          <div className="text-center">
-            <p className="text-[10px] uppercase tracking-widest text-muted-foreground">
-              Modelo
-            </p>
-            <div className="relative mx-auto mt-3 flex aspect-square w-full items-center justify-center rounded-2xl border border-dashed border-border/60 bg-background/40">
-              <span className="font-jp text-[120px] leading-none">
-                {activity.kanjiChar}
-              </span>
-            </div>
-            <p className="mt-3 text-sm font-medium">{activity.meaning}</p>
-            <p className="font-jp text-xs text-muted-foreground">
-              {activity.reading}
-            </p>
-          </div>
-          <div className="text-center">
-            <p className="text-[10px] uppercase tracking-widest text-muted-foreground">
-              Tu turno
-            </p>
-            <div
-              ref={containerRef}
-              className="relative mx-auto mt-3 aspect-square w-full overflow-hidden rounded-2xl border border-primary/30 bg-card/60"
-            >
-              <span className="pointer-events-none absolute inset-0 flex items-center justify-center font-jp text-[120px] leading-none text-foreground/10">
-                {activity.kanjiChar}
-              </span>
-              <canvas
-                ref={canvasRef}
-                className="absolute inset-0 size-full cursor-crosshair"
-                onMouseDown={startDraw}
-                onMouseMove={draw}
-                onMouseUp={endDraw}
-                onMouseLeave={endDraw}
-                onTouchStart={startDraw}
-                onTouchMove={draw}
-                onTouchEnd={endDraw}
-              />
-            </div>
-            <div className="mt-3 flex justify-center gap-2">
-              <Button size="sm" variant="outline" onClick={clearCanvas}>
-                <Eraser className="size-3.5" />
-                Borrar
-              </Button>
-              <Button size="sm" disabled={!hasStrokes} onClick={onComplete}>
-                <Check className="size-3.5" />
-                Lo escribí
-              </Button>
-            </div>
-          </div>
+        <div className="text-center">
+          <p className="font-jp text-5xl leading-none">{activity.kanjiChar}</p>
+          <p className="mt-3 text-sm font-medium">{activity.meaning}</p>
+          <p className="font-jp text-xs text-muted-foreground">
+            {activity.reading}
+          </p>
+        </div>
+
+        <div className="mt-6 flex justify-center">
+          <StrokeTrainer char={activity.kanjiChar} size={240} />
         </div>
 
         {activity.note ? (
@@ -957,6 +906,10 @@ function WriteKanjiActivity({
             <span>{activity.note}</span>
           </p>
         ) : null}
+
+        <Button size="lg" className="mt-6 w-full" onClick={onComplete}>
+          <Check className="size-4" /> Lo practiqué
+        </Button>
       </div>
     </ActivityShell>
   );
@@ -976,10 +929,33 @@ function WriteSentenceActivity({
   onAnswer: (correct: boolean) => void;
 }) {
   const [value, setValue] = useState("");
-  const [showKeyboard, setShowKeyboard] = useState(false);
+  // Keyboard visible by default; remember user preference across activities
+  const [showKeyboard, setShowKeyboard] = useState(() => {
+    if (typeof window === "undefined") return true;
+    return localStorage.getItem("nihongo-keyboard-visible") !== "false";
+  });
   const [romajiInput, setRomajiInput] = useState("");
-  const [inputMode, setInputMode] = useState<"native" | "romaji">("native");
+  // Default to romaji input (most accessible for users without a JP keyboard)
+  const [inputMode, setInputMode] = useState<"native" | "romaji">(() => {
+    if (typeof window === "undefined") return "romaji";
+    return (localStorage.getItem("nihongo-input-mode") as "native" | "romaji") || "romaji";
+  });
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+
+  // Persist keyboard preference
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem(
+        "nihongo-keyboard-visible",
+        showKeyboard ? "true" : "false"
+      );
+    }
+  }, [showKeyboard]);
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("nihongo-input-mode", inputMode);
+    }
+  }, [inputMode]);
 
   // Extract kanji from accepted answers to offer as quick-tap keys
   const quickKanji = useMemo(() => {
@@ -1073,28 +1049,34 @@ function WriteSentenceActivity({
           ) : null}
         </div>
 
-        {/* Input mode tabs */}
+        {/* Input mode tabs + keyboard toggle (prominent) */}
         {!verified ? (
-          <div className="flex items-center gap-1.5 rounded-lg bg-secondary/40 p-1 text-xs">
-            <ModeTab
-              active={inputMode === "native"}
-              onClick={() => setInputMode("native")}
-            >
-              Teclado nativo
-            </ModeTab>
-            <ModeTab
-              active={inputMode === "romaji"}
-              onClick={() => setInputMode("romaji")}
-            >
-              Escribir en romaji
-            </ModeTab>
-            <button
+          <div className="space-y-2">
+            <div className="flex items-center gap-1.5 rounded-lg bg-secondary/40 p-1 text-xs">
+              <ModeTab
+                active={inputMode === "native"}
+                onClick={() => setInputMode("native")}
+              >
+                Teclado nativo
+              </ModeTab>
+              <ModeTab
+                active={inputMode === "romaji"}
+                onClick={() => setInputMode("romaji")}
+              >
+                Escribir en romaji
+              </ModeTab>
+            </div>
+            <Button
+              variant={showKeyboard ? "default" : "outline"}
+              size="sm"
+              className="w-full"
               onClick={() => setShowKeyboard((v) => !v)}
-              className="ml-auto inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] text-primary hover:bg-primary/10"
             >
-              <Keyboard className="size-3" />
-              {showKeyboard ? "Ocultar teclado" : "Teclado en pantalla"}
-            </button>
+              <Keyboard className="size-4" />
+              {showKeyboard
+                ? "Ocultar teclado japonés"
+                : "Mostrar teclado japonés (hiragana / katakana / kanji)"}
+            </Button>
           </div>
         ) : null}
 

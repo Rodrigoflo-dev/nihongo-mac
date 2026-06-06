@@ -1,8 +1,6 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
-  Brain,
   Check,
   Feather,
   Send,
@@ -13,11 +11,9 @@ import {
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { PageHeader } from "@/components/layout/page-header";
 import { burstLevelUp, burstXp } from "@/components/visual/confetti";
-import { useAiBackend } from "@/hooks/use-ai-backend";
 import { usePlayTts } from "@/hooks/use-listening";
 import {
   useCreateJournalEntry,
@@ -27,10 +23,6 @@ import {
 import type { JournalEntry } from "@/lib/api";
 
 export default function JournalPage() {
-  const { data: aiConfig } = useAiBackend();
-  const aiActive =
-    aiConfig?.backend === "claude" && aiConfig.hasClaudeKey ||
-    aiConfig?.backend === "ollama";
   const { data: entries } = useJournalEntries();
   const create = useCreateJournalEntry();
   const remove = useDeleteJournalEntry();
@@ -53,10 +45,8 @@ export default function JournalPage() {
             Escribe tu día <span className="gradient-text">en japonés</span>
           </>
         }
-        description="Una sola frase basta. Claude corrige tus errores y detecta los patrones que más repites para que aparezcan como repasos."
+        description="Una sola frase basta. Escribe en japonés cada día y recibe consejos para mejorar tu constancia y estilo."
       />
-
-      {aiConfig && !aiActive ? <ClaudeKeyCard /> : null}
 
       {/* Editor */}
       <motion.div
@@ -80,12 +70,7 @@ export default function JournalPage() {
         <Separator className="my-4" />
         <div className="flex items-center justify-between">
           <p className="text-xs text-muted-foreground">
-            {text.length} caracteres ·{" "}
-            {aiActive
-              ? aiConfig?.backend === "ollama"
-                ? `Corrección local (${aiConfig.ollamaModel})`
-                : "Corrección con Claude"
-              : "Sin IA — configura en Ajustes"}
+            {text.length} caracteres
           </p>
           <Button
             disabled={!text.trim() || create.isPending}
@@ -95,12 +80,12 @@ export default function JournalPage() {
             {create.isPending ? (
               <>
                 <Sparkles className="size-4 animate-pulse" />
-                Corrigiendo…
+                Guardando…
               </>
             ) : (
               <>
                 <Send className="size-4" />
-                Guardar y corregir
+                Guardar entrada
               </>
             )}
           </Button>
@@ -212,28 +197,5 @@ function EntryCard({
         })}
       </p>
     </motion.div>
-  );
-}
-
-function ClaudeKeyCard() {
-  return (
-    <Card className="border-primary/30 bg-primary/5">
-      <CardHeader>
-        <div className="flex items-center gap-2">
-          <Brain className="size-4 text-primary" />
-          <CardTitle className="text-base">Activa correcciones IA</CardTitle>
-        </div>
-        <CardDescription>
-          Elige un backend de IA (Claude API de pago o{" "}
-          <span className="font-mono">Ollama</span> local y gratis) en Ajustes →
-          IA. Sin esto, las entradas se guardan pero no obtienen corrección.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <Button size="sm" asChild>
-          <Link to="/settings">Ir a Ajustes</Link>
-        </Button>
-      </CardContent>
-    </Card>
   );
 }

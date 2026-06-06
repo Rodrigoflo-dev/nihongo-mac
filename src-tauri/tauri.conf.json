@@ -1,7 +1,7 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "Nihongo",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "identifier": "com.nihongo.app",
   "build": {
     "frontendDist": "../dist",
@@ -10,7 +10,6 @@
     "beforeBuildCommand": "npm run build"
   },
   "app": {
-    "macOSPrivateApi": true,
     "windows": [
       {
         "title": "Nihongo",
@@ -23,7 +22,7 @@
         "fullscreen": false,
         "titleBarStyle": "Overlay",
         "hiddenTitle": true,
-        "transparent": true,
+        "transparent": false,
         "decorations": true,
         "center": true
       }

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
-import { Check, RotateCcw, Sparkles, Star, X } from "lucide-react";
+import { ArrowLeft, Check, RotateCcw, Sparkles, Star, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -32,6 +32,7 @@ export default function LessonPlayer() {
   const [completion, setCompletion] = useState<LessonCompletionResponse | null>(
     null
   );
+  const [confirmingExit, setConfirmingExit] = useState(false);
 
   useEffect(() => {
     if (lessonId && lesson) startLesson.mutate(lessonId);
@@ -148,10 +149,14 @@ export default function LessonPlayer() {
     setStep((s) => s + 1);
   };
 
-  const handleExit = () => {
-    if (window.confirm("¿Salir de la lección? Tu progreso de hoy no se guardará.")) {
-      navigate("/");
-    }
+  const handleExit = () => setConfirmingExit(true);
+
+  const handleBack = () => {
+    if (step === 0) return;
+    setVerified(false);
+    setAnswered(null);
+    setAttemptForStep(0);
+    setStep((s) => Math.max(0, s - 1));
   };
 
   let buttonLabel: string;
@@ -175,13 +180,22 @@ export default function LessonPlayer() {
   return (
     <div className="relative flex h-screen w-screen flex-col overflow-hidden bg-background text-foreground">
       <MeshBackground />
-      <div className="absolute inset-x-0 top-0 z-10 h-7" data-tauri-drag-region />
+      <div className="absolute left-20 right-0 top-0 z-10 h-7" data-tauri-drag-region />
 
-      <header className="relative z-10 flex items-center gap-4 px-8 pt-10">
+      <header className="relative z-10 flex items-center gap-2 px-8 pt-10">
         <Button variant="ghost" size="sm" onClick={handleExit}>
           <X className="size-3.5" /> Salir
         </Button>
-        <div className="flex-1">
+        <Button
+          variant="ghost"
+          size="sm"
+          disabled={step === 0}
+          onClick={handleBack}
+          title="Volver a la actividad anterior"
+        >
+          <ArrowLeft className="size-3.5" /> Atrás
+        </Button>
+        <div className="ml-2 flex-1">
           <p className="font-jp text-[10px] tracking-[0.3em] text-muted-foreground">
             {lesson.jpTitle ?? "授業"}
           </p>
@@ -196,16 +210,18 @@ export default function LessonPlayer() {
         <Progress value={progress} className="h-1" />
       </div>
 
-      <main className="relative z-10 flex flex-1 items-center justify-center overflow-y-auto px-8 py-8">
-        <AnimatePresence mode="wait">
-          <ActivityView
-            key={`${current.id}-${attemptForStep}`}
-            activity={current}
-            verified={verified}
-            attempt={attemptForStep}
-            onAnswer={(correct) => setAnswered({ correct })}
-          />
-        </AnimatePresence>
+      <main className="relative z-10 flex-1 overflow-y-auto px-8 py-8">
+        <div className="flex min-h-full items-center justify-center">
+          <AnimatePresence mode="wait">
+            <ActivityView
+              key={`${current.id}-${attemptForStep}`}
+              activity={current}
+              verified={verified}
+              attempt={attemptForStep}
+              onAnswer={(correct) => setAnswered({ correct })}
+            />
+          </AnimatePresence>
+        </div>
       </main>
 
       <footer className="relative z-10 px-8 pb-8 pt-4">
@@ -240,6 +256,41 @@ export default function LessonPlayer() {
           ) : null}
         </div>
       </footer>
+
+      {/* Custom exit confirmation modal (window.confirm doesn't render in
+          Tauri's WKWebView, so we ship our own). */}
+      {confirmingExit ? (
+        <div className="absolute inset-0 z-50 grid place-items-center bg-background/70 backdrop-blur-sm">
+          <div className="mx-8 w-full max-w-sm rounded-2xl glass-strong p-6 text-center">
+            <p className="font-jp text-[10px] tracking-[0.4em] text-muted-foreground">
+              確認
+            </p>
+            <h2 className="mt-2 text-xl font-semibold">
+              ¿Salir de la lección?
+            </h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Lo que respondiste en esta sesión no contará para tu puntuación
+              final si sales ahora.
+            </p>
+            <div className="mt-6 flex gap-2">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => setConfirmingExit(false)}
+              >
+                Cancelar
+              </Button>
+              <Button
+                variant="destructive"
+                className="flex-1"
+                onClick={() => navigate("/")}
+              >
+                <X className="size-3.5" /> Salir
+              </Button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

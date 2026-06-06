@@ -5,6 +5,12 @@ import { invoke } from "@tauri-apps/api/core";
 // ---------------------------------------------------------------------------
 export type JlptLevel = "N5" | "N4" | "N3" | "N2" | "N1";
 
+// Local login (username + PIN, gates the single profile)
+export interface AuthStatus {
+  hasCredential: boolean;
+  username: string | null;
+}
+
 export interface UserProfile {
   id: number;
   name: string;
@@ -476,30 +482,6 @@ export interface JournalCorrectionResponse {
   award: XpAward;
 }
 
-export type AiBackend = "claude" | "ollama" | "none";
-
-export interface AiBackendConfig {
-  backend: AiBackend;
-  hasClaudeKey: boolean;
-  ollamaUrl: string;
-  ollamaModel: string;
-}
-
-export interface UpdateAiBackendInput {
-  backend?: AiBackend;
-  claudeApiKey?: string;
-  ollamaUrl?: string;
-  ollamaModel?: string;
-  clearClaudeKey?: boolean;
-}
-
-export interface OllamaStatus {
-  reachable: boolean;
-  modelPresent: boolean;
-  installedModels: string[];
-  error: string | null;
-}
-
 // Activity heatmap
 export interface DayActivity {
   date: string;
@@ -568,6 +550,12 @@ export const api = {
   appVersion: () => invoke<string>("app_version"),
   dbHealth: () => invoke<number>("db_health"),
 
+  // Auth (local login)
+  authStatus: () => invoke<AuthStatus>("auth_status"),
+  setCredentials: (username: string, pin: string) =>
+    invoke<AuthStatus>("set_credentials", { username, pin }),
+  verifyPin: (pin: string) => invoke<boolean>("verify_pin", { pin }),
+
   // User
   getUserProfile: () => invoke<UserProfile>("get_user_profile"),
   updateUserProfile: (input: UpdateUserProfileInput) =>
@@ -587,9 +575,7 @@ export const api = {
     invoke<DayActivity[]>("get_activity_heatmap", { days: days ?? null }),
   getAchievements: () => invoke<UnlockedAchievement[]>("get_achievements"),
 
-  // Notifications
-  sendNotification: (title: string, body: string) =>
-    invoke<void>("send_notification", { title, body }),
+  // Notifications (sending is done in the frontend via the notification plugin)
   checkReminderDue: () => invoke<string | null>("check_reminder_due"),
   openMicSettings: () => invoke<void>("open_mic_settings"),
 
@@ -648,8 +634,6 @@ export const api = {
     invoke<ListeningListItem[]>("list_listening", { level }),
   getListeningDialogue: (dialogueId: number) =>
     invoke<ListeningDialogue>("get_listening_dialogue", { dialogueId }),
-  playJapaneseTts: (text: string, voice?: string, rate?: number) =>
-    invoke<void>("play_japanese_tts", { text, voice, rate }),
   completeListeningDialogue: (
     dialogueId: number,
     submission: { answers: { questionId: string; optionIndex: number }[]; durationSeconds?: number }
@@ -666,14 +650,6 @@ export const api = {
     invoke<JournalCorrectionResponse>("create_journal_entry", { textJp }),
   deleteJournalEntry: (entryId: number) =>
     invoke<void>("delete_journal_entry", { entryId }),
-  setClaudeApiKey: (key: string) =>
-    invoke<void>("set_claude_api_key", { key }),
-  clearClaudeApiKey: () => invoke<void>("clear_claude_api_key"),
-  hasClaudeApiKey: () => invoke<boolean>("has_claude_api_key"),
-  getAiBackendConfig: () => invoke<AiBackendConfig>("get_ai_backend_config"),
-  updateAiBackend: (input: UpdateAiBackendInput) =>
-    invoke<AiBackendConfig>("update_ai_backend", { input }),
-  testOllama: () => invoke<OllamaStatus>("test_ollama"),
 
   // Lessons (guided e-learning)
   listCourses: () => invoke<Course[]>("list_courses"),

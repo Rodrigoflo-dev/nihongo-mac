@@ -39,7 +39,7 @@ export function ChoiceGrid<T extends string>({
             whileTap={{ scale: 0.97 }}
             onClick={() => onChange(opt.value)}
             className={cn(
-              "group relative flex flex-col items-start gap-1 rounded-xl border bg-card px-4 py-4 text-left transition-all",
+              "group relative flex min-w-0 flex-col items-start gap-1 overflow-hidden rounded-xl border bg-card px-4 py-4 text-left transition-all",
               "hover:bg-accent hover:border-primary/30",
               active && "border-primary ring-2 ring-primary/20 bg-primary/5"
             )}
@@ -47,16 +47,18 @@ export function ChoiceGrid<T extends string>({
             {opt.jp ? (
               <span
                 className={cn(
-                  "font-jp text-[11px] tracking-[0.25em]",
+                  "block w-full break-words font-jp text-[11px] leading-tight tracking-[0.08em]",
                   active ? "text-primary" : "text-muted-foreground"
                 )}
               >
                 {opt.jp}
               </span>
             ) : null}
-            <span className="text-sm font-medium">{opt.label}</span>
+            <span className="block w-full break-words text-sm font-medium">
+              {opt.label}
+            </span>
             {opt.description ? (
-              <span className="text-xs text-muted-foreground">
+              <span className="block w-full break-words text-xs text-muted-foreground">
                 {opt.description}
               </span>
             ) : null}

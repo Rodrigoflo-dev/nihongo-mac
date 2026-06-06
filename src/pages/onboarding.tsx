@@ -116,7 +116,7 @@ export default function OnboardingPage() {
           >
             <FeaturePill icon={<Target className="size-4" />} label="Misiones diarias" />
             <FeaturePill icon={<Star className="size-4" />} label="Sube de nivel" />
-            <FeaturePill icon={<Sparkles className="size-4" />} label="Corrección IA" />
+            <FeaturePill icon={<Sparkles className="size-4" />} label="Aprende por situaciones" />
           </motion.div>
         </StepShell>
       );

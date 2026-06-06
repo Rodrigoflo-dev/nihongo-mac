@@ -1,13 +1,32 @@
 import { useEffect } from "react";
+import {
+  isPermissionGranted,
+  requestPermission,
+  sendNotification,
+} from "@tauri-apps/plugin-notification";
 
 import { api } from "@/lib/api";
 
 /**
- * Hook that periodically checks whether the daily reminder is due and sends
- * a native macOS notification if the user has not been active yet today.
- *
- * Runs once on mount and then every 10 minutes.
+ * Periodically checks whether the daily reminder is due and sends a native
+ * notification (cross-platform via tauri-plugin-notification) if the user has
+ * not been active yet today. Runs once on mount and then every 10 minutes
+ * while the app is open.
  */
+async function ensurePermission(): Promise<boolean> {
+  try {
+    let granted = await isPermissionGranted();
+    if (!granted) {
+      const result = await requestPermission();
+      granted = result === "granted";
+    }
+    return granted;
+  } catch (e) {
+    console.warn("notification permission check failed", e);
+    return false;
+  }
+}
+
 export function useReminderCheck() {
   useEffect(() => {
     let cancelled = false;
@@ -15,10 +34,11 @@ export function useReminderCheck() {
       try {
         const msg = await api.checkReminderDue();
         if (cancelled || !msg) return;
-        await api.sendNotification(
-          "Tu sesión de hoy te está esperando",
-          msg
-        );
+        if (!(await ensurePermission())) return;
+        sendNotification({
+          title: "Tu sesión de hoy te está esperando",
+          body: msg,
+        });
       } catch (e) {
         // swallow — notification permission may not be granted yet
         console.warn("reminder check failed", e);

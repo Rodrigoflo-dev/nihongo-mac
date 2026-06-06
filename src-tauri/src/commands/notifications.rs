@@ -1,7 +1,9 @@
-//! Native macOS notifications via `osascript`.
+//! Reminder logic + macOS mic-settings helper.
 //!
-//! Uses the system Notification Center. The first notification triggers a
-//! macOS permission prompt the user has to accept; from then on it's silent.
+//! Native notifications themselves are sent from the frontend via
+//! `@tauri-apps/plugin-notification` (cross-platform Mac + Windows, with proper
+//! permission handling). This module only decides *whether* a reminder is due
+//! (`check_reminder_due`) and provides a macOS shortcut to the mic settings.
 
 use std::process::Command;
 
@@ -10,42 +12,27 @@ use crate::error::{AppError, AppResult};
 #[tauri::command]
 pub async fn open_mic_settings() -> AppResult<()> {
     tokio::task::spawn_blocking(|| {
-        Command::new("open")
-            .arg("x-apple.systempreferences:com.apple.preference.security?Privacy_Microphone")
-            .status()
-            .map_err(|e| AppError::Other(format!("could not open settings: {e}")))?;
+        #[cfg(target_os = "macos")]
+        {
+            Command::new("open")
+                .arg("x-apple.systempreferences:com.apple.preference.security?Privacy_Microphone")
+                .status()
+                .map_err(|e| AppError::Other(format!("could not open settings: {e}")))?;
+        }
+        #[cfg(target_os = "windows")]
+        {
+            // `explorer` resolves the ms-settings: URI and is a GUI process, so
+            // it never flashes a console window (unlike `cmd /C start`).
+            Command::new("explorer")
+                .arg("ms-settings:privacy-microphone")
+                .status()
+                .map_err(|e| AppError::Other(format!("could not open settings: {e}")))?;
+        }
         Ok::<(), AppError>(())
     })
     .await
     .map_err(|e| AppError::Other(format!("settings join: {e}")))??;
     Ok(())
-}
-
-fn escape_double(s: &str) -> String {
-    s.replace('\\', "\\\\").replace('"', "\\\"")
-}
-
-#[tauri::command]
-pub async fn send_notification(title: String, body: String) -> AppResult<()> {
-    let title = escape_double(&title);
-    let body = escape_double(&body);
-    let script = format!(
-        "display notification \"{body}\" with title \"Nihongo\" subtitle \"{title}\""
-    );
-
-    tokio::task::spawn_blocking(move || {
-        let status = Command::new("osascript")
-            .arg("-e")
-            .arg(&script)
-            .status()
-            .map_err(|e| AppError::Other(format!("could not spawn osascript: {e}")))?;
-        if !status.success() {
-            return Err(AppError::Other(format!("osascript exited with {}", status)));
-        }
-        Ok(())
-    })
-    .await
-    .map_err(|e| AppError::Other(format!("notification join: {e}")))?
 }
 
 #[tauri::command]
