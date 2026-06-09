@@ -333,3 +333,79 @@ pub fn get_next_lesson(db: State<'_, DbState>) -> AppResult<Option<NextLessonInf
         }
     })
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::models::LessonActivities;
+    use rusqlite::Connection;
+
+    /// Build a fresh in-memory DB with all migrations + seed applied.
+    fn fresh_db() -> Connection {
+        let conn = Connection::open_in_memory().expect("open in-memory db");
+        conn.execute_batch("PRAGMA foreign_keys = ON;").unwrap();
+        crate::db::migrations::run(&conn).expect("migrations run clean");
+        crate::seed::run_if_empty(&conn).expect("seed runs clean");
+        conn
+    }
+
+    /// Every lesson's activities_json must parse into LessonActivities and have
+    /// at least one activity. This guards against the bare-array vs
+    /// {"activities":[...]} mistake that silently empties a lesson and freezes
+    /// the lesson player on the loading screen.
+    #[test]
+    fn all_lessons_parse_with_activities() {
+        let conn = fresh_db();
+        let mut stmt = conn
+            .prepare("SELECT id, title, activities_json FROM lessons ORDER BY id")
+            .unwrap();
+        let rows = stmt
+            .query_map([], |r| {
+                Ok((
+                    r.get::<_, i64>(0)?,
+                    r.get::<_, String>(1)?,
+                    r.get::<_, String>(2)?,
+                ))
+            })
+            .unwrap();
+
+        let mut failures: Vec<String> = Vec::new();
+        let mut total = 0;
+        for row in rows {
+            let (id, title, json) = row.unwrap();
+            total += 1;
+            match serde_json::from_str::<LessonActivities>(&json) {
+                Ok(parsed) if !parsed.activities.is_empty() => {}
+                Ok(_) => failures.push(format!("lesson {id} '{title}': parsed but ZERO activities")),
+                Err(e) => failures.push(format!("lesson {id} '{title}': parse error: {e}")),
+            }
+        }
+
+        assert!(total > 0, "no lessons seeded — migrations/seed broken");
+        assert!(
+            failures.is_empty(),
+            "{} of {} lessons invalid:\n{}",
+            failures.len(),
+            total,
+            failures.join("\n")
+        );
+    }
+
+    /// Unit exams remix lesson activities, so the same activity shapes must hold
+    /// across every course/unit. Also sanity-check the catalog seeded.
+    #[test]
+    fn courses_units_and_kanji_seeded() {
+        let conn = fresh_db();
+        let courses: i64 = conn
+            .query_row("SELECT COUNT(*) FROM courses", [], |r| r.get(0))
+            .unwrap();
+        let units: i64 = conn
+            .query_row("SELECT COUNT(*) FROM units", [], |r| r.get(0))
+            .unwrap();
+        let kanji: i64 = conn
+            .query_row("SELECT COUNT(*) FROM kanji", [], |r| r.get(0))
+            .unwrap();
+        assert!(courses >= 2, "expected the N5 + situations courses, got {courses}");
+        assert!(units >= 1, "no units seeded");
+        assert!(kanji > 1000, "kanji catalog not fully seeded, got {kanji}");
+    }
+}

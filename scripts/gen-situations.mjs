@@ -132,7 +132,9 @@ for (const l of lessons) {
 }
 sql += "\n";
 for (const l of lessons) {
-  sql += `INSERT OR REPLACE INTO lessons (id, unit_id, title, jp_title, summary, duration_minutes, ordering, is_seed, activities_json) VALUES (${l.id}, ${l.unitId}, '${esc(l.title)}', '${esc(l.jp)}', '${esc(l.summary)}', 6, 1, 1, ${jstr(l.activities)});\n`;
+  // activities_json must be the object form {"activities": [...]} to match the
+  // Rust LessonActivities struct (a bare array fails to parse → empty lesson).
+  sql += `INSERT OR REPLACE INTO lessons (id, unit_id, title, jp_title, summary, duration_minutes, ordering, is_seed, activities_json) VALUES (${l.id}, ${l.unitId}, '${esc(l.title)}', '${esc(l.jp)}', '${esc(l.summary)}', 6, 1, 1, ${jstr({ activities: l.activities })});\n`;
 }
 
 writeFileSync(OUT, sql);
