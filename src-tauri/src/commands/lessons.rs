@@ -336,7 +336,7 @@ pub fn get_next_lesson(db: State<'_, DbState>) -> AppResult<Option<NextLessonInf
 
 #[cfg(test)]
 mod tests {
-    use crate::models::LessonActivities;
+    use crate::models::{GrammarLessonData, LessonActivities, ReadingQuestionSet};
     use rusqlite::Connection;
 
     /// Build a fresh in-memory DB with all migrations + seed applied.
@@ -407,5 +407,67 @@ mod tests {
         assert!(courses >= 2, "expected the N5 + situations courses, got {courses}");
         assert!(units >= 1, "no units seeded");
         assert!(kanji > 1000, "kanji catalog not fully seeded, got {kanji}");
+    }
+
+    /// Grammar lessons, reading passages and listening dialogues all store their
+    /// quiz/content as JSON. Every one must parse into its Rust type with a
+    /// non-empty question/quiz set — same guard as lessons, across all content.
+    #[test]
+    fn all_grammar_reading_listening_content_parses() {
+        let conn = fresh_db();
+        let mut failures: Vec<String> = Vec::new();
+
+        // Grammar: `examples` column holds {"examples":[...],"quiz":[...]}.
+        let mut g = conn
+            .prepare("SELECT id, title, examples FROM grammar_lessons ORDER BY id")
+            .unwrap();
+        let mut g_total = 0;
+        for row in g
+            .query_map([], |r| {
+                Ok((
+                    r.get::<_, i64>(0)?,
+                    r.get::<_, String>(1)?,
+                    r.get::<_, Option<String>>(2)?,
+                ))
+            })
+            .unwrap()
+        {
+            let (id, title, json) = row.unwrap();
+            g_total += 1;
+            match json.as_deref().map(serde_json::from_str::<GrammarLessonData>) {
+                Some(Ok(d)) if !d.quiz.is_empty() => {}
+                Some(Ok(_)) => failures.push(format!("grammar {id} '{title}': parsed but empty quiz")),
+                Some(Err(e)) => failures.push(format!("grammar {id} '{title}': {e}")),
+                None => failures.push(format!("grammar {id} '{title}': null content")),
+            }
+        }
+
+        // Reading + listening: `questions` column holds {"questions":[...]}.
+        for table in ["reading_passages", "listening_dialogues"] {
+            let mut stmt = conn
+                .prepare(&format!("SELECT id, title, questions FROM {table} ORDER BY id"))
+                .unwrap();
+            for row in stmt
+                .query_map([], |r| {
+                    Ok((
+                        r.get::<_, i64>(0)?,
+                        r.get::<_, String>(1)?,
+                        r.get::<_, Option<String>>(2)?,
+                    ))
+                })
+                .unwrap()
+            {
+                let (id, title, json) = row.unwrap();
+                match json.as_deref().map(serde_json::from_str::<ReadingQuestionSet>) {
+                    Some(Ok(q)) if !q.questions.is_empty() => {}
+                    Some(Ok(_)) => failures.push(format!("{table} {id} '{title}': empty questions")),
+                    Some(Err(e)) => failures.push(format!("{table} {id} '{title}': {e}")),
+                    None => failures.push(format!("{table} {id} '{title}': null questions")),
+                }
+            }
+        }
+
+        assert!(g_total > 0, "no grammar lessons seeded");
+        assert!(failures.is_empty(), "content parse failures:\n{}", failures.join("\n"));
     }
 }

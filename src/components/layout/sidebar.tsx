@@ -104,10 +104,10 @@ export function Sidebar() {
       initial={{ opacity: 0, x: -10 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.45, ease: [0.21, 1.02, 0.73, 1] }}
-      className="relative z-10 flex h-full w-64 flex-col gap-5 border-r border-sidebar-border/60 bg-sidebar/40 px-3 pt-12 pb-4 backdrop-blur-xl"
+      className="relative z-10 flex h-full w-64 shrink-0 flex-col gap-5 overflow-y-auto border-r border-sidebar-border/60 bg-sidebar/40 px-3 pt-12 pb-4 backdrop-blur-xl"
     >
       {/* Brand */}
-      <div className="px-3" data-tauri-no-drag>
+      <div className="shrink-0 px-3" data-tauri-no-drag>
         <p className="font-jp text-xs tracking-[0.4em] text-sidebar-foreground/45">
           にほんご
         </p>
@@ -117,20 +117,22 @@ export function Sidebar() {
       </div>
 
       {/* Primary nav */}
-      <nav className="flex flex-col gap-1 px-1" data-tauri-no-drag>
+      <nav className="flex shrink-0 flex-col gap-1 px-1" data-tauri-no-drag>
         {PRIMARY_NAV.map((item) => (
           <NavItemLink key={item.to} {...item} />
         ))}
       </nav>
 
-      {/* Spacer */}
-      <div className="flex-1" />
+      {/* Spacer — collapses to 0 when content overflows so the list scrolls */}
+      <div className="min-h-2 flex-1" />
 
       {/* Player badge */}
-      <SidebarPlayer />
+      <div className="shrink-0">
+        <SidebarPlayer />
+      </div>
 
       {/* Secondary nav */}
-      <nav className="flex flex-col gap-1 px-1" data-tauri-no-drag>
+      <nav className="flex shrink-0 flex-col gap-1 px-1" data-tauri-no-drag>
         {SECONDARY_NAV.map((item) => (
           <NavItemLink key={item.to} {...item} />
         ))}
