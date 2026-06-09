@@ -2,6 +2,7 @@ import * as React from "react";
 import { Navigate, useLocation } from "react-router-dom";
 
 import { useUserProfile } from "@/hooks/use-user-profile";
+import { LoadingScreen } from "@/components/visual/loading-screen";
 
 interface OnboardingGateProps {
   children: React.ReactNode;
@@ -12,11 +13,7 @@ export function OnboardingGate({ children }: OnboardingGateProps) {
   const location = useLocation();
 
   if (isLoading) {
-    return (
-      <div className="grid h-screen place-items-center bg-background text-muted-foreground">
-        <p className="text-sm">読み込み中…</p>
-      </div>
-    );
+    return <LoadingScreen label="Preparando tu plan…" />;
   }
 
   if (isError) {

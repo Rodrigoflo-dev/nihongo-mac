@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { motion } from "framer-motion";
 import HanziWriter from "hanzi-writer";
 import { Check, Eraser, PlayCircle, RotateCcw, Volume2 } from "lucide-react";
 
@@ -14,23 +15,40 @@ import { cn } from "@/lib/utils";
  * If a kanji has no stroke data, falls back to a "trace mode" — the glyph is
  * shown faded and the user free-draws over it on a canvas.
  */
+export interface StrokeProgress {
+  /** Whether real stroke-order data exists (false → trace fallback). */
+  hasData: boolean;
+  /** Whether the learner completed the writing quiz. */
+  passed: boolean;
+  /** Stroke mistakes made during the quiz. */
+  mistakes: number;
+}
+
 export function StrokeTrainer({
   char,
   size = 240,
+  onProgress,
 }: {
   char: string;
   size?: number;
+  onProgress?: (s: StrokeProgress) => void;
 }) {
   const targetRef = useRef<HTMLDivElement | null>(null);
   const writerRef = useRef<HanziWriter | null>(null);
   const [status, setStatus] = useState<"loading" | "ready" | "nodata">("loading");
   const [quizActive, setQuizActive] = useState(false);
   const [quizResult, setQuizResult] = useState<null | "passed">(null);
+  const [mistakes, setMistakes] = useState(0);
+
+  // Keep onProgress in a ref so the writer effect doesn't re-run on each render.
+  const progressRef = useRef(onProgress);
+  progressRef.current = onProgress;
 
   useEffect(() => {
     setStatus("loading");
     setQuizActive(false);
     setQuizResult(null);
+    setMistakes(0);
     const el = targetRef.current;
     if (!el) return;
     el.innerHTML = "";
@@ -58,18 +76,32 @@ export function StrokeTrainer({
             if (!cancelled) onComplete(d);
           })
           .catch(() => {
-            if (!cancelled) setStatus("nodata");
+            if (!cancelled) {
+              setStatus("nodata");
+              progressRef.current?.({ hasData: false, passed: false, mistakes: 0 });
+            }
           });
       },
       onLoadCharDataError: () => {
-        if (!cancelled) setStatus("nodata");
+        if (!cancelled) {
+          setStatus("nodata");
+          progressRef.current?.({ hasData: false, passed: false, mistakes: 0 });
+        }
       },
     });
     writerRef.current = writer;
 
     // hanzi-writer resolves data async; mark ready shortly after if no error.
     const t = setTimeout(() => {
-      if (!cancelled) setStatus((s) => (s === "loading" ? "ready" : s));
+      if (!cancelled) {
+        setStatus((s) => {
+          if (s === "loading") {
+            progressRef.current?.({ hasData: true, passed: false, mistakes: 0 });
+            return "ready";
+          }
+          return s;
+        });
+      }
     }, 250);
 
     return () => {
@@ -87,12 +119,16 @@ export function StrokeTrainer({
 
   const startQuiz = () => {
     setQuizResult(null);
+    setMistakes(0);
     setQuizActive(true);
     writerRef.current?.quiz({
       leniency: 1.1,
-      onComplete: () => {
+      onComplete: (summary?: { totalMistakes?: number }) => {
+        const m = summary?.totalMistakes ?? 0;
+        setMistakes(m);
         setQuizResult("passed");
         setQuizActive(false);
+        progressRef.current?.({ hasData: true, passed: true, mistakes: m });
       },
     });
   };
@@ -100,9 +136,11 @@ export function StrokeTrainer({
   const reset = () => {
     setQuizActive(false);
     setQuizResult(null);
+    setMistakes(0);
     writerRef.current?.cancelQuiz();
     writerRef.current?.hideCharacter();
     writerRef.current?.showOutline();
+    progressRef.current?.({ hasData: true, passed: false, mistakes: 0 });
   };
 
   if (status === "nodata") {
@@ -120,9 +158,19 @@ export function StrokeTrainer({
       </div>
 
       {quizResult === "passed" ? (
-        <p className="flex items-center gap-1.5 text-sm font-medium text-success">
-          <Check className="size-4" /> ¡Bien escrito!
-        </p>
+        <motion.p
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className={cn(
+            "flex items-center gap-1.5 text-sm font-medium",
+            mistakes === 0 ? "text-success" : "text-warning"
+          )}
+        >
+          <Check className="size-4" />
+          {mistakes === 0
+            ? "¡Perfecto! Todos los trazos en orden 🎉"
+            : `Completado con ${mistakes} ${mistakes === 1 ? "corrección" : "correcciones"} — ¡sigue practicando!`}
+        </motion.p>
       ) : quizActive ? (
         <p className="text-xs text-muted-foreground">
           Dibuja los trazos en orden sobre la guía…

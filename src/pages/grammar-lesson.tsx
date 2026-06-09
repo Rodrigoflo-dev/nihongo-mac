@@ -6,6 +6,7 @@ import { Check, Sparkles, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { RomajiLine } from "@/components/lesson/romaji-line";
 import {
   useGrammarLesson,
   useStartGrammarLesson,
@@ -188,6 +189,7 @@ function LessonView({
               <p className="font-jp text-xs text-muted-foreground">
                 {ex.reading}
               </p>
+              <RomajiLine reading={ex.reading} />
               <p className="mt-1 text-sm text-muted-foreground">{ex.meaning}</p>
             </div>
           ))}

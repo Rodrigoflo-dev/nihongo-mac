@@ -17,7 +17,8 @@ import { toKana, toRomaji } from "wanakana";
 
 import { Button } from "@/components/ui/button";
 import { JapaneseKeyboard } from "@/components/lesson/japanese-keyboard";
-import { StrokeTrainer } from "@/components/kanji/stroke-trainer";
+import { RomajiLine } from "@/components/lesson/romaji-line";
+import { StrokeTrainer, type StrokeProgress } from "@/components/kanji/stroke-trainer";
 import { usePlayTts } from "@/hooks/use-listening";
 import { api } from "@/lib/api";
 import type { Activity } from "@/lib/api";
@@ -48,6 +49,99 @@ function TtsErrorNote({ message }: { message: string | null }) {
       {message}
     </p>
   );
+}
+
+// ---------------------------------------------------------------------------
+// Smart, encouraging feedback for free-text sentence answers.
+// ---------------------------------------------------------------------------
+
+function normalizeSentence(s: string): string {
+  return s.trim().replace(/[。、.\s]+$/g, "").replace(/\s+/g, "");
+}
+
+function levenshtein(a: string, b: string): number {
+  const m = a.length;
+  const n = b.length;
+  if (m === 0) return n;
+  if (n === 0) return m;
+  const prev = new Array(n + 1);
+  const cur = new Array(n + 1);
+  for (let j = 0; j <= n; j++) prev[j] = j;
+  for (let i = 1; i <= m; i++) {
+    cur[0] = i;
+    for (let j = 1; j <= n; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + cost);
+    }
+    for (let j = 0; j <= n; j++) prev[j] = cur[j];
+  }
+  return prev[n];
+}
+
+export interface SentenceVerdict {
+  correct: boolean;
+  tone: "success" | "close" | "wrong";
+  title: string;
+  detail?: string;
+}
+
+/**
+ * Compare a learner's answer to the accepted variants and return warm,
+ * specific feedback so the app visibly "pays attention" to their mistakes.
+ */
+export function evaluateSentence(
+  raw: string,
+  accepted: string[]
+): SentenceVerdict {
+  const v = normalizeSentence(raw);
+  const variants = accepted.map(normalizeSentence).filter(Boolean);
+  if (variants.includes(v)) {
+    return { correct: true, tone: "success", title: "¡Perfecto! 🎉 Lo escribiste tal cual." };
+  }
+  // Closest accepted variant by edit distance.
+  let best = variants[0] ?? "";
+  let bestDist = Infinity;
+  for (const t of variants) {
+    const d = levenshtein(v, t);
+    if (d < bestDist) {
+      bestDist = d;
+      best = t;
+    }
+  }
+  const diff = v.length - best.length;
+  if (bestDist <= 2 && v.length > 0) {
+    if (diff < 0) {
+      return {
+        correct: false,
+        tone: "close",
+        title: "¡Casi! Te falta un poquito ✍️",
+        detail: `Escribiste ${v.length} caracteres y la respuesta tiene ${best.length}. Revisa si te faltó una partícula o el final です/ます.`,
+      };
+    }
+    if (diff > 0) {
+      return {
+        correct: false,
+        tone: "close",
+        title: "¡Casi! Pusiste algo de más ✂️",
+        detail: `Sobra ${diff} carácter${diff === 1 ? "" : "es"}. Quita lo extra y vuelve a intentar.`,
+      };
+    }
+    return {
+      correct: false,
+      tone: "close",
+      title: "¡Muy cerca! Solo un carácter distinto 🔍",
+      detail: "Compara con la versión natural de abajo y corrige el carácter.",
+    };
+  }
+  if (v.length === 0) {
+    return { correct: false, tone: "wrong", title: "Escribe tu intento antes de verificar ✏️" };
+  }
+  return {
+    correct: false,
+    tone: "wrong",
+    title: "Aún no es correcto — ¡tú puedes! 💪",
+    detail: "Apóyate en la pista y en el teclado. Mira la versión natural de abajo.",
+  };
 }
 
 function ModeTab({
@@ -273,6 +367,7 @@ function IntroVocab({
           <h2 className="font-jp text-4xl font-medium tracking-tight">
             {activity.word}
           </h2>
+          <RomajiLine reading={activity.reading} className="text-center" />
           <p className="text-xl text-foreground/80">{activity.meaning}</p>
         </div>
         <Button
@@ -332,6 +427,7 @@ function IntroGrammar({
           <p className="font-jp text-xs text-muted-foreground">
             {activity.example.reading}
           </p>
+          <RomajiLine reading={activity.example.reading} />
           <p className="mt-1 text-sm text-muted-foreground">
             {activity.example.meaning}
           </p>
@@ -726,6 +822,7 @@ function SpeakingActivity({
           {activity.reading}
         </p>
         <p className="mt-3 font-jp text-3xl leading-tight">{activity.textJp}</p>
+        <RomajiLine reading={activity.reading} className="mt-1 text-center" />
         <p className="mt-2 text-sm text-muted-foreground">{activity.meaning}</p>
         <Button
           className="mt-5"
@@ -885,6 +982,16 @@ function WriteKanjiActivity({
   activity: Extract<Activity, { kind: "write_kanji" }>;
   onComplete: () => void;
 }) {
+  const [progress, setProgress] = useState<StrokeProgress>({
+    hasData: true,
+    passed: false,
+    mistakes: 0,
+  });
+  // Real validation: if the kanji has stroke data, the learner must complete
+  // the writing quiz. If there's no data (trace fallback), we can't validate
+  // strokes, so we allow continuing.
+  const canContinue = progress.passed || !progress.hasData;
+
   return (
     <ActivityShell eyebrow="Escribe el kanji" jp="書いてみよう">
       <div className="rounded-3xl glass-strong p-8">
@@ -897,7 +1004,11 @@ function WriteKanjiActivity({
         </div>
 
         <div className="mt-6 flex justify-center">
-          <StrokeTrainer char={activity.kanjiChar} size={240} />
+          <StrokeTrainer
+            char={activity.kanjiChar}
+            size={240}
+            onProgress={setProgress}
+          />
         </div>
 
         {activity.note ? (
@@ -907,8 +1018,21 @@ function WriteKanjiActivity({
           </p>
         ) : null}
 
-        <Button size="lg" className="mt-6 w-full" onClick={onComplete}>
-          <Check className="size-4" /> Lo practiqué
+        {progress.hasData && !progress.passed ? (
+          <p className="mt-6 text-center text-xs text-muted-foreground">
+            Pulsa <span className="font-medium text-foreground">Practicar</span> y
+            escribe el kanji trazo por trazo para continuar.
+          </p>
+        ) : null}
+
+        <Button
+          size="lg"
+          className="mt-3 w-full"
+          disabled={!canContinue}
+          onClick={onComplete}
+        >
+          <Check className="size-4" />
+          {canContinue ? "Continuar" : "Practica el trazo para continuar"}
         </Button>
       </div>
     </ActivityShell>
@@ -1026,14 +1150,13 @@ function WriteSentenceActivity({
     setValue(converted);
   };
 
-  const normalize = (s: string) =>
-    s.trim().replace(/[。、\s]+$/g, "").replace(/\s+/g, "");
+  const verdict = useMemo(
+    () => evaluateSentence(value, activity.accepted),
+    [value, activity.accepted]
+  );
 
   const check = () => {
-    const v = normalize(value);
-    const accepted = activity.accepted.map(normalize);
-    const ok = accepted.includes(v);
-    onAnswer(ok);
+    onAnswer(verdict.correct);
   };
 
   return (
@@ -1145,6 +1268,28 @@ function WriteSentenceActivity({
 
         {verified ? (
           <div className="space-y-3">
+            <motion.div
+              initial={{ opacity: 0, y: 8, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              transition={{ duration: 0.3 }}
+              className={cn(
+                "rounded-xl border p-3 text-sm font-medium",
+                verdict.tone === "success" && "border-success/40 bg-success/10 text-success",
+                verdict.tone === "close" && "border-warning/40 bg-warning/10 text-warning",
+                verdict.tone === "wrong" && "border-destructive/30 bg-destructive/10 text-destructive"
+              )}
+            >
+              <p>{verdict.title}</p>
+              {verdict.detail ? (
+                <p className="mt-1 text-xs font-normal opacity-90">{verdict.detail}</p>
+              ) : null}
+              {!verdict.correct && value.trim() ? (
+                <p className="mt-2 text-xs font-normal">
+                  <span className="opacity-70">Tu intento: </span>
+                  <span className="font-jp text-sm">{value.trim()}</span>
+                </p>
+              ) : null}
+            </motion.div>
             <div className="rounded-xl border border-success/30 bg-success/5 p-3">
               <p className="text-[10px] uppercase tracking-widest text-success">
                 Versión natural

@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
-import { ArrowLeft, Check, RotateCcw, Sparkles, Star, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, RotateCcw, Sparkles, Star, Trophy, X } from "lucide-react";
+import { motion } from "framer-motion";
 
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -13,6 +14,7 @@ import { MeshBackground } from "@/components/visual/mesh-background";
 import { burstLevelUp, burstXp } from "@/components/visual/confetti";
 import { useCompleteLesson, useLesson, useStartLesson } from "@/hooks/use-lessons";
 import type { LessonCompletionResponse } from "@/lib/api";
+import { cn } from "@/lib/utils";
 
 export default function LessonPlayer() {
   const { id } = useParams<{ id: string }>();
@@ -161,17 +163,21 @@ export default function LessonPlayer() {
 
   let buttonLabel: string;
   let buttonDisabled = false;
+  let buttonIcon: React.ReactNode = <ArrowRight className="size-5" />;
   if (isSummary) {
-    buttonLabel = complete.isPending ? "Guardando…" : "Terminar lección";
+    buttonLabel = complete.isPending ? "Guardando…" : "Terminar lección 🎉";
     buttonDisabled = complete.isPending;
+    buttonIcon = <Trophy className="size-5" />;
   } else if (isQuiz) {
     if (!verified) {
-      buttonLabel = "Verificar";
+      buttonLabel = "Comprobar";
       buttonDisabled = answered === null;
+      buttonIcon = <Check className="size-5" />;
     } else if (answered && !answered.correct) {
       buttonLabel = "Intentar de nuevo";
+      buttonIcon = <RotateCcw className="size-5" />;
     } else {
-      buttonLabel = isLast ? "Finalizar" : "Continuar";
+      buttonLabel = isLast ? "Finalizar" : "¡Continuar!";
     }
   } else {
     buttonLabel = isLast ? "Finalizar" : "Continuar";
@@ -241,14 +247,21 @@ export default function LessonPlayer() {
                   : `Intento ${attemptForStep + 1} — sigue tratando, ya casi.`}
             </div>
           ) : null}
-          <Button
-            size="xl"
-            className="w-full bg-gradient-to-br from-primary via-primary to-neon-violet"
-            disabled={buttonDisabled}
-            onClick={handleNext}
-          >
-            {buttonLabel}
-          </Button>
+          <motion.div whileTap={{ scale: buttonDisabled ? 1 : 0.97 }}>
+            <Button
+              size="xl"
+              className={cn(
+                "w-full gap-2 bg-gradient-to-r from-primary via-neon-violet to-neon-cyan text-base font-semibold tracking-wide text-primary-foreground transition-all",
+                "shadow-[0_18px_45px_-12px_color-mix(in_oklch,var(--color-primary)_70%,transparent)]",
+                !buttonDisabled && "hover:brightness-110 hover:shadow-[0_22px_55px_-10px_color-mix(in_oklch,var(--color-primary)_85%,transparent)]"
+              )}
+              disabled={buttonDisabled}
+              onClick={handleNext}
+            >
+              {buttonLabel}
+              {buttonIcon}
+            </Button>
+          </motion.div>
           {wrongAttempts > 0 && !isSummary ? (
             <p className="text-center text-[10px] text-muted-foreground">
               {wrongAttempts} {wrongAttempts === 1 ? "error" : "errores"} en esta lección

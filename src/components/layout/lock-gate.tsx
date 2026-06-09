@@ -8,7 +8,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { MeshBackground } from "@/components/visual/mesh-background";
+import { LoadingScreen } from "@/components/visual/loading-screen";
 import { api } from "@/lib/api";
+import { useSession } from "@/stores/session";
 
 /**
  * Gates the whole app behind a local username + PIN.
@@ -25,14 +27,11 @@ export function LockGate({ children }: { children: React.ReactNode }) {
     queryFn: () => api.authStatus(),
     staleTime: Infinity,
   });
-  const [unlocked, setUnlocked] = useState(false);
+  const unlocked = useSession((s) => s.unlocked);
+  const setUnlocked = useSession((s) => s.unlock);
 
   if (isLoading || !status) {
-    return (
-      <div className="grid h-screen place-items-center bg-background text-muted-foreground">
-        <p className="text-sm">読み込み中…</p>
-      </div>
-    );
+    return <LoadingScreen label="にほんご" />;
   }
 
   if (unlocked) return <>{children}</>;
@@ -42,7 +41,7 @@ export function LockGate({ children }: { children: React.ReactNode }) {
       <CreateCredential
         onDone={async () => {
           await refetch();
-          setUnlocked(true);
+          setUnlocked();
         }}
       />
     );
@@ -51,7 +50,7 @@ export function LockGate({ children }: { children: React.ReactNode }) {
   return (
     <UnlockScreen
       username={status.username ?? ""}
-      onDone={() => setUnlocked(true)}
+      onDone={() => setUnlocked()}
     />
   );
 }

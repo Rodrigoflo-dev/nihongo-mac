@@ -8,6 +8,7 @@ import {
   GraduationCap,
   Headphones,
   Home,
+  LogOut,
   type LucideIcon,
   Mic,
   PenTool,
@@ -17,6 +18,7 @@ import {
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { useSession } from "@/stores/session";
 import { SidebarPlayer } from "./sidebar-player";
 
 interface NavItem {
@@ -94,6 +96,7 @@ function NavItemLink({ to, label, icon: Icon, jp }: NavItem) {
 }
 
 export function Sidebar() {
+  const lock = useSession((s) => s.lock);
   return (
     <motion.aside
       initial={{ opacity: 0, x: -10 }}
@@ -129,6 +132,19 @@ export function Sidebar() {
         {SECONDARY_NAV.map((item) => (
           <NavItemLink key={item.to} {...item} />
         ))}
+        <button
+          onClick={lock}
+          data-tauri-no-drag
+          className={cn(
+            "group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-all duration-200",
+            "text-sidebar-foreground/65 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground"
+          )}
+        >
+          <LogOut className="size-4 shrink-0 text-sidebar-foreground/55" />
+          <span className="flex-1 truncate text-left font-medium">
+            Cerrar sesión
+          </span>
+        </button>
       </nav>
     </motion.aside>
   );
