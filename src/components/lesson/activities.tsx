@@ -312,6 +312,7 @@ function IntroKanji({
             <p className="font-jp text-xs text-muted-foreground">
               {activity.example.reading}
             </p>
+            <RomajiLine reading={activity.example.reading} />
             <p className="mt-1 text-sm text-muted-foreground">
               {activity.example.meaning}
             </p>
@@ -343,6 +344,9 @@ function ReadingBlock({
       <p className="mt-1 font-jp text-base">
         {readings.length > 0 ? readings.join(" · ") : "—"}
       </p>
+      {readings.length > 0 ? (
+        <RomajiLine reading={readings.join(" · ")} />
+      ) : null}
     </div>
   );
 }
@@ -1001,6 +1005,7 @@ function WriteKanjiActivity({
           <p className="font-jp text-xs text-muted-foreground">
             {activity.reading}
           </p>
+          <RomajiLine reading={activity.reading} className="text-center" />
         </div>
 
         <div className="mt-6 flex justify-center">

@@ -13,6 +13,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { KanjiTile } from "@/components/kanji/kanji-tile";
+import { RomajiLine } from "@/components/lesson/romaji-line";
 import { PageHeader } from "@/components/layout/page-header";
 import { useIntroduceKanji, useKanjiList, useReviewQueue } from "@/hooks/use-kanji";
 import { useUserProfile } from "@/hooks/use-user-profile";
@@ -309,6 +310,12 @@ function NewKanjiTile({
             .slice(0, 2)
             .join(" · ") || "—"}
         </p>
+        <RomajiLine
+          reading={[...item.kanji.onyomi, ...item.kanji.kunyomi]
+            .slice(0, 2)
+            .join(" · ")}
+          className="text-[10px]"
+        />
       </div>
       <Button
         size="sm"

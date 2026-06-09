@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 
 import { Badge } from "@/components/ui/badge";
+import { RomajiLine } from "@/components/lesson/romaji-line";
 import type { KanjiListItem } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
@@ -43,6 +44,10 @@ export function KanjiTile({ item, onClick, active }: KanjiTileProps) {
         <p className="font-jp text-xs text-muted-foreground">
           {[...kanji.onyomi, ...kanji.kunyomi].slice(0, 2).join(" · ") || "—"}
         </p>
+        <RomajiLine
+          reading={[...kanji.onyomi, ...kanji.kunyomi].slice(0, 2).join(" · ")}
+          className="text-[10px]"
+        />
       </div>
     </motion.button>
   );
