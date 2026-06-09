@@ -12,6 +12,7 @@ import {
   type LucideIcon,
   Mic,
   PenTool,
+  RotateCcw,
   ScrollText,
   Settings as SettingsIcon,
   TrendingUp,
@@ -31,6 +32,7 @@ interface NavItem {
 const PRIMARY_NAV: NavItem[] = [
   { to: "/", label: "Inicio", icon: Home, jp: "ホーム" },
   { to: "/learn", label: "Curso", icon: GraduationCap, jp: "授業" },
+  { to: "/repaso", label: "Repaso", icon: RotateCcw, jp: "復習" },
   { to: "/kanji", label: "Kanji", icon: PenTool, jp: "漢字" },
   { to: "/grammar", label: "Gramática", icon: BookOpen, jp: "文法" },
   { to: "/journal", label: "Diario", icon: Feather, jp: "日記" },

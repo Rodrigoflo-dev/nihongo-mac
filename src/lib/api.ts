@@ -516,6 +516,26 @@ export interface NextAction {
   kanjiHint: string;
 }
 
+// Adaptive learning insights
+export interface SkillInsight {
+  key: string;
+  label: string;
+  jp: string;
+  modulePath: string;
+  attempts: number;
+  accuracyPct: number;
+}
+
+export interface LearningInsights {
+  skills: SkillInsight[];
+  totalAttempts: number;
+  focusKey: string | null;
+  focusLabel: string | null;
+  focusPath: string | null;
+  headline: string;
+  jpHeadline: string;
+}
+
 // Dashboard
 export interface LifetimeStats {
   totalMinutes: number;
@@ -574,6 +594,7 @@ export const api = {
   getActivityHeatmap: (days?: number) =>
     invoke<DayActivity[]>("get_activity_heatmap", { days: days ?? null }),
   getAchievements: () => invoke<UnlockedAchievement[]>("get_achievements"),
+  getSkillInsights: () => invoke<LearningInsights>("get_skill_insights"),
 
   // Notifications (sending is done in the frontend via the notification plugin)
   checkReminderDue: () => invoke<string | null>("check_reminder_due"),

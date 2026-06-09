@@ -58,6 +58,7 @@ pub fn run() {
             commands::dashboard::get_lifetime_stats,
             commands::dashboard::get_activity_heatmap,
             commands::dashboard::get_achievements,
+            commands::dashboard::get_skill_insights,
             // guidance
             commands::guidance::get_next_action,
             // player + missions

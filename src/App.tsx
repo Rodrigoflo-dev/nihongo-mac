@@ -14,6 +14,7 @@ import HiraganaSpeedGame from "@/pages/minigame-hiragana-speed";
 import KanjiMatchGame from "@/pages/minigame-kanji-match";
 import LearnPage from "@/pages/learn";
 import LessonPlayer from "@/pages/lesson-player";
+import ReviewLessonsPage from "@/pages/review-lessons";
 import PlayPage from "@/pages/play";
 import ListeningPage from "@/pages/listening";
 import OnboardingPage from "@/pages/onboarding";
@@ -35,6 +36,7 @@ function App() {
           <Route element={<AppLayout />}>
             <Route path="/" element={<DashboardPage />} />
             <Route path="/learn" element={<LearnPage />} />
+            <Route path="/repaso" element={<ReviewLessonsPage />} />
             <Route path="/kanji" element={<KanjiPage />} />
             <Route path="/kanji/review" element={<KanjiReviewPage />} />
             <Route path="/grammar" element={<GrammarPage />} />

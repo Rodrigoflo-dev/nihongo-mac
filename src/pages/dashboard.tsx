@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { Calendar, Clock, Sparkles, Star, Trophy } from "lucide-react";
 
 import { Progress } from "@/components/ui/progress";
+import { InsightsCard } from "@/components/dashboard/insights-card";
 import { MissionList } from "@/components/dashboard/mission-list";
 import { NextActionHero } from "@/components/dashboard/next-action-hero";
 import { useDashboardStats } from "@/hooks/use-dashboard-stats";
@@ -58,6 +59,9 @@ export default function DashboardPage() {
 
       {/* Single, gigantic next-action hero */}
       {action ? <NextActionHero action={action} /> : null}
+
+      {/* Adaptive, personalized focus based on the user's own accuracy */}
+      <InsightsCard />
 
       {/* Compact stats strip */}
       <motion.div

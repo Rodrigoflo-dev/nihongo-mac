@@ -293,6 +293,131 @@ pub fn get_dashboard_stats(db: State<'_, DbState>) -> AppResult<DashboardStats> 
     })
 }
 
+// ---------------------------------------------------------------------------
+// Adaptive learning insights — personalizes by tracking accuracy per skill.
+// ---------------------------------------------------------------------------
+
+#[derive(Debug, Clone, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SkillInsight {
+    pub key: String,
+    pub label: String,
+    pub jp: String,
+    pub module_path: String,
+    pub attempts: i64,
+    pub accuracy_pct: i64,
+}
+
+#[derive(Debug, Clone, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct LearningInsights {
+    pub skills: Vec<SkillInsight>,
+    pub total_attempts: i64,
+    pub focus_key: Option<String>,
+    pub focus_label: Option<String>,
+    pub focus_path: Option<String>,
+    pub headline: String,
+    pub jp_headline: String,
+}
+
+/// Compute per-skill accuracy from the activity log so the dashboard can adapt
+/// to how *this* user is doing and point them at their weakest area. This is
+/// the foundation of the adaptive engine: it reflects real performance, not a
+/// fixed path.
+#[tauri::command]
+pub fn get_skill_insights(db: State<'_, DbState>) -> AppResult<LearningInsights> {
+    // skill key, label, jp, module path, and the activity_log types it maps to.
+    let defs: &[(&str, &str, &str, &str, &[&str])] = &[
+        ("kanji", "Kanji", "漢字", "/kanji/review", &["kanji_review"]),
+        ("grammar", "Gramática", "文法", "/grammar", &["grammar_quiz"]),
+        ("listening", "Listening", "聴解", "/listening", &["listening"]),
+        ("reading", "Lectura", "読解", "/reading", &["reading_quiz"]),
+        ("speaking", "Speaking", "会話", "/speaking", &["speaking"]),
+        ("lessons", "Lecciones", "授業", "/learn", &["lesson", "unit_exam"]),
+    ];
+
+    db.with(|c| {
+        let mut skills = Vec::new();
+        let mut total_attempts = 0i64;
+        for (key, label, jp, path, types) in defs {
+            let placeholders = types
+                .iter()
+                .map(|_| "?")
+                .collect::<Vec<_>>()
+                .join(", ");
+            let sql = format!(
+                "SELECT COUNT(*), COALESCE(SUM(correct), 0)
+                   FROM activity_log
+                  WHERE activity_type IN ({placeholders})"
+            );
+            let params: Vec<&dyn rusqlite::ToSql> =
+                types.iter().map(|t| t as &dyn rusqlite::ToSql).collect();
+            let (attempts, correct): (i64, i64) = c
+                .query_row(&sql, params.as_slice(), |r| Ok((r.get(0)?, r.get(1)?)))
+                .unwrap_or((0, 0));
+            total_attempts += attempts;
+            let accuracy_pct = if attempts > 0 {
+                ((correct as f64 / attempts as f64) * 100.0).round() as i64
+            } else {
+                0
+            };
+            skills.push(SkillInsight {
+                key: key.to_string(),
+                label: label.to_string(),
+                jp: jp.to_string(),
+                module_path: path.to_string(),
+                attempts,
+                accuracy_pct,
+            });
+        }
+
+        // Pick the focus: weakest skill with enough data (>=3 attempts).
+        let focus = skills
+            .iter()
+            .filter(|s| s.attempts >= 3)
+            .min_by_key(|s| s.accuracy_pct);
+
+        let (focus_key, focus_label, focus_path, headline, jp_headline) = if total_attempts == 0 {
+            (
+                None,
+                None,
+                None,
+                "Empieza una lección y aprenderé tu estilo para personalizar tu plan.".to_string(),
+                "あなたに合わせて".to_string(),
+            )
+        } else if let Some(f) = focus {
+            (
+                Some(f.key.clone()),
+                Some(f.label.clone()),
+                Some(f.module_path.clone()),
+                format!(
+                    "Tu punto a reforzar hoy es {} ({}% de aciertos). Le dedicamos un momento y subimos esa cifra.",
+                    f.label, f.accuracy_pct
+                ),
+                "今日の重点".to_string(),
+            )
+        } else {
+            (
+                None,
+                None,
+                None,
+                "Sigue practicando un poco más y personalizaré tu plan según tus aciertos.".to_string(),
+                "もう少し".to_string(),
+            )
+        };
+
+        Ok(LearningInsights {
+            skills,
+            total_attempts,
+            focus_key,
+            focus_label,
+            focus_path,
+            headline,
+            jp_headline,
+        })
+    })
+}
+
 // Helper used by other modules to recompute minutes for missions.
 pub fn minutes_today_and_week(conn: &Connection) -> AppResult<(i64, i64)> {
     let now = Utc::now();
