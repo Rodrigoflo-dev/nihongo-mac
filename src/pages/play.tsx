@@ -1,10 +1,8 @@
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
-  ArrowRight,
   CalendarDays,
   Flame,
-  Gamepad2,
   Headphones,
   type LucideIcon,
   Puzzle,
@@ -82,7 +80,6 @@ export default function PlayPage() {
           {MINIGAMES.map((g) => (
             <GameCard key={g.key} game={g} />
           ))}
-          <ComingSoonCard />
         </div>
       </section>
     </div>
@@ -118,10 +115,7 @@ function FeaturedCard({
           accent
         )}
       />
-      <Link
-        to={`${game.path}?d=medium&featured=1`}
-        className="relative block overflow-hidden rounded-2xl glass-strong p-6"
-      >
+      <div className="relative overflow-hidden rounded-2xl glass-strong p-6">
         <div
           className={cn(
             "absolute -right-20 -top-20 size-44 rounded-full bg-gradient-to-br opacity-60 blur-2xl",
@@ -154,12 +148,18 @@ function FeaturedCard({
               </p>
             </div>
           </div>
-          <div className="flex items-center justify-between text-[11px] text-muted-foreground">
-            <span>Pulsa para jugar →</span>
-            <ArrowRight className="size-3.5 text-muted-foreground" />
+          <div>
+            <p className="mb-1.5 text-[10px] uppercase tracking-widest text-muted-foreground">
+              Elige dificultad
+            </p>
+            <div className="grid grid-cols-3 gap-1.5">
+              {game.difficulties.map((d) => (
+                <DifficultyButton key={d} game={game} difficulty={d} />
+              ))}
+            </div>
           </div>
         </div>
-      </Link>
+      </div>
     </motion.div>
   );
 }
@@ -199,10 +199,15 @@ function GameCard({ game }: { game: MinigameDef }) {
             {game.description}
           </p>
         </div>
-        <div className="grid grid-cols-3 gap-1.5">
-          {game.difficulties.map((d) => (
-            <DifficultyButton key={d} game={game} difficulty={d} />
-          ))}
+        <div>
+          <p className="mb-1.5 text-[10px] uppercase tracking-widest text-muted-foreground">
+            Elige dificultad
+          </p>
+          <div className="grid grid-cols-3 gap-1.5">
+            {game.difficulties.map((d) => (
+              <DifficultyButton key={d} game={game} difficulty={d} />
+            ))}
+          </div>
         </div>
       </div>
     </motion.div>
@@ -221,46 +226,23 @@ function DifficultyButton({
     <Link
       to={`${game.path}?d=${difficulty}`}
       className={cn(
-        "group flex flex-col items-center gap-0.5 rounded-lg border bg-card/40 px-2 py-2 text-center transition-all",
-        "hover:border-primary/40 hover:bg-accent/30"
+        "group flex flex-col items-center gap-0.5 rounded-lg border border-border bg-card/60 px-2 py-2.5 text-center transition-all",
+        "hover:-translate-y-0.5 hover:border-primary/60 hover:bg-accent/40 hover:shadow-[0_8px_20px_-10px_color-mix(in_oklch,var(--color-primary)_60%,transparent)]"
       )}
     >
       <span
-        className={cn(
-          "text-[11px] font-semibold",
-          DIFFICULTY_COLORS[difficulty]
-        )}
+        className={cn("text-[12px] font-bold", DIFFICULTY_COLORS[difficulty])}
       >
         {DIFFICULTY_LABELS[difficulty]}
       </span>
       {typeof best === "number" && best > 0 ? (
         <span className="inline-flex items-center gap-0.5 text-[9px] text-warning">
           <Trophy className="size-2.5" />
-          {best}
+          récord {best}
         </span>
       ) : (
-        <span className="text-[9px] text-muted-foreground">—</span>
+        <span className="text-[9px] font-medium text-primary/80">Jugar ▸</span>
       )}
     </Link>
-  );
-}
-
-function ComingSoonCard() {
-  return (
-    <div className="relative overflow-hidden rounded-2xl border border-dashed border-border/50 bg-card/30 p-6">
-      <div className="flex items-start gap-4">
-        <div className="flex size-12 items-center justify-center rounded-xl bg-secondary/50 text-muted-foreground">
-          <Gamepad2 className="size-5" />
-        </div>
-        <div>
-          <p className="text-sm font-semibold text-muted-foreground">
-            Próximamente
-          </p>
-          <p className="mt-1 text-xs text-muted-foreground">
-            Sentence Builder · Listening Rush · Vocab Memory
-          </p>
-        </div>
-      </div>
-    </div>
   );
 }
