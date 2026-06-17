@@ -36,8 +36,19 @@ export default function LessonPlayer() {
   );
   const [confirmingExit, setConfirmingExit] = useState(false);
 
+  // Reset all player state when navigating to a different lesson (no full page
+  // reload — a reload used to reset the session store and re-prompt the PIN).
   useEffect(() => {
-    if (lessonId && lesson) startLesson.mutate(lessonId);
+    setStep(0);
+    setVerified(false);
+    setAnswered(null);
+    setAttemptForStep(0);
+    setWrongAttempts(0);
+    setFirstTryCorrect(0);
+    setStartedAt(Date.now());
+    setCompletion(null);
+    setConfirmingExit(false);
+    if (lessonId) startLesson.mutate(lessonId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lessonId]);
 
@@ -98,7 +109,6 @@ export default function LessonPlayer() {
         onContinue={() => {
           if (completion.nextLessonId) {
             navigate(`/learn/${completion.nextLessonId}`, { replace: true });
-            window.location.reload();
           } else {
             navigate("/learn");
           }

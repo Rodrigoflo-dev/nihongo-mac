@@ -42,6 +42,17 @@ export const MINIGAMES: MinigameDef[] = [
     icon: "zap",
     tone: "from-warning/40 to-streak/20 ring-warning/30",
   },
+  {
+    key: "kanji_quiz",
+    title: "Kanji Quiz",
+    jp: "漢字クイズ",
+    description:
+      "Reconoce el significado del kanji que aparece. Combo x5 duplica los puntos.",
+    difficulties: ["easy", "medium", "hard"],
+    path: "/play/kanji-quiz",
+    icon: "puzzle",
+    tone: "from-neon-cyan/40 to-success/20 ring-neon-cyan/30",
+  },
 ];
 
 /** Days since epoch — deterministic per local calendar day */
@@ -128,6 +139,12 @@ export const HIRAGANA_SPEED_CONFIG = {
     includeYouon: true,
     label: "25s · completo",
   },
+} as const;
+
+export const KANJI_QUIZ_CONFIG = {
+  easy: { seconds: 45, label: "45s · relajado" },
+  medium: { seconds: 35, label: "35s" },
+  hard: { seconds: 25, label: "25s · rápido" },
 } as const;
 
 /**

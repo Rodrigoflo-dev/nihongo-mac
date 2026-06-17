@@ -1,0 +1,392 @@
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { AnimatePresence, motion } from "framer-motion";
+import { ArrowLeft, Play, Puzzle, RotateCcw, Sparkles, Star, Trophy } from "lucide-react";
+
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import { burstLevelUp, burstXp } from "@/components/visual/confetti";
+import { useMinigameBest, useRecordMinigameScore } from "@/hooks/use-minigames";
+import { useKanjiList } from "@/hooks/use-kanji";
+import { useUserProfile } from "@/hooks/use-user-profile";
+import {
+  DIFFICULTY_COLORS,
+  DIFFICULTY_LABELS,
+  type Difficulty,
+  KANJI_QUIZ_CONFIG,
+  difficultyBonusPercent,
+  isDailyFeatured,
+  isWeeklyFeatured,
+} from "@/lib/minigames";
+import { cn } from "@/lib/utils";
+
+interface Item {
+  char: string;
+  meaning: string;
+}
+
+function pickQuestion(pool: Item[], currentChar: string | null) {
+  let candidate: Item;
+  do {
+    candidate = pool[Math.floor(Math.random() * pool.length)];
+  } while (candidate.char === currentChar && pool.length > 1);
+
+  const wrong = new Set<string>();
+  let guard = 0;
+  while (wrong.size < 3 && guard < 200) {
+    guard++;
+    const c = pool[Math.floor(Math.random() * pool.length)];
+    if (c.meaning !== candidate.meaning) wrong.add(c.meaning);
+  }
+  const options = [candidate.meaning, ...wrong];
+  for (let i = options.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [options[i], options[j]] = [options[j], options[i]];
+  }
+  return { char: candidate.char, correct: candidate.meaning, options };
+}
+
+type Phase = "idle" | "playing" | "done";
+
+export default function KanjiQuizGame() {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const difficulty: Difficulty =
+    (searchParams.get("d") as Difficulty) || "medium";
+  const config = KANJI_QUIZ_CONFIG[difficulty];
+  const gameKey = `kanji_quiz_${difficulty}`;
+  const featuredDailyBonus = isDailyFeatured("kanji_quiz") ? 1.25 : 1.0;
+  const featuredWeeklyBonus = isWeeklyFeatured("kanji_quiz") ? 1.5 : 1.0;
+
+  const { data: profile } = useUserProfile();
+  const { data: list } = useKanjiList(profile?.currentLevel ?? "N5");
+
+  const pool = useMemo<Item[]>(() => {
+    const seen = new Set<string>();
+    const out: Item[] = [];
+    for (const it of list ?? []) {
+      const meaning = it.kanji.meaningEs?.split(/[,/]/)[0]?.trim();
+      if (it.kanji.character && meaning && !seen.has(meaning)) {
+        seen.add(meaning);
+        out.push({ char: it.kanji.character, meaning });
+      }
+    }
+    return out;
+  }, [list]);
+
+  const { data: best } = useMinigameBest(gameKey);
+  const record = useRecordMinigameScore();
+
+  const [phase, setPhase] = useState<Phase>("idle");
+  const [timeLeft, setTimeLeft] = useState<number>(config.seconds);
+  const [score, setScore] = useState(0);
+  const [combo, setCombo] = useState(0);
+  const [question, setQuestion] = useState<ReturnType<typeof pickQuestion> | null>(null);
+  const [picked, setPicked] = useState<string | null>(null);
+  const [feedback, setFeedback] = useState<"ok" | "bad" | null>(null);
+  const [submitted, setSubmitted] = useState<{
+    xp: number;
+    stars: number;
+    newBest: boolean;
+    bestScore: number;
+  } | null>(null);
+
+  useEffect(() => {
+    if (phase !== "playing") return;
+    if (timeLeft <= 0) {
+      setPhase("done");
+      return;
+    }
+    const id = setTimeout(() => setTimeLeft((t) => t - 1), 1000);
+    return () => clearTimeout(id);
+  }, [phase, timeLeft]);
+
+  useEffect(() => {
+    if (phase !== "done" || submitted) return;
+    const multiplier = featuredDailyBonus * featuredWeeklyBonus;
+    const finalScore = Math.round(score * multiplier);
+    record
+      .mutateAsync({ gameKey, score: finalScore, durationSeconds: config.seconds })
+      .then((res) => {
+        setSubmitted({
+          xp: res.award.xpAmount,
+          stars: res.award.starAmount,
+          newBest: res.newBest,
+          bestScore: res.bestScore,
+        });
+        if (finalScore > 0) burstXp();
+        if (res.award.leveledUp) burstLevelUp();
+      });
+  }, [phase, submitted, score, record, gameKey, config.seconds, featuredDailyBonus, featuredWeeklyBonus]);
+
+  const start = () => {
+    if (pool.length < 4) return;
+    setScore(0);
+    setCombo(0);
+    setTimeLeft(config.seconds);
+    setQuestion(pickQuestion(pool, null));
+    setPicked(null);
+    setFeedback(null);
+    setSubmitted(null);
+    setPhase("playing");
+  };
+
+  const answer = (opt: string) => {
+    if (!question || picked) return;
+    setPicked(opt);
+    if (opt === question.correct) {
+      const points = 1 + Math.floor(combo / 5);
+      setScore((s) => s + points);
+      setCombo((c) => c + 1);
+      setFeedback("ok");
+    } else {
+      setCombo(0);
+      setFeedback("bad");
+    }
+    setTimeout(() => {
+      setQuestion(pickQuestion(pool, question.char));
+      setPicked(null);
+      setFeedback(null);
+    }, 320);
+  };
+
+  const pct = useMemo(
+    () => (timeLeft / config.seconds) * 100,
+    [timeLeft, config.seconds]
+  );
+
+  if (phase === "idle") {
+    return (
+      <IntroCard
+        best={best ?? 0}
+        ready={pool.length >= 4}
+        onStart={start}
+        onExit={() => navigate("/play")}
+      />
+    );
+  }
+
+  if (phase === "done" && submitted) {
+    return (
+      <ResultCard
+        score={score}
+        bestScore={submitted.bestScore}
+        newBest={submitted.newBest}
+        xp={submitted.xp}
+        stars={submitted.stars}
+        onPlayAgain={start}
+        onExit={() => navigate("/play")}
+      />
+    );
+  }
+
+  return (
+    <div className="mx-auto max-w-2xl space-y-6">
+      <div className="flex items-center justify-between">
+        <Button variant="ghost" size="sm" onClick={() => setPhase("idle")}>
+          <ArrowLeft className="size-3.5" /> Cancelar
+        </Button>
+        <div className="flex items-center gap-2 text-xs">
+          <Badge variant="outline" className="text-[10px]">
+            <span className={DIFFICULTY_COLORS[difficulty]}>
+              {DIFFICULTY_LABELS[difficulty]}
+            </span>
+          </Badge>
+          {isDailyFeatured("kanji_quiz") || isWeeklyFeatured("kanji_quiz") ? (
+            <Badge variant="warning" className="text-[10px]">
+              +{difficultyBonusPercent(difficulty)}% XP
+            </Badge>
+          ) : null}
+          <span className="text-muted-foreground">Puntos: {score}</span>
+          {combo >= 3 ? (
+            <span className="rounded-full bg-warning/15 px-2 py-0.5 text-warning">
+              x{combo} combo
+            </span>
+          ) : null}
+        </div>
+      </div>
+
+      <div>
+        <div className="flex items-center justify-between text-[11px] uppercase tracking-widest text-muted-foreground">
+          <span>漢字クイズ · {config.label}</span>
+          <span className="tabular-nums">{timeLeft}s</span>
+        </div>
+        <Progress
+          value={pct}
+          className={cn("mt-1 h-1.5", pct < 30 && "[&>div]:bg-destructive")}
+        />
+      </div>
+
+      <div
+        className={cn(
+          "relative grid h-64 place-items-center overflow-hidden rounded-3xl glass-strong transition-colors",
+          feedback === "ok" && "bg-success/10",
+          feedback === "bad" && "bg-destructive/10"
+        )}
+      >
+        <AnimatePresence mode="wait">
+          {question ? (
+            <motion.span
+              key={question.char}
+              initial={{ opacity: 0, scale: 0.85, y: 12 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.85, y: -12 }}
+              transition={{ duration: 0.18 }}
+              className="font-jp text-[9rem] leading-none"
+            >
+              {question.char}
+            </motion.span>
+          ) : null}
+        </AnimatePresence>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        {question?.options.map((opt) => {
+          const isCorrect = opt === question.correct;
+          const isPicked = picked === opt;
+          return (
+            <Button
+              key={opt}
+              size="xl"
+              variant="outline"
+              disabled={picked !== null}
+              className={cn(
+                "h-16 text-base font-semibold",
+                picked && isCorrect && "border-success bg-success/15 text-success",
+                isPicked && !isCorrect && "border-destructive bg-destructive/15 text-destructive"
+              )}
+              onClick={() => answer(opt)}
+            >
+              {opt}
+            </Button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function IntroCard({
+  best,
+  ready,
+  onStart,
+  onExit,
+}: {
+  best: number;
+  ready: boolean;
+  onStart: () => void;
+  onExit: () => void;
+}) {
+  return (
+    <div className="mx-auto max-w-md py-8">
+      <div className="overflow-hidden rounded-3xl glass-strong p-8 text-center">
+        <div className="mx-auto flex size-16 items-center justify-center rounded-2xl bg-gradient-to-br from-neon-cyan via-primary to-success text-primary-foreground">
+          <Puzzle className="size-7" />
+        </div>
+        <p className="mt-4 font-jp text-[11px] tracking-[0.4em] text-primary">
+          漢字クイズ
+        </p>
+        <h2 className="mt-1 text-2xl font-semibold tracking-tight">Kanji Quiz</h2>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Aparece un kanji; elige su significado correcto antes de que acabe el
+          tiempo. 5 aciertos seguidos duplican los puntos.
+        </p>
+        {best > 0 ? (
+          <p className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-warning/15 px-3 py-1.5 text-sm text-warning">
+            <Trophy className="size-3.5" /> Tu récord: {best}
+          </p>
+        ) : null}
+        {!ready ? (
+          <p className="mt-3 rounded-lg bg-warning/10 px-3 py-2 text-xs text-warning">
+            Necesitas un poco más de kanji en tu nivel para jugar este modo.
+          </p>
+        ) : null}
+        <div className="mt-6 flex gap-2">
+          <Button variant="outline" className="flex-1" onClick={onExit}>
+            Salir
+          </Button>
+          <Button
+            className="flex-1 bg-gradient-to-br from-neon-cyan to-primary text-primary-foreground"
+            disabled={!ready}
+            onClick={onStart}
+          >
+            <Play className="size-4" />
+            ¡Empezar!
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ResultCard({
+  score,
+  bestScore,
+  newBest,
+  xp,
+  stars,
+  onPlayAgain,
+  onExit,
+}: {
+  score: number;
+  bestScore: number;
+  newBest: boolean;
+  xp: number;
+  stars: number;
+  onPlayAgain: () => void;
+  onExit: () => void;
+}) {
+  return (
+    <div className="mx-auto max-w-md py-8">
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="overflow-hidden rounded-3xl glass-strong p-8 text-center"
+      >
+        <p className="font-jp text-xs tracking-[0.4em] text-primary">時間切れ</p>
+        <h2 className="mt-2 text-2xl font-semibold">¡Tiempo!</h2>
+        <div className="mt-5 grid grid-cols-2 gap-3">
+          <div className="rounded-xl border bg-card/60 px-4 py-3">
+            <p className="text-[10px] uppercase tracking-widest text-muted-foreground">
+              Puntuación
+            </p>
+            <p className="mt-1 text-3xl font-bold tabular-nums">{score}</p>
+          </div>
+          <div className="rounded-xl border bg-card/60 px-4 py-3">
+            <p className="text-[10px] uppercase tracking-widest text-muted-foreground">
+              {newBest ? "¡Nuevo récord!" : "Tu récord"}
+            </p>
+            <p
+              className={cn(
+                "mt-1 text-3xl font-bold tabular-nums",
+                newBest && "text-warning"
+              )}
+            >
+              {bestScore}
+            </p>
+          </div>
+        </div>
+        <div className="mt-4 flex justify-center gap-2">
+          <div className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1.5 text-sm text-primary">
+            <Sparkles className="size-3.5" /> +{xp} XP
+          </div>
+          {stars > 0 ? (
+            <div className="inline-flex items-center gap-1.5 rounded-full bg-warning/15 px-3 py-1.5 text-sm text-warning">
+              <Star className="size-3.5 fill-current" /> +{stars}
+            </div>
+          ) : null}
+        </div>
+        <div className="mt-7 flex gap-2">
+          <Button variant="outline" className="flex-1" onClick={onExit}>
+            Salir
+          </Button>
+          <Button className="flex-1" onClick={onPlayAgain}>
+            <RotateCcw className="size-3.5" />
+            Otra ronda
+          </Button>
+        </div>
+      </motion.div>
+    </div>
+  );
+}

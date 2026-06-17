@@ -2,10 +2,12 @@ import { Outlet } from "react-router-dom";
 
 import { MeshBackground } from "@/components/visual/mesh-background";
 import { useReminderCheck } from "@/hooks/use-reminder-check";
+import { useAchievementWatch } from "@/hooks/use-achievement-watch";
 import { Sidebar } from "./sidebar";
 
 export function AppLayout() {
   useReminderCheck();
+  useAchievementWatch();
   return (
     <div className="relative flex h-screen w-screen overflow-hidden text-foreground">
       <MeshBackground />

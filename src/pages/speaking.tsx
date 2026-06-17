@@ -1,18 +1,12 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import {
-  CheckCircle2,
-  Mic,
-  Play,
-  RotateCcw,
-  Square,
-  Volume2,
-} from "lucide-react";
+import { CheckCircle2, Mic, Square, Volume2 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/layout/page-header";
 import { usePlayTts } from "@/hooks/use-listening";
+import { useVoiceRecorder } from "@/hooks/use-voice-recorder";
 import { cn } from "@/lib/utils";
 
 interface SpeakingPhrase {
@@ -65,46 +59,13 @@ export default function SpeakingPage() {
   const play = usePlayTts();
   const [idx, setIdx] = useState(0);
   const phrase = PHRASES[idx];
+  const rec = useVoiceRecorder();
 
-  const [recording, setRecording] = useState(false);
-  const [recordedUrl, setRecordedUrl] = useState<string | null>(null);
-  const [permissionError, setPermissionError] = useState<string | null>(null);
-  const recorderRef = useRef<MediaRecorder | null>(null);
-  const chunksRef = useRef<Blob[]>([]);
-
+  // Clear the recording when moving to another phrase.
   useEffect(() => {
-    setRecordedUrl(null);
+    rec.reset();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [idx]);
-
-  const start = async () => {
-    setPermissionError(null);
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const recorder = new MediaRecorder(stream);
-      chunksRef.current = [];
-      recorder.ondataavailable = (e) => {
-        if (e.data.size > 0) chunksRef.current.push(e.data);
-      };
-      recorder.onstop = () => {
-        const blob = new Blob(chunksRef.current, { type: "audio/webm" });
-        const url = URL.createObjectURL(blob);
-        setRecordedUrl(url);
-        stream.getTracks().forEach((t) => t.stop());
-      };
-      recorder.start();
-      recorderRef.current = recorder;
-      setRecording(true);
-    } catch (e) {
-      setPermissionError(
-        "No tengo permiso para el micrófono. Activa el permiso en Ajustes de macOS → Privacidad → Micrófono."
-      );
-    }
-  };
-
-  const stop = () => {
-    recorderRef.current?.stop();
-    setRecording(false);
-  };
 
   const next = () => setIdx((i) => (i + 1) % PHRASES.length);
 
@@ -125,9 +86,9 @@ export default function SpeakingPage() {
         }
       />
 
-      {permissionError ? (
+      {rec.error ? (
         <div className="rounded-2xl border border-warning/40 bg-warning/5 px-4 py-3 text-sm text-warning">
-          {permissionError}
+          {rec.error}
         </div>
       ) : null}
 
@@ -171,12 +132,13 @@ export default function SpeakingPage() {
           {/* Recorder */}
           <div className="grid grid-cols-1 gap-4 md:grid-cols-[1fr_1fr_auto] md:items-center">
             <RecordPanel
-              recording={recording}
-              recordedUrl={recordedUrl}
-              onStart={start}
-              onStop={stop}
+              recording={rec.recording}
+              recordedUrl={rec.recordedUrl}
+              level={rec.level}
+              onStart={rec.start}
+              onStop={rec.stop}
             />
-            <PlaybackPanel recordedUrl={recordedUrl} />
+            <PlaybackPanel recordedUrl={rec.recordedUrl} />
             <Button
               size="lg"
               variant="outline"
@@ -187,6 +149,13 @@ export default function SpeakingPage() {
               <CheckCircle2 className="size-4" />
             </Button>
           </div>
+
+          {rec.recording && rec.silent ? (
+            <p className="rounded-lg bg-warning/10 px-3 py-2 text-center text-xs text-warning">
+              No detecto sonido. Verifica que tu mic esté seleccionado en Ajustes
+              de macOS → Sonido → Entrada.
+            </p>
+          ) : null}
         </motion.div>
       </AnimatePresence>
     </div>
@@ -196,11 +165,13 @@ export default function SpeakingPage() {
 function RecordPanel({
   recording,
   recordedUrl,
+  level,
   onStart,
   onStop,
 }: {
   recording: boolean;
   recordedUrl: string | null;
+  level: number;
   onStart: () => void;
   onStop: () => void;
 }) {
@@ -214,12 +185,27 @@ function RecordPanel({
         className={cn(
           "relative mx-auto flex size-20 items-center justify-center rounded-full transition-all",
           recording
-            ? "bg-destructive text-destructive-foreground shadow-[0_0_40px_0_color-mix(in_oklch,var(--color-destructive)_50%,transparent)] animate-pulse"
+            ? "bg-destructive text-destructive-foreground"
             : "bg-gradient-to-br from-primary via-neon-violet to-neon-cyan text-primary-foreground"
         )}
+        style={
+          recording
+            ? {
+                boxShadow: `0 0 ${20 + level * 60}px ${4 + level * 16}px color-mix(in oklch, var(--color-destructive) ${30 + level * 40}%, transparent)`,
+              }
+            : undefined
+        }
       >
         {recording ? <Square className="size-7" /> : <Mic className="size-7" />}
       </button>
+      {recording ? (
+        <div className="mx-auto flex h-1.5 w-24 items-center overflow-hidden rounded-full bg-secondary/50">
+          <div
+            className="h-full rounded-full bg-destructive transition-[width] duration-150"
+            style={{ width: `${Math.round(level * 100)}%` }}
+          />
+        </div>
+      ) : null}
       <p className="text-xs text-muted-foreground">
         {recording ? "Grabando…" : recordedUrl ? "Listo" : "Pulsa para grabar"}
       </p>
@@ -228,30 +214,22 @@ function RecordPanel({
 }
 
 function PlaybackPanel({ recordedUrl }: { recordedUrl: string | null }) {
-  const ref = useRef<HTMLAudioElement | null>(null);
   return (
     <div className="space-y-3 rounded-2xl glass p-5 text-center">
       <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
         Reproducir
       </p>
-      <button
-        onClick={() => ref.current?.play()}
-        disabled={!recordedUrl}
-        className={cn(
-          "relative mx-auto flex size-20 items-center justify-center rounded-full transition-all",
-          recordedUrl
-            ? "bg-gradient-to-br from-success to-neon-cyan text-primary-foreground"
-            : "bg-secondary text-muted-foreground"
-        )}
-      >
-        {recordedUrl ? <Play className="size-7" /> : <RotateCcw className="size-7" />}
-      </button>
-      <p className="text-xs text-muted-foreground">
-        {recordedUrl ? "Pulsa para escuchar" : "Aún sin grabación"}
-      </p>
       {recordedUrl ? (
-        <audio ref={ref} src={recordedUrl} preload="auto" />
-      ) : null}
+        <audio
+          src={recordedUrl}
+          preload="auto"
+          controls
+          controlsList="nodownload"
+          className="w-full"
+        />
+      ) : (
+        <p className="py-6 text-xs text-muted-foreground">Aún sin grabación</p>
+      )}
     </div>
   );
 }

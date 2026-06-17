@@ -137,20 +137,26 @@ function StatTile({
   accent?: boolean;
 }) {
   return (
-    <div
+    <motion.div
+      whileHover={{ y: -3 }}
+      transition={{ type: "spring", stiffness: 300, damping: 20 }}
       className={cn(
-        "relative overflow-hidden rounded-xl glass px-4 py-3",
+        "group relative overflow-hidden rounded-xl glass px-4 py-3 transition-colors hover:bg-accent/30",
         accent && "ring-1 ring-neon-cyan/40"
       )}
     >
-      <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.12em] text-muted-foreground">
+      <div
+        aria-hidden
+        className="absolute -right-8 -top-8 size-20 rounded-full bg-gradient-to-br from-primary/20 to-neon-cyan/10 opacity-0 blur-2xl transition-opacity group-hover:opacity-100"
+      />
+      <div className="relative flex items-center gap-2 text-[11px] uppercase tracking-[0.12em] text-muted-foreground">
         {icon}
         <span>{label}</span>
       </div>
-      <p className="mt-1 text-xl font-semibold tracking-tight tabular-nums">
+      <p className="relative mt-1 text-xl font-semibold tracking-tight tabular-nums">
         {value}
       </p>
-    </div>
+    </motion.div>
   );
 }
 

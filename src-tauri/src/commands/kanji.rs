@@ -12,7 +12,10 @@ use crate::models::{
 };
 use crate::srs::{self, ReviewGrade, SrsState};
 
-const XP_INTRODUCE_KANJI: i64 = 25;
+// Introducing a kanji just adds it to your study pool — it is NOT practice, so
+// it grants no XP (otherwise XP could be farmed by spamming "Introducir").
+// XP is earned by actually reviewing (recall + grade + stroke practice).
+const XP_INTRODUCE_KANJI: i64 = 0;
 
 fn xp_for_review(grade: ReviewGrade) -> i64 {
     match grade {
