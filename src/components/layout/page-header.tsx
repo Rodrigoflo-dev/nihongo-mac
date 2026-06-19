@@ -27,11 +27,14 @@ export function PageHeader({
     >
       <div>
         {eyebrow ? (
-          <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+          <p className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.25em] text-neon-cyan">
+            <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-neon-cyan" />
             {eyebrow}
           </p>
         ) : null}
-        <h1 className="mt-1 text-3xl font-semibold tracking-tight">{title}</h1>
+        <h1 className="mt-2 font-display text-3xl font-extrabold tracking-tight">
+          {title}
+        </h1>
         {description ? (
           <p className="mt-2 max-w-prose text-balance text-muted-foreground">
             {description}

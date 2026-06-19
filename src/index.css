@@ -495,6 +495,38 @@
     inset 0 0 8px color-mix(in oklch, var(--color-primary) 18%, transparent);
 }
 
+/* Faint cyberpunk grid — used as a full-bleed background overlay */
+@utility holo-grid {
+  background-image:
+    linear-gradient(
+      color-mix(in oklch, var(--color-primary) 7%, transparent) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      90deg,
+      color-mix(in oklch, var(--color-primary) 7%, transparent) 1px,
+      transparent 1px
+    );
+  background-size: 44px 44px;
+  -webkit-mask-image: radial-gradient(
+    ellipse at 50% 0%,
+    black 0%,
+    transparent 75%
+  );
+  mask-image: radial-gradient(ellipse at 50% 0%, black 0%, transparent 75%);
+}
+
+/* HUD corner brackets for panels (cyberpunk framing) */
+@utility hud-frame {
+  position: relative;
+}
+@utility hud-corner {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border-color: color-mix(in oklch, var(--color-neon-cyan) 70%, transparent);
+}
+
 /* Animated gradient border (used on hero / level-up cards) */
 @layer utilities {
   .ring-glow {

@@ -111,9 +111,12 @@ export function Sidebar() {
         <p className="font-jp text-xs tracking-[0.4em] text-sidebar-foreground/45">
           にほんご
         </p>
-        <h1 className="text-lg font-semibold tracking-tight gradient-text">
+        <h1 className="font-display text-lg font-extrabold tracking-tighter gradient-text">
           Nihongo
         </h1>
+        <p className="-mt-0.5 font-mono text-[9px] uppercase tracking-[0.3em] text-neon-cyan/70">
+          Aether System
+        </p>
       </div>
 
       {/* Primary nav */}

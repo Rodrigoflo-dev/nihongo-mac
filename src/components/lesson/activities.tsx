@@ -196,7 +196,7 @@ function ActivityShell({
             {jp}
           </p>
         ) : null}
-        <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+        <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-neon-cyan">
           {eyebrow}
         </p>
       </div>
@@ -289,15 +289,30 @@ function IntroKanji({
 }) {
   return (
     <ActivityShell eyebrow="Nuevo kanji" jp="新しい漢字">
-      <div className="rounded-3xl glass-strong p-10">
-        <div className="text-center">
+      <div className="hud-frame relative overflow-hidden rounded-3xl glass-strong p-10">
+        {/* HUD scanline + corner brackets */}
+        <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-3xl">
+          <div className="animate-scanline absolute left-0 h-10 w-full bg-gradient-to-b from-transparent via-neon-cyan/8 to-transparent" />
+        </div>
+        <span className="hud-corner left-3 top-3 border-l-2 border-t-2" />
+        <span className="hud-corner right-3 top-3 border-r-2 border-t-2" />
+        <span className="hud-corner bottom-3 left-3 border-b-2 border-l-2" />
+        <span className="hud-corner bottom-3 right-3 border-b-2 border-r-2" />
+
+        <div className="relative text-center">
           <div className="relative inline-flex items-center justify-center">
-            <div className="absolute inset-0 rounded-full bg-gradient-to-br from-primary via-neon-violet to-neon-cyan opacity-30 blur-2xl" />
-            <span className="relative font-jp text-[140px] leading-none">
+            <div className="absolute inset-0 animate-pulse rounded-full bg-gradient-to-br from-primary via-neon-violet to-neon-cyan opacity-30 blur-2xl" />
+            <span
+              className="animate-holo-float relative font-jp text-[150px] leading-none text-primary"
+              style={{
+                textShadow:
+                  "0 0 22px color-mix(in oklch, var(--color-primary) 75%, transparent), 0 0 48px color-mix(in oklch, var(--color-neon-violet) 50%, transparent)",
+              }}
+            >
               {activity.kanjiChar}
             </span>
           </div>
-          <p className="mt-4 text-2xl font-semibold tracking-tight">
+          <p className="mt-4 font-display text-2xl font-bold tracking-tight">
             {activity.meaning}
           </p>
         </div>
@@ -338,8 +353,8 @@ function ReadingBlock({
   readings: string[];
 }) {
   return (
-    <div className="rounded-xl border border-border/50 bg-card/50 p-4">
-      <p className="text-[10px] uppercase tracking-widest text-muted-foreground">
+    <div className="relative rounded-xl border border-l-2 border-border/50 border-l-neon-cyan/60 bg-card/50 p-4">
+      <p className="font-mono text-[10px] uppercase tracking-widest text-neon-cyan/90">
         {label}
       </p>
       <p className="mt-1 font-jp text-base">
