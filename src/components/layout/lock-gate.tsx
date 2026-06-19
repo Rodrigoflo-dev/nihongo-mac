@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { MeshBackground } from "@/components/visual/mesh-background";
 import { LoadingScreen } from "@/components/visual/loading-screen";
+import { HoloKanji } from "@/components/visual/holo-kanji";
 import { api } from "@/lib/api";
 import { useSession } from "@/stores/session";
 
@@ -69,27 +70,74 @@ function AuthShell({
   children: React.ReactNode;
 }) {
   return (
-    <div className="relative grid h-screen w-screen place-items-center bg-background text-foreground">
+    <div className="relative h-screen w-screen overflow-y-auto bg-background text-foreground">
       <MeshBackground />
-      <div className="absolute left-20 right-0 top-0 z-10 h-7" data-tauri-drag-region />
-      <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.35 }}
-        className="relative z-10 w-full max-w-sm px-8"
-      >
-        <div className="rounded-3xl glass-strong p-8">
-          <div className="flex size-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-            {icon}
+      {/* radial hero glow */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 [background:radial-gradient(circle_at_50%_-10%,color-mix(in_oklch,var(--color-primary)_18%,transparent)_0%,transparent_60%)]"
+      />
+      <div className="absolute left-20 right-0 top-0 z-20 h-7" data-tauri-drag-region />
+
+      {/* Brand */}
+      <div className="absolute left-8 top-8 z-20 hidden md:block">
+        <p className="font-jp text-display-lg-mobile text-xl font-extrabold tracking-tighter text-primary">
+          にほんご
+        </p>
+        <p className="-mt-1 font-mono text-[10px] uppercase tracking-[0.3em] text-neon-cyan">
+          Nihongo · Aether
+        </p>
+      </div>
+
+      <div className="relative z-10 mx-auto grid min-h-full max-w-6xl items-center gap-stack-lg px-6 py-20 lg:grid-cols-2 lg:gap-12">
+        {/* Left: copy + form */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+          className="order-2 mx-auto w-full max-w-md lg:order-1"
+        >
+          <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 backdrop-blur-md">
+            <span className="size-1.5 animate-pulse rounded-full bg-neon-cyan" />
+            <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-neon-cyan">
+              {eyebrow}
+            </span>
           </div>
-          <p className="mt-5 font-jp text-[11px] tracking-[0.3em] text-primary">
-            {eyebrow}
+          <h1 className="mt-5 font-display text-4xl font-extrabold leading-[1.05] tracking-tight text-foreground sm:text-5xl">
+            {title}
+          </h1>
+          <p className="mt-3 max-w-prose text-base text-muted-foreground">
+            {subtitle}
           </p>
-          <h1 className="mt-1 text-2xl font-semibold tracking-tight">{title}</h1>
-          <p className="mt-2 text-sm text-muted-foreground">{subtitle}</p>
-          <div className="mt-6">{children}</div>
-        </div>
-      </motion.div>
+
+          <div className="mt-7 rounded-3xl glass-strong border border-white/10 p-6">
+            <div className="mb-4 flex size-11 items-center justify-center rounded-2xl bg-primary/15 text-primary primary-glow">
+              {icon}
+            </div>
+            {children}
+          </div>
+        </motion.div>
+
+        {/* Right: 3D holo kanji */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1], delay: 0.1 }}
+          className="order-1 flex items-center justify-center lg:order-2"
+        >
+          <HoloKanji size={360} className="max-w-full" />
+        </motion.div>
+      </div>
+
+      {/* footer status line */}
+      <div className="pointer-events-none absolute bottom-5 left-0 z-10 hidden w-full justify-between px-8 md:flex">
+        <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
+          © Nihongo · 夢を追え
+        </p>
+        <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
+          System Status: <span className="text-neon-cyan">Online</span>
+        </p>
+      </div>
     </div>
   );
 }

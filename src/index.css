@@ -71,10 +71,11 @@
   --sidebar-ring: oklch(0.58 0.24 285);
 
   --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  --font-display: "Inter", system-ui, -apple-system, sans-serif;
+  --font-display: "Sora", "Inter", system-ui, -apple-system, sans-serif;
   --font-jp: "Noto Sans JP", "Hiragino Sans", "Hiragino Kaku Gothic ProN",
     "Yu Gothic", system-ui, sans-serif;
-  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas,
+    monospace;
 }
 
 .dark {
@@ -200,6 +201,9 @@
   --animate-float: float 6s ease-in-out infinite;
   --animate-spin-slow: spin 20s linear infinite;
   --animate-ring-pulse: ring-pulse 2.6s ease-out infinite;
+  --animate-scanline: scanline 4s linear infinite;
+  --animate-holo-float: holo-float 5s ease-in-out infinite;
+  --animate-holo-spin: holo-spin 7s ease-in-out infinite;
 }
 
 @keyframes aurora {
@@ -259,6 +263,38 @@
   100% {
     box-shadow:
       0 0 0 18px color-mix(in oklch, var(--color-primary) 0%, transparent);
+  }
+}
+
+/* Cyberpunk HUD: a thin scanline sweeping down a panel */
+@keyframes scanline {
+  0% {
+    transform: translateY(-100%);
+  }
+  100% {
+    transform: translateY(2000%);
+  }
+}
+
+/* Holographic float: gentle vertical drift + slight tilt for the 3D kanji */
+@keyframes holo-float {
+  0%,
+  100% {
+    transform: translateY(0) rotateZ(0deg);
+  }
+  50% {
+    transform: translateY(-12px) rotateZ(0.6deg);
+  }
+}
+
+/* 3D holographic spin — oscillating rotateY so the kanji stays readable */
+@keyframes holo-spin {
+  0%,
+  100% {
+    transform: rotateY(-17deg) rotateX(5deg);
+  }
+  50% {
+    transform: rotateY(17deg) rotateX(-5deg);
   }
 }
 
@@ -450,6 +486,13 @@
   -webkit-background-clip: text;
   color: transparent;
   -webkit-text-fill-color: transparent;
+}
+
+/* Soft neon glow for primary chips/icons (cyberpunk HUD) */
+@utility primary-glow {
+  box-shadow:
+    0 0 18px color-mix(in oklch, var(--color-primary) 35%, transparent),
+    inset 0 0 8px color-mix(in oklch, var(--color-primary) 18%, transparent);
 }
 
 /* Animated gradient border (used on hero / level-up cards) */
