@@ -64,6 +64,15 @@ export function NextActionHero({ action }: NextActionHeroProps) {
 
       {/* Card */}
       <div className="relative overflow-hidden rounded-3xl glass-strong">
+        {/* HUD corner brackets */}
+        <span className="hud-corner left-3 top-3 z-20 border-l-2 border-t-2" />
+        <span className="hud-corner right-3 top-3 z-20 border-r-2 border-t-2" />
+        <span className="hud-corner bottom-3 left-3 z-20 border-b-2 border-l-2" />
+        <span className="hud-corner bottom-3 right-3 z-20 border-b-2 border-r-2" />
+        {/* scanline */}
+        <div className="pointer-events-none absolute inset-0 z-20 overflow-hidden rounded-3xl">
+          <div className="animate-scanline absolute left-0 h-12 w-full bg-gradient-to-b from-transparent via-neon-cyan/[0.06] to-transparent" />
+        </div>
         {/* Decorative gradient sheen */}
         <div
           aria-hidden
@@ -81,7 +90,7 @@ export function NextActionHero({ action }: NextActionHeroProps) {
         <div className="grid grid-cols-12 items-center gap-6 p-8">
           {/* Text + CTA */}
           <div className="relative z-10 col-span-7 space-y-5">
-            <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-background/30 px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-muted-foreground backdrop-blur">
+            <div className="inline-flex items-center gap-2 rounded-full border border-neon-cyan/30 bg-background/30 px-3 py-1 font-mono text-[11px] uppercase tracking-[0.2em] text-neon-cyan backdrop-blur">
               <span
                 className={cn(
                   "size-1.5 rounded-full",
@@ -97,7 +106,7 @@ export function NextActionHero({ action }: NextActionHeroProps) {
               <p className="font-jp text-xs tracking-[0.35em] text-muted-foreground">
                 {action.jpSubtitle}
               </p>
-              <h2 className="text-3xl font-semibold leading-tight tracking-tight text-balance md:text-4xl">
+              <h2 className="font-display text-3xl font-extrabold leading-tight tracking-tight text-balance md:text-4xl">
                 {action.title}
               </h2>
               <p className="max-w-md text-balance text-sm text-muted-foreground">

@@ -196,6 +196,11 @@ export default function LessonPlayer() {
   return (
     <div className="relative flex h-screen w-screen flex-col overflow-hidden bg-background text-foreground">
       <MeshBackground />
+      <div aria-hidden className="holo-grid pointer-events-none absolute inset-0 z-0 opacity-50" />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 z-0 [background:radial-gradient(circle_at_50%_-10%,color-mix(in_oklch,var(--color-primary)_12%,transparent)_0%,transparent_55%)]"
+      />
       <div className="absolute left-20 right-0 top-0 z-10 h-7" data-tauri-drag-region />
 
       <header className="relative z-10 flex items-center gap-2 px-8 pt-10">
@@ -215,10 +220,10 @@ export default function LessonPlayer() {
           <p className="font-jp text-[10px] tracking-[0.3em] text-muted-foreground">
             {lesson.jpTitle ?? "授業"}
           </p>
-          <p className="text-sm font-semibold leading-tight">{lesson.title}</p>
+          <p className="font-display text-sm font-bold leading-tight">{lesson.title}</p>
         </div>
-        <p className="text-xs tabular-nums text-muted-foreground">
-          {step + 1} / {activities.length}
+        <p className="font-mono text-xs tabular-nums text-neon-cyan/80">
+          {String(step + 1).padStart(2, "0")} / {String(activities.length).padStart(2, "0")}
         </p>
       </header>
 

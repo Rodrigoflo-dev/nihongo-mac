@@ -149,11 +149,12 @@ function StatTile({
         aria-hidden
         className="absolute -right-8 -top-8 size-20 rounded-full bg-gradient-to-br from-primary/20 to-neon-cyan/10 opacity-0 blur-2xl transition-opacity group-hover:opacity-100"
       />
-      <div className="relative flex items-center gap-2 text-[11px] uppercase tracking-[0.12em] text-muted-foreground">
+      <span className="hud-corner right-2 top-2 border-r-2 border-t-2 opacity-0 transition-opacity group-hover:opacity-100" />
+      <div className="relative flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.15em] text-muted-foreground">
         {icon}
         <span>{label}</span>
       </div>
-      <p className="relative mt-1 text-xl font-semibold tracking-tight tabular-nums">
+      <p className="relative mt-1 font-display text-2xl font-extrabold tracking-tight tabular-nums">
         {value}
       </p>
     </motion.div>
