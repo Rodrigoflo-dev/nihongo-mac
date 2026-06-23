@@ -24,6 +24,7 @@ import {
   useLessonExercises,
   useStartLesson,
 } from "@/hooks/use-lessons";
+import { api } from "@/lib/api";
 import type { Activity, ExerciseDifficulty, LessonCompletionResponse } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
@@ -165,6 +166,19 @@ export default function LessonPlayer() {
           .filter((s) => s.kind === "activity" && s.difficulty).length
       : 0;
 
+  // Map each taught item (kanji/word) to the step that explains it, so the
+  // "Repasar" button can jump back instantly within this lesson.
+  const learnIndex = useMemo(() => {
+    const m = new Map<string, number>();
+    steps.forEach((s, i) => {
+      if (s.kind !== "activity") return;
+      const a = s.activity;
+      if (a.kind === "intro_kanji") m.set(a.kanjiChar, i);
+      else if (a.kind === "intro_vocab") m.set(a.word, i);
+    });
+    return m;
+  }, [steps]);
+
   if (isLoading || !lesson || !currentStep) {
     return (
       <div className="relative grid h-screen w-screen place-items-center bg-background text-foreground">
@@ -245,6 +259,25 @@ export default function LessonPlayer() {
     setAnswered(null);
     setAttemptForStep(0);
     setStep((s) => s + 1);
+  };
+
+  // Jump to learn a kanji/word: instantly to its explanation in THIS lesson if
+  // present, otherwise navigate to the lesson elsewhere that teaches it.
+  const handleLearn = (target: string) => {
+    const idx = learnIndex.get(target);
+    if (idx !== undefined) {
+      setVerified(false);
+      setAnswered(null);
+      setAttemptForStep(0);
+      setStep(idx);
+      return;
+    }
+    api
+      .findLessonForKanji(target)
+      .then((ref) => {
+        if (ref && ref.lessonId !== lesson.id) navigate(`/learn/${ref.lessonId}`);
+      })
+      .catch(() => {});
   };
 
   const handleExit = () => setConfirmingExit(true);
@@ -345,6 +378,7 @@ export default function LessonPlayer() {
                 verified={verified}
                 attempt={attemptForStep}
                 onAnswer={(correct) => setAnswered({ correct })}
+                onLearn={handleLearn}
               />
             ) : currentStep.kind === "dudas" ? (
               <DudasInterstitial

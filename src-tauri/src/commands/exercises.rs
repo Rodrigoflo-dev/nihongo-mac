@@ -13,6 +13,7 @@
 
 use rand::rngs::StdRng;
 use rand::seq::SliceRandom;
+use rand::Rng;
 use rand::SeedableRng;
 use rusqlite::Connection;
 use serde::Serialize;
@@ -325,6 +326,113 @@ fn build_exercise(
     }
 }
 
+/// "¿Cómo suena?" — play the word/kanji (TTS) and pick its meaning. Audio
+/// listening practice grounded in the taught item.
+fn build_listen(
+    rng: &mut StdRng,
+    idx: usize,
+    item: &Item,
+    meaning_pool: &[String],
+) -> Option<Activity> {
+    let mut distractors = pick_distractors(rng, meaning_pool, &item.meaning, 3);
+    distractors.retain(|d| d != &item.meaning);
+    if distractors.is_empty() {
+        return None;
+    }
+    let mut options = vec![item.meaning.clone()];
+    options.append(&mut distractors);
+    options.shuffle(rng);
+    let correct_index = options.iter().position(|o| o == &item.meaning)?;
+    Some(Activity::Listening {
+        id: format!("gen-listen-{idx}"),
+        text_jp: item.jp.clone(),
+        voice: "Kyoko".to_string(),
+        prompt: "Escucha y elige el significado".to_string(),
+        options,
+        correct_index,
+        explanation: Some(format!("{} = {}", item.jp, item.meaning)),
+    })
+}
+
+/// "Escribe la lectura" — type the reading in hiragana (uses the JP keyboard /
+/// romaji input). Accepts each variant when a reading lists several (よん／し).
+fn build_write_reading(idx: usize, item: &Item) -> Option<Activity> {
+    if item.reading.is_empty() {
+        return None;
+    }
+    let accepted: Vec<String> = item
+        .reading
+        .split(['／', '/', '・', ';', '；', ',', '、'])
+        .map(|s| s.trim().to_string())
+        .filter(|s| !s.is_empty())
+        .collect();
+    if accepted.is_empty() {
+        return None;
+    }
+    Some(Activity::WriteSentence {
+        id: format!("gen-write-{idx}"),
+        prompt: format!("Escribe en hiragana cómo se lee {}", item.jp),
+        hint: Some(format!("Significa «{}»", item.meaning)),
+        accepted,
+        explanation: format!("{} se lee {}", item.jp, item.reading),
+    })
+}
+
+/// "Dibuja el kanji" — trace it stroke by stroke (StrokeTrainer). Only for
+/// single kanji.
+fn build_draw(idx: usize, item: &Item) -> Option<Activity> {
+    if !item.is_kanji {
+        return None;
+    }
+    Some(Activity::WriteKanji {
+        id: format!("gen-draw-{idx}"),
+        kanji_char: item.jp.clone(),
+        meaning: item.meaning.clone(),
+        reading: item.reading.clone(),
+        note: None,
+    })
+}
+
+/// Pick an exercise for a band with VARIETY: each band has a chance to use a
+/// richer modality (audio / writing / drawing) when applicable, otherwise it
+/// falls back to the band's default multiple-choice question. This keeps the 20
+/// exercises from feeling repetitive.
+#[allow(clippy::too_many_arguments)]
+fn build_for_band(
+    rng: &mut StdRng,
+    idx: usize,
+    band: &str,
+    item: &Item,
+    meaning_pool: &[String],
+    kanji_pool: &[String],
+    reading_pool: &[String],
+) -> Option<Activity> {
+    let roll = rng.gen_range(0..3);
+    let alt = match band {
+        // fácil: sometimes "¿cómo suena?" (audio → meaning)
+        "facil" => {
+            if roll == 0 {
+                build_listen(rng, idx, item, meaning_pool)
+            } else {
+                None
+            }
+        }
+        // medio: sometimes "escribe la lectura" (keyboard)
+        "medio" => match roll {
+            0 => build_write_reading(idx, item),
+            1 => build_listen(rng, idx, item, meaning_pool),
+            _ => None,
+        },
+        // difícil: draw the kanji, or fill-the-blank in a real sentence
+        _ => match roll {
+            0 => build_draw(idx, item),
+            1 => build_blank_exercise(rng, idx, item, kanji_pool),
+            _ => None,
+        },
+    };
+    alt.or_else(|| build_exercise(rng, idx, band, item, meaning_pool, kanji_pool, reading_pool))
+}
+
 /// Core generator (pure, testable): produce up to TOTAL exercises for a lesson.
 pub fn generate(conn: &Connection, lesson_id: i64, seed: u64) -> Vec<GeneratedExercise> {
     let mut rng = StdRng::seed_from_u64(seed ^ (lesson_id as u64).wrapping_mul(0x9E3779B97F4A7C15));
@@ -383,33 +491,15 @@ pub fn generate(conn: &Connection, lesson_id: i64, seed: u64) -> Vec<GeneratedEx
             guard += 1;
             let item = &items[order[oi % order.len()]].clone();
             oi += 1;
-            // Hard band = real-life USAGE: prefer a fill-in-the-blank from an
-            // authored example sentence; fall back to reading/production recall.
-            let activity = if band == "dificil" {
-                build_blank_exercise(&mut rng, global_idx, item, &kanji_pool).or_else(
-                    || {
-                        build_exercise(
-                            &mut rng,
-                            global_idx,
-                            band,
-                            item,
-                            &meaning_pool,
-                            &kanji_pool,
-                            &reading_pool,
-                        )
-                    },
-                )
-            } else {
-                build_exercise(
-                    &mut rng,
-                    global_idx,
-                    band,
-                    item,
-                    &meaning_pool,
-                    &kanji_pool,
-                    &reading_pool,
-                )
-            };
+            let activity = build_for_band(
+                &mut rng,
+                global_idx,
+                band,
+                item,
+                &meaning_pool,
+                &kanji_pool,
+                &reading_pool,
+            );
             if let Some(activity) = activity {
                 out.push(GeneratedExercise {
                     activity,
@@ -457,24 +547,30 @@ mod tests {
         let dificil = ex.iter().filter(|e| e.difficulty == "dificil").count();
         assert_eq!((facil, medio, dificil), (7, 7, 6), "band split");
 
-        // Every exercise must be a valid quiz: >=2 options, a valid correct idx,
-        // and the correct option present.
+        // Multiple-choice exercises (quiz/listening) must be valid: >=2 distinct
+        // options and an in-range correct index. Other modalities (write/draw)
+        // are also allowed for variety.
         for e in &ex {
-            if let Activity::Quiz {
-                options,
-                correct_index,
-                ..
-            } = &e.activity
-            {
+            let mcq = match &e.activity {
+                Activity::Quiz {
+                    options,
+                    correct_index,
+                    ..
+                }
+                | Activity::Listening {
+                    options,
+                    correct_index,
+                    ..
+                } => Some((options, correct_index)),
+                _ => None,
+            };
+            if let Some((options, correct_index)) = mcq {
                 assert!(options.len() >= 2, "needs >=2 options");
                 assert!(*correct_index < options.len(), "correct idx in range");
-                // No duplicate options (distractors must differ from answer).
                 let mut sorted = options.clone();
                 sorted.sort();
                 sorted.dedup();
                 assert_eq!(sorted.len(), options.len(), "options must be distinct");
-            } else {
-                panic!("generated exercise must be a Quiz");
             }
         }
     }
@@ -515,6 +611,30 @@ mod tests {
                 );
             }
         }
+    }
+
+    #[test]
+    fn produces_varied_exercise_types() {
+        use std::collections::HashSet;
+        let conn = fresh_db();
+        let mut kinds: HashSet<&str> = HashSet::new();
+        for id in 1..=40 {
+            for seed in [1u64, 2, 3, 4] {
+                for e in generate(&conn, id, seed) {
+                    kinds.insert(match &e.activity {
+                        Activity::Quiz { .. } => "quiz",
+                        Activity::Listening { .. } => "listening",
+                        Activity::WriteSentence { .. } => "write",
+                        Activity::WriteKanji { .. } => "draw",
+                        _ => "other",
+                    });
+                }
+            }
+        }
+        assert!(
+            kinds.len() >= 3,
+            "practice should mix modalities (mcq/audio/write/draw), got {kinds:?}"
+        );
     }
 
     #[test]

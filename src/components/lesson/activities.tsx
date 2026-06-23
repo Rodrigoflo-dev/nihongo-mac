@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   ArrowRight,
@@ -220,6 +219,8 @@ export interface ActivityRenderProps {
   verified: boolean;
   attempt: number;
   onAnswer: (correct: boolean) => void;
+  /** Jump to learn this kanji/word (in-lesson if possible). */
+  onLearn?: (target: string) => void;
 }
 
 export function ActivityView({
@@ -227,6 +228,7 @@ export function ActivityView({
   verified,
   attempt,
   onAnswer,
+  onLearn,
 }: ActivityRenderProps) {
   switch (activity.kind) {
     case "intro_kanji":
@@ -242,6 +244,7 @@ export function ActivityView({
           activity={activity}
           verified={verified}
           onAnswer={onAnswer}
+          onLearn={onLearn}
         />
       );
     case "listening":
@@ -251,6 +254,7 @@ export function ActivityView({
           activity={activity}
           verified={verified}
           onAnswer={onAnswer}
+          onLearn={onLearn}
         />
       );
     case "speaking":
@@ -490,10 +494,12 @@ function QuizActivity({
   activity,
   verified,
   onAnswer,
+  onLearn,
 }: {
   activity: Extract<Activity, { kind: "quiz" }>;
   verified: boolean;
   onAnswer: (correct: boolean) => void;
+  onLearn?: (target: string) => void;
 }) {
   // Shuffle options once per activity mount so the correct answer doesn't
   // always sit in the same slot.
@@ -591,6 +597,7 @@ function QuizActivity({
           <ExplanationCard
             correctAnswer={activity.options[activity.correctIndex]}
             explanation={activity.explanation}
+            onLearn={onLearn}
           />
         ) : null}
       </HudPanel>
@@ -606,10 +613,12 @@ function ListeningActivity({
   activity,
   verified,
   onAnswer,
+  onLearn,
 }: {
   activity: Extract<Activity, { kind: "listening" }>;
   verified: boolean;
   onAnswer: (correct: boolean) => void;
+  onLearn?: (target: string) => void;
 }) {
   const play = usePlayTts();
   const [rate, setRate] = useState(160);
@@ -747,6 +756,7 @@ function ListeningActivity({
           <ExplanationCard
             correctAnswer={activity.options[activity.correctIndex]}
             explanation={activity.explanation}
+            onLearn={onLearn}
           />
         ) : null}
       </div>
@@ -1325,10 +1335,14 @@ function SummaryActivity({
 function ExplanationCard({
   correctAnswer,
   explanation,
+  onLearn,
 }: {
   correctAnswer: string;
   explanation: string;
+  onLearn?: (target: string) => void;
 }) {
+  // Only meaningful for Japanese answers (kana/kanji), not Spanish meanings.
+  const isJapanese = /[぀-ヿ㐀-鿿]/.test(correctAnswer);
   return (
     <motion.div
       initial={{ opacity: 0, y: 8 }}
@@ -1344,47 +1358,17 @@ function ExplanationCard({
         <span className="font-jp text-base text-success">{correctAnswer}</span>
       </p>
       <p className="text-sm leading-relaxed text-foreground/85">{explanation}</p>
-      <LearnThisButton target={correctAnswer} />
+      {onLearn && isJapanese ? (
+        <button
+          onClick={() => onLearn(correctAnswer)}
+          className="mt-1 inline-flex items-center gap-2 rounded-lg border border-neon-cyan/40 bg-neon-cyan/10 px-3 py-2 text-xs font-semibold text-neon-cyan transition-colors hover:bg-neon-cyan/15"
+        >
+          <GraduationCap className="size-4" />
+          Repasar {correctAnswer}
+          <ArrowRight className="size-3.5" />
+        </button>
+      ) : null}
     </motion.div>
-  );
-}
-
-/**
- * Offered when you get something wrong: jump to the lesson that actually teaches
- * this kanji/word, so you can learn it properly (not just see the right answer).
- * Only shows for Japanese answers that some lesson teaches.
- */
-function LearnThisButton({ target }: { target: string }) {
-  const navigate = useNavigate();
-  const [state, setState] = useState<"idle" | "loading" | "none">("idle");
-
-  // Only meaningful for Japanese text (kana/kanji), not Spanish meanings.
-  const isJapanese = /[぀-ヿ㐀-鿿]/.test(target);
-  if (!isJapanese || state === "none") return null;
-
-  const go = async () => {
-    setState("loading");
-    try {
-      const ref = await api.findLessonForKanji(target);
-      if (ref) navigate(`/learn/${ref.lessonId}`);
-      else setState("none");
-    } catch {
-      setState("none");
-    }
-  };
-
-  return (
-    <button
-      onClick={go}
-      disabled={state === "loading"}
-      className="mt-1 inline-flex items-center gap-2 rounded-lg border border-neon-cyan/40 bg-neon-cyan/10 px-3 py-2 text-xs font-semibold text-neon-cyan transition-colors hover:bg-neon-cyan/15 disabled:opacity-60"
-    >
-      <GraduationCap className="size-4" />
-      {state === "loading"
-        ? "Buscando la lección…"
-        : `Aprender ${target} en su lección`}
-      <ArrowRight className="size-3.5" />
-    </button>
   );
 }
 
