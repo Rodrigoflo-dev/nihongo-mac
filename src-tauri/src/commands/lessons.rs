@@ -124,6 +124,49 @@ pub fn get_lesson(db: State<'_, DbState>, lesson_id: i64) -> AppResult<Lesson> {
     db.with(|c| read_lesson(c, lesson_id))
 }
 
+#[derive(Debug, Clone, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct KanjiLessonRef {
+    pub lesson_id: i64,
+    pub title: String,
+}
+
+/// Find the lesson that teaches a given kanji or word, so the practice screen
+/// can offer "go learn this". Matches an intro_kanji's kanjiChar first, then an
+/// intro_vocab's word. Returns None if nothing teaches it yet.
+#[tauri::command]
+pub fn find_lesson_for_kanji(
+    db: State<'_, DbState>,
+    query: String,
+) -> AppResult<Option<KanjiLessonRef>> {
+    use rusqlite::OptionalExtension;
+    db.with(|c| {
+        // The query value is bound as a parameter (no SQL injection); only the
+        // LIKE wildcards are literal.
+        for key in ["kanjiChar", "word"] {
+            let pattern = format!("%\"{key}\":\"{query}\"%");
+            let found = c
+                .query_row(
+                    "SELECT id, title FROM lessons
+                      WHERE activities_json LIKE ?1
+                      ORDER BY ordering, id LIMIT 1",
+                    [pattern],
+                    |r| {
+                        Ok(KanjiLessonRef {
+                            lesson_id: r.get(0)?,
+                            title: r.get(1)?,
+                        })
+                    },
+                )
+                .optional()?;
+            if found.is_some() {
+                return Ok(found);
+            }
+        }
+        Ok(None)
+    })
+}
+
 fn read_lesson(c: &Connection, id: i64) -> AppResult<Lesson> {
     c.query_row(
         "SELECT l.id, l.unit_id, l.title, l.jp_title, l.summary, l.duration_minutes,

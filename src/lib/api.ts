@@ -261,6 +261,11 @@ export interface GeneratedExercise {
   difficulty: ExerciseDifficulty;
 }
 
+export interface KanjiLessonRef {
+  lessonId: number;
+  title: string;
+}
+
 export interface LessonSummary {
   id: number;
   unitId: number;
@@ -684,6 +689,8 @@ export const api = {
   getLesson: (lessonId: number) => invoke<Lesson>("get_lesson", { lessonId }),
   generateLessonExercises: (lessonId: number, seed: number) =>
     invoke<GeneratedExercise[]>("generate_lesson_exercises", { lessonId, seed }),
+  findLessonForKanji: (query: string) =>
+    invoke<KanjiLessonRef | null>("find_lesson_for_kanji", { query }),
   startLesson: (lessonId: number) =>
     invoke<Lesson>("start_lesson", { lessonId }),
   completeLesson: (result: LessonResult) =>

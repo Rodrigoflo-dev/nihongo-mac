@@ -278,21 +278,18 @@ fn build_exercise(
 pub fn generate(conn: &Connection, lesson_id: i64, seed: u64) -> Vec<GeneratedExercise> {
     let mut rng = StdRng::seed_from_u64(seed ^ (lesson_id as u64).wrapping_mul(0x9E3779B97F4A7C15));
     let level = lesson_level(conn, lesson_id);
-
-    // Items: what the lesson taught, topped up from the catalog at its level.
-    let mut items = taught_items(conn, lesson_id);
     let catalog = catalog_kanji(conn, &level);
-    if items.len() < 8 {
-        let mut extra = catalog.clone();
-        extra.shuffle(&mut rng);
-        for it in extra {
-            if items.iter().all(|x| x.jp != it.jp) {
-                items.push(it);
-            }
-            if items.len() >= 10 {
-                break;
-            }
-        }
+
+    // TARGETS = only what THIS lesson actually taught (intro_kanji/intro_vocab).
+    // We never quiz the learner on catalog items they were never shown — that was
+    // unfair (you'd fail kanji that were never in the explanation). If a lesson
+    // teaches few items we just drill those with more question variety. Only when
+    // a lesson has NO taught items at all do we fall back to the level catalog.
+    let mut items = taught_items(conn, lesson_id);
+    if items.is_empty() {
+        items = catalog.clone();
+        items.shuffle(&mut rng);
+        items.truncate(10);
     }
     if items.is_empty() {
         return vec![];
@@ -408,6 +405,44 @@ mod tests {
                 assert_eq!(sorted.len(), options.len(), "options must be distinct");
             } else {
                 panic!("generated exercise must be a Quiz");
+            }
+        }
+    }
+
+    #[test]
+    fn exercises_only_target_taught_items() {
+        use std::collections::HashSet;
+        let conn = fresh_db();
+        // Find a lesson that actually teaches items (intro_kanji/intro_vocab).
+        let mut lesson_id = 0i64;
+        for id in 1..=60 {
+            if !taught_items(&conn, id).is_empty() {
+                lesson_id = id;
+                break;
+            }
+        }
+        assert!(lesson_id > 0, "expected at least one lesson with taught items");
+
+        let taught = taught_items(&conn, lesson_id);
+        let allowed: HashSet<String> = taught
+            .iter()
+            .flat_map(|i| [i.jp.clone(), i.meaning.clone(), i.reading.clone()])
+            .filter(|s| !s.is_empty())
+            .collect();
+
+        let ex = generate(&conn, lesson_id, 999);
+        for e in &ex {
+            if let Activity::Quiz {
+                options,
+                correct_index,
+                ..
+            } = &e.activity
+            {
+                let correct = &options[*correct_index];
+                assert!(
+                    allowed.contains(correct),
+                    "correct answer '{correct}' must come from a TAUGHT item (lesson {lesson_id}); the learner was never shown untaught material"
+                );
             }
         }
     }
