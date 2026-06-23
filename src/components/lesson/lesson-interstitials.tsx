@@ -33,8 +33,8 @@ const BANDS = {
   },
   dificil: {
     label: "Difícil",
-    jp: "むずかしい",
-    desc: "Lecturas y trampas. ¡A por todas!",
+    jp: "実践",
+    desc: "Úsalo en frases reales — completa el contexto.",
     tone: "from-warning to-neon-pink",
     dots: 3,
   },

@@ -46,6 +46,11 @@ struct Item {
     meaning: String,
     /// Whether this is a single kanji (enables reading questions from on/kun).
     is_kanji: bool,
+    /// A real authored example SENTENCE that uses this item (for context/usage
+    /// fill-in-the-blank questions). None if the lesson gave no usable example.
+    example_jp: Option<String>,
+    /// Spanish translation of the example sentence, when available.
+    example_meaning: Option<String>,
 }
 
 /// Take the first gloss from a "a / b, c" style meaning string.
@@ -97,6 +102,7 @@ fn taught_items(conn: &Connection, lesson_id: i64) -> Vec<Item> {
                 meaning,
                 onyomi,
                 kunyomi,
+                example,
                 ..
             } => {
                 let reading = kunyomi
@@ -109,12 +115,15 @@ fn taught_items(conn: &Connection, lesson_id: i64) -> Vec<Item> {
                     reading,
                     meaning: primary_gloss(&meaning),
                     is_kanji: true,
+                    example_jp: example.as_ref().map(|e| e.jp.clone()),
+                    example_meaning: example.as_ref().map(|e| e.meaning.clone()),
                 });
             }
             Activity::IntroVocab {
                 word,
                 reading,
                 meaning,
+                example,
                 ..
             } => items.push(Item {
                 jp: word.clone(),
@@ -122,6 +131,9 @@ fn taught_items(conn: &Connection, lesson_id: i64) -> Vec<Item> {
                 meaning: primary_gloss(&meaning),
                 // single-character vocab still behaves like a kanji for readings
                 is_kanji: word.chars().count() == 1,
+                // the vocab "example" is a plain JP phrase (no translation)
+                example_jp: example,
+                example_meaning: None,
             }),
             _ => {}
         }
@@ -152,6 +164,8 @@ fn catalog_kanji(conn: &Connection, level: &str) -> Vec<Item> {
                 reading,
                 meaning: primary_gloss(&r.get::<_, String>(1)?),
                 is_kanji: true,
+                example_jp: None,
+                example_meaning: None,
             })
         })
         .map(|it| it.filter_map(Result::ok).collect::<Vec<_>>())
@@ -203,6 +217,43 @@ fn make_quiz(
         correct_index,
         explanation: Some(explanation),
     })
+}
+
+/// Real-life USAGE question: take an authored example sentence, blank out the
+/// taught word, and ask the learner to fill it in. This teaches *how the word
+/// is used in context* (the whole point — speaking real Japanese), grounded in
+/// verified sentences (never invented). Returns None if there's no usable
+/// example sentence (e.g. the example is just the word itself).
+fn build_blank_exercise(
+    rng: &mut StdRng,
+    idx: usize,
+    item: &Item,
+    kanji_pool: &[String],
+) -> Option<Activity> {
+    let sentence = item.example_jp.as_ref()?;
+    // Needs to be an actual sentence/phrase that CONTAINS the word and is longer
+    // than the word alone (otherwise blanking gives no context).
+    if !sentence.contains(&item.jp)
+        || sentence.chars().count() <= item.jp.chars().count()
+    {
+        return None;
+    }
+    let blanked = sentence.replacen(&item.jp, "＿＿", 1);
+    let hint = item
+        .example_meaning
+        .clone()
+        .unwrap_or_else(|| item.meaning.clone());
+    let distractors = pick_distractors(rng, kanji_pool, &item.jp, 3);
+    let explanation = format!("{sentence} — {hint}");
+    make_quiz(
+        rng,
+        format!("gen-ctx-{idx}"),
+        format!("Completa la frase — «{hint}»"),
+        Some(blanked),
+        item.jp.clone(),
+        distractors,
+        explanation,
+    )
 }
 
 /// Build one exercise for an item at a given difficulty band.
@@ -332,15 +383,34 @@ pub fn generate(conn: &Connection, lesson_id: i64, seed: u64) -> Vec<GeneratedEx
             guard += 1;
             let item = &items[order[oi % order.len()]].clone();
             oi += 1;
-            if let Some(activity) = build_exercise(
-                &mut rng,
-                global_idx,
-                band,
-                item,
-                &meaning_pool,
-                &kanji_pool,
-                &reading_pool,
-            ) {
+            // Hard band = real-life USAGE: prefer a fill-in-the-blank from an
+            // authored example sentence; fall back to reading/production recall.
+            let activity = if band == "dificil" {
+                build_blank_exercise(&mut rng, global_idx, item, &kanji_pool).or_else(
+                    || {
+                        build_exercise(
+                            &mut rng,
+                            global_idx,
+                            band,
+                            item,
+                            &meaning_pool,
+                            &kanji_pool,
+                            &reading_pool,
+                        )
+                    },
+                )
+            } else {
+                build_exercise(
+                    &mut rng,
+                    global_idx,
+                    band,
+                    item,
+                    &meaning_pool,
+                    &kanji_pool,
+                    &reading_pool,
+                )
+            };
+            if let Some(activity) = activity {
                 out.push(GeneratedExercise {
                     activity,
                     difficulty: band.to_string(),
@@ -445,6 +515,40 @@ mod tests {
                 );
             }
         }
+    }
+
+    #[test]
+    fn produces_contextual_usage_questions() {
+        let conn = fresh_db();
+        let mut found = false;
+        for id in 1..=80 {
+            let ex = generate(&conn, id, 7);
+            let ctx: Vec<_> = ex
+                .iter()
+                .filter(|e| match &e.activity {
+                    Activity::Quiz { id, .. } => id.starts_with("gen-ctx"),
+                    _ => false,
+                })
+                .collect();
+            if !ctx.is_empty() {
+                found = true;
+                // Every contextual question must blank out the word in a real
+                // sentence (prompt_jp contains the blank marker).
+                for e in &ctx {
+                    if let Activity::Quiz { prompt_jp, .. } = &e.activity {
+                        assert!(
+                            prompt_jp.as_deref().unwrap_or("").contains("＿＿"),
+                            "contextual question must show a fill-in-the-blank sentence"
+                        );
+                    }
+                }
+                break;
+            }
+        }
+        assert!(
+            found,
+            "expected at least one lesson to yield a real-usage fill-in-the-blank question"
+        );
     }
 
     #[test]
