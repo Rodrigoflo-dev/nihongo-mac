@@ -257,6 +257,26 @@ fn build_blank_exercise(
     )
 }
 
+/// A fuller explanation for a wrong answer: meaning + reading + a real example,
+/// so the learner actually understands the item (not just "学 = estudiar").
+fn rich_explanation(item: &Item) -> String {
+    let mut s = format!("{} significa «{}»", item.jp, item.meaning);
+    if !item.reading.is_empty() {
+        s.push_str(&format!(". Se lee {}", item.reading));
+    }
+    if let Some(ex) = &item.example_jp {
+        if ex != &item.jp {
+            match &item.example_meaning {
+                Some(m) if !m.is_empty() => {
+                    s.push_str(&format!(". Ejemplo: {ex} — {m}"))
+                }
+                _ => s.push_str(&format!(". Ejemplo: {ex}")),
+            }
+        }
+    }
+    s
+}
+
 /// Build one exercise for an item at a given difficulty band.
 #[allow(clippy::too_many_arguments)]
 fn build_exercise(
@@ -281,7 +301,7 @@ fn build_exercise(
                 prompt_jp,
                 item.meaning.clone(),
                 distractors,
-                format!("{} = {}", item.jp, item.meaning),
+                rich_explanation(item),
             )
         }
         // Production: see the meaning, pick the kanji/word. 4 options.
@@ -294,7 +314,7 @@ fn build_exercise(
                 None,
                 item.jp.clone(),
                 distractors,
-                format!("«{}» se escribe {}", item.meaning, item.jp),
+                rich_explanation(item),
             )
         }
         // Hard: reading recall (if kanji) else meaning→word with 4 options.
@@ -308,7 +328,7 @@ fn build_exercise(
                     Some(item.jp.clone()),
                     item.reading.clone(),
                     distractors,
-                    format!("{} se lee {}", item.jp, item.reading),
+                    rich_explanation(item),
                 )
             } else {
                 let distractors = pick_distractors(rng, kanji_pool, &item.jp, 3);
@@ -319,7 +339,7 @@ fn build_exercise(
                     None,
                     item.jp.clone(),
                     distractors,
-                    format!("«{}» se escribe {}", item.meaning, item.jp),
+                    rich_explanation(item),
                 )
             }
         }
@@ -350,7 +370,7 @@ fn build_listen(
         prompt: "Escucha y elige el significado".to_string(),
         options,
         correct_index,
-        explanation: Some(format!("{} = {}", item.jp, item.meaning)),
+        explanation: Some(rich_explanation(item)),
     })
 }
 

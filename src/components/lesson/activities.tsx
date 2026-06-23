@@ -598,6 +598,10 @@ function QuizActivity({
             correctAnswer={activity.options[activity.correctIndex]}
             explanation={activity.explanation}
             onLearn={onLearn}
+            learnTarget={
+              japaneseToken(activity.promptJp) ??
+              japaneseToken(activity.options[activity.correctIndex])
+            }
           />
         ) : null}
       </HudPanel>
@@ -757,6 +761,10 @@ function ListeningActivity({
             correctAnswer={activity.options[activity.correctIndex]}
             explanation={activity.explanation}
             onLearn={onLearn}
+            learnTarget={
+              japaneseToken(activity.textJp) ??
+              japaneseToken(activity.options[activity.correctIndex])
+            }
           />
         ) : null}
       </div>
@@ -1332,17 +1340,25 @@ function SummaryActivity({
 // Shared explanation card
 // ---------------------------------------------------------------------------
 
+/** Returns the string if it contains Japanese (kana/kanji), else undefined. */
+function japaneseToken(s?: string | null): string | undefined {
+  return s && /[぀-ヿ㐀-鿿]/.test(s) ? s : undefined;
+}
+
 function ExplanationCard({
   correctAnswer,
   explanation,
   onLearn,
+  learnTarget,
 }: {
   correctAnswer: string;
   explanation: string;
   onLearn?: (target: string) => void;
+  /** The Japanese kanji/word to review (may differ from the answer, e.g. when
+   *  the answer is a Spanish meaning and the kanji is in the prompt). */
+  learnTarget?: string;
 }) {
-  // Only meaningful for Japanese answers (kana/kanji), not Spanish meanings.
-  const isJapanese = /[぀-ヿ㐀-鿿]/.test(correctAnswer);
+  const target = learnTarget ?? japaneseToken(correctAnswer);
   return (
     <motion.div
       initial={{ opacity: 0, y: 8 }}
@@ -1358,13 +1374,13 @@ function ExplanationCard({
         <span className="font-jp text-base text-success">{correctAnswer}</span>
       </p>
       <p className="text-sm leading-relaxed text-foreground/85">{explanation}</p>
-      {onLearn && isJapanese ? (
+      {onLearn && target ? (
         <button
-          onClick={() => onLearn(correctAnswer)}
+          onClick={() => onLearn(target)}
           className="mt-1 inline-flex items-center gap-2 rounded-lg border border-neon-cyan/40 bg-neon-cyan/10 px-3 py-2 text-xs font-semibold text-neon-cyan transition-colors hover:bg-neon-cyan/15"
         >
           <GraduationCap className="size-4" />
-          Repasar {correctAnswer}
+          Ir a la lección de {target}
           <ArrowRight className="size-3.5" />
         </button>
       ) : null}
