@@ -26,6 +26,7 @@ import { usePlayTts } from "@/hooks/use-listening";
 import { useVoiceRecorder } from "@/hooks/use-voice-recorder";
 import { api } from "@/lib/api";
 import type { Activity } from "@/lib/api";
+import { grammarNoteFor, type GrammarNote } from "@/lib/grammar-notes";
 import { cn } from "@/lib/utils";
 
 /**
@@ -459,6 +460,7 @@ function IntroGrammar({
 }: {
   activity: Extract<Activity, { kind: "intro_grammar" }>;
 }) {
+  const note = grammarNoteFor(activity.pattern, activity.title);
   return (
     <ActivityShell eyebrow="Nueva gramática" jp="新しい文法">
       <HudPanel glow className="p-10">
@@ -485,8 +487,94 @@ function IntroGrammar({
             {activity.example.meaning}
           </p>
         </div>
+
+        {note ? <GrammarDeepDive note={note} /> : null}
       </HudPanel>
     </ActivityShell>
+  );
+}
+
+/** Thorough "why / when / mistakes / examples" panel for a grammar point. */
+function GrammarDeepDive({ note }: { note: GrammarNote }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35, delay: 0.1 }}
+      className="mt-7 space-y-5 rounded-2xl border border-neon-cyan/25 bg-background/40 p-5"
+    >
+      <div className="flex items-center gap-3">
+        <span
+          className="font-jp text-3xl font-bold text-neon-cyan"
+          style={{
+            textShadow:
+              "0 0 18px color-mix(in oklch, var(--color-neon-cyan) 55%, transparent)",
+          }}
+        >
+          {note.jp}
+        </span>
+        <div>
+          <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-neon-cyan">
+            詳しく · A fondo
+          </p>
+          <p className="font-display text-base font-bold leading-tight">
+            {note.title}
+          </p>
+        </div>
+      </div>
+
+      <div>
+        <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-primary">
+          ¿Por qué se usa?
+        </p>
+        <p className="mt-1 text-sm leading-relaxed text-foreground/90">
+          {note.why}
+        </p>
+      </div>
+
+      <div>
+        <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-primary">
+          ¿Cuándo usarla?
+        </p>
+        <ul className="mt-1.5 space-y-1.5">
+          {note.whenToUse.map((c, i) => (
+            <li key={i} className="flex gap-2 text-sm text-foreground/90">
+              <span className="mt-1 size-1.5 shrink-0 rounded-full bg-neon-cyan" />
+              <span>{c}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <div>
+        <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-warning">
+          ⚠ Errores comunes
+        </p>
+        <ul className="mt-1.5 space-y-1.5">
+          {note.mistakes.map((m, i) => (
+            <li key={i} className="flex gap-2 text-sm text-foreground/80">
+              <span className="mt-1 size-1.5 shrink-0 rounded-full bg-warning" />
+              <span>{m}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <div className="grid gap-2 sm:grid-cols-2">
+        {note.examples.map((ex, i) => (
+          <div
+            key={i}
+            className="rounded-xl border border-l-2 border-border/40 border-l-success/60 bg-card/40 p-3"
+          >
+            <p className="font-jp text-base">{ex.jp}</p>
+            <p className="font-jp text-[11px] text-muted-foreground">
+              {ex.reading}
+            </p>
+            <p className="mt-0.5 text-xs text-muted-foreground">{ex.meaning}</p>
+          </div>
+        ))}
+      </div>
+    </motion.div>
   );
 }
 
