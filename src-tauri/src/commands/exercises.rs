@@ -374,6 +374,18 @@ fn build_listen(
     })
 }
 
+fn is_kanji_char(c: char) -> bool {
+    ('\u{4E00}'..='\u{9FFF}').contains(&c) || ('\u{3400}'..='\u{4DBF}').contains(&c)
+}
+
+/// Build a guiding hint for a "write" exercise: meaning + length + first sound,
+/// so it nudges memory of HOW it's written without giving the whole answer.
+fn reading_hint(meaning: &str, reading: &str) -> String {
+    let n = reading.chars().count();
+    let first = reading.chars().next().map(String::from).unwrap_or_default();
+    format!("«{meaning}» · {n} caracteres, empieza con «{first}»")
+}
+
 /// "Escribe la lectura" — type the reading in hiragana (uses the JP keyboard /
 /// romaji input). Accepts each variant when a reading lists several (よん／し).
 fn build_write_reading(idx: usize, item: &Item) -> Option<Activity> {
@@ -389,12 +401,52 @@ fn build_write_reading(idx: usize, item: &Item) -> Option<Activity> {
     if accepted.is_empty() {
         return None;
     }
+    let hint = reading_hint(&item.meaning, &accepted[0]);
     Some(Activity::WriteSentence {
         id: format!("gen-write-{idx}"),
         prompt: format!("Escribe en hiragana cómo se lee {}", item.jp),
-        hint: Some(format!("Significa «{}»", item.meaning)),
+        hint: Some(hint),
         accepted,
-        explanation: format!("{} se lee {}", item.jp, item.reading),
+        explanation: rich_explanation(item),
+    })
+}
+
+/// "Escribe la palabra" — write the WORD in Japanese from its meaning. The hint
+/// shows WHICH kanji you need to build it (memorize the components), and we
+/// accept either the kanji form or its kana reading.
+fn build_write_word(idx: usize, item: &Item) -> Option<Activity> {
+    // Only for multi-character words that actually contain kanji.
+    let kanji: Vec<String> = item
+        .jp
+        .chars()
+        .filter(|c| is_kanji_char(*c))
+        .map(String::from)
+        .collect();
+    if item.jp.chars().count() < 2 || kanji.is_empty() {
+        return None;
+    }
+    let mut accepted = vec![item.jp.clone()];
+    if !item.reading.is_empty() {
+        for r in item
+            .reading
+            .split(['／', '/', '・', ';', '；', ',', '、'])
+            .map(|s| s.trim())
+            .filter(|s| !s.is_empty())
+        {
+            accepted.push(r.to_string());
+        }
+    }
+    let hint = format!(
+        "Necesitas estos kanji: {} · se lee «{}»",
+        kanji.join(" + "),
+        item.reading
+    );
+    Some(Activity::WriteSentence {
+        id: format!("gen-word-{idx}"),
+        prompt: format!("Escribe «{}» en japonés", item.meaning),
+        hint: Some(hint),
+        accepted,
+        explanation: rich_explanation(item),
     })
 }
 
@@ -427,26 +479,28 @@ fn build_for_band(
     kanji_pool: &[String],
     reading_pool: &[String],
 ) -> Option<Activity> {
-    let roll = rng.gen_range(0..3);
+    let roll = rng.gen_range(0..4);
     let alt = match band {
         // fácil: sometimes "¿cómo suena?" (audio → meaning)
         "facil" => {
-            if roll == 0 {
+            if roll <= 1 {
                 build_listen(rng, idx, item, meaning_pool)
             } else {
                 None
             }
         }
-        // medio: sometimes "escribe la lectura" (keyboard)
+        // medio: writing practice (with hints) — type the word or its reading
         "medio" => match roll {
-            0 => build_write_reading(idx, item),
-            1 => build_listen(rng, idx, item, meaning_pool),
+            0 => build_write_word(idx, item).or_else(|| build_write_reading(idx, item)),
+            1 => build_write_reading(idx, item),
+            2 => build_listen(rng, idx, item, meaning_pool),
             _ => None,
         },
         // difícil: draw the kanji, or fill-the-blank in a real sentence
         _ => match roll {
             0 => build_draw(idx, item),
             1 => build_blank_exercise(rng, idx, item, kanji_pool),
+            2 => build_write_word(idx, item),
             _ => None,
         },
     };
@@ -655,6 +709,26 @@ mod tests {
             kinds.len() >= 3,
             "practice should mix modalities (mcq/audio/write/draw), got {kinds:?}"
         );
+    }
+
+    #[test]
+    fn write_exercises_always_have_hints() {
+        let conn = fresh_db();
+        let mut checked = 0;
+        for id in 1..=40 {
+            for seed in [1u64, 2, 3, 4, 5] {
+                for e in generate(&conn, id, seed) {
+                    if let Activity::WriteSentence { hint, .. } = &e.activity {
+                        assert!(
+                            hint.as_ref().map(|h| !h.trim().is_empty()).unwrap_or(false),
+                            "every write exercise must include a guiding hint"
+                        );
+                        checked += 1;
+                    }
+                }
+            }
+        }
+        assert!(checked > 0, "expected some write exercises to be generated");
     }
 
     #[test]
