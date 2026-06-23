@@ -6,6 +6,13 @@ import {
 } from "@tauri-apps/plugin-notification";
 
 import { api } from "@/lib/api";
+import { useUserProfile } from "@/hooks/use-user-profile";
+
+const SENT_KEY = "nihongo-reminder-sent-date";
+
+function todayStr(): string {
+  return new Date().toISOString().slice(0, 10);
+}
 
 /**
  * Periodically checks whether the daily reminder is due and sends a native
@@ -28,10 +35,17 @@ async function ensurePermission(): Promise<boolean> {
 }
 
 export function useReminderCheck() {
+  // Re-evaluate whenever the reminder time changes (so editing it in Ajustes
+  // takes effect right away, not only on the next 10-min tick).
+  const { data: profile } = useUserProfile();
+  const reminderTime = profile?.reminderTime ?? null;
+
   useEffect(() => {
     let cancelled = false;
     const check = async () => {
       try {
+        // Only fire once per day, even if the app stays open past the hour.
+        if (localStorage.getItem(SENT_KEY) === todayStr()) return;
         const msg = await api.checkReminderDue();
         if (cancelled || !msg) return;
         if (!(await ensurePermission())) return;
@@ -39,6 +53,7 @@ export function useReminderCheck() {
           title: "Tu sesión de hoy te está esperando",
           body: msg,
         });
+        localStorage.setItem(SENT_KEY, todayStr());
       } catch (e) {
         // swallow — notification permission may not be granted yet
         console.warn("reminder check failed", e);
@@ -46,11 +61,11 @@ export function useReminderCheck() {
     };
 
     const t1 = setTimeout(check, 4_000);
-    const interval = setInterval(check, 10 * 60 * 1000);
+    const interval = setInterval(check, 5 * 60 * 1000);
     return () => {
       cancelled = true;
       clearTimeout(t1);
       clearInterval(interval);
     };
-  }, []);
+  }, [reminderTime]);
 }

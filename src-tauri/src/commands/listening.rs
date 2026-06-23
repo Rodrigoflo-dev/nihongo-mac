@@ -152,6 +152,12 @@ pub fn complete_listening_dialogue(
         )?;
 
         let now = Utc::now();
+        crate::commands::bump_daily_session(
+            c,
+            now,
+            "listening",
+            submission.duration_seconds.unwrap_or(0),
+        )?;
         let xp = XP_LISTEN + if passed { XP_LISTEN_QUIZ_PASS } else { 10 };
         let (effective, change) = award_xp_internal(
             c,

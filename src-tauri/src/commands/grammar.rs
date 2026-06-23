@@ -190,6 +190,8 @@ pub fn submit_grammar_quiz(
         )?;
 
         let now = Utc::now();
+        // Grammar quiz time isn't tracked client-side; estimate from quiz length.
+        crate::commands::bump_daily_session(c, now, "grammar", 30 + total * 25)?;
         let xp_total =
             if passed { XP_QUIZ_PASS } else { 20 } + if perfect { XP_QUIZ_PERFECT_BONUS } else { 0 };
         let (xp_awarded, level_change) = award_xp_internal(

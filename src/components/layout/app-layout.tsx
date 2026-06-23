@@ -1,5 +1,6 @@
 import { Outlet } from "react-router-dom";
 
+import { AccentFX } from "@/components/visual/accent-fx";
 import { MeshBackground } from "@/components/visual/mesh-background";
 import { useReminderCheck } from "@/hooks/use-reminder-check";
 import { useAchievementWatch } from "@/hooks/use-achievement-watch";
@@ -17,6 +18,8 @@ export function AppLayout() {
         aria-hidden
         className="pointer-events-none absolute inset-0 z-0 [background:radial-gradient(circle_at_50%_-8%,color-mix(in_oklch,var(--color-primary)_14%,transparent)_0%,transparent_55%)]"
       />
+      {/* per-theme animated ambient effects (sits behind content, z-0) */}
+      <AccentFX />
       <Sidebar />
       <main className="relative z-10 flex-1 overflow-hidden">
         {/* Drag region starts AFTER the macOS traffic lights (~80px from left) so

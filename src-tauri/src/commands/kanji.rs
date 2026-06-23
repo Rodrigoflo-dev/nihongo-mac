@@ -284,7 +284,7 @@ pub fn review_kanji(
             params![kanji_id, if correct { 1 } else { 0 }, duration_seconds.unwrap_or(0)],
         )?;
 
-        bump_daily_session(c, now, "kanji", duration_seconds.unwrap_or(0))?;
+        crate::commands::bump_daily_session(c, now, "kanji", duration_seconds.unwrap_or(0))?;
 
         let (xp_review, change_review) =
             award_xp_internal(c, xp_for_review(grade), "kanji_review", None, now)?;
@@ -412,31 +412,3 @@ fn load_kanji_srs(conn: &Connection, kanji_id: i64) -> AppResult<KanjiSrs> {
     })
 }
 
-fn bump_daily_session(
-    conn: &Connection,
-    now: DateTime<Utc>,
-    activity: &str,
-    duration_seconds: i64,
-) -> AppResult<()> {
-    let today = now.format("%Y-%m-%d").to_string();
-    let minutes_delta = (duration_seconds / 60).max(0);
-
-    conn.execute(
-        "INSERT INTO daily_sessions (session_date, minutes_studied, activities_completed,
-                                     kanji_reviewed, vocab_reviewed, grammar_completed,
-                                     listening_minutes, speaking_minutes, journaled)
-         VALUES (?1, ?2, 1,
-                 CASE WHEN ?3 = 'kanji' THEN 1 ELSE 0 END,
-                 CASE WHEN ?3 = 'vocab' THEN 1 ELSE 0 END,
-                 CASE WHEN ?3 = 'grammar' THEN 1 ELSE 0 END,
-                 0, 0, 0)
-         ON CONFLICT(session_date) DO UPDATE SET
-             minutes_studied = minutes_studied + excluded.minutes_studied,
-             activities_completed = activities_completed + 1,
-             kanji_reviewed = kanji_reviewed + (CASE WHEN ?3 = 'kanji' THEN 1 ELSE 0 END),
-             vocab_reviewed = vocab_reviewed + (CASE WHEN ?3 = 'vocab' THEN 1 ELSE 0 END),
-             grammar_completed = grammar_completed + (CASE WHEN ?3 = 'grammar' THEN 1 ELSE 0 END)",
-        params![today, minutes_delta, activity],
-    )?;
-    Ok(())
-}

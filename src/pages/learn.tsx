@@ -12,6 +12,8 @@ import {
 
 import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/layout/page-header";
+import { HudPanel } from "@/components/visual/hud-panel";
+import { HoloKanji } from "@/components/visual/holo-kanji";
 import { useCourses } from "@/hooks/use-lessons";
 import type { LessonSummary, Unit } from "@/lib/api";
 import { cn } from "@/lib/utils";
@@ -21,29 +23,41 @@ export default function LearnPage() {
 
   return (
     <div className="mx-auto max-w-5xl space-y-10">
-      <PageHeader
-        eyebrow="授業 — Tu curso"
-        title={
-          <>
-            Aprende paso a paso, <span className="gradient-text">como una clase real</span>
-          </>
-        }
-        description="Cada lección combina nuevos kanji, gramática, escucha y voz. Avanzas en orden — el siguiente paso siempre está marcado."
-      />
+      <div className="relative">
+        <PageHeader
+          eyebrow="授業 — Tu curso"
+          title={
+            <>
+              Aprende paso a paso, <span className="gradient-text">como una clase real</span>
+            </>
+          }
+          description="Cada lección combina nuevos kanji, gramática, escucha y voz. Avanzas en orden — el siguiente paso siempre está marcado."
+        />
+        <div className="pointer-events-none absolute -right-6 -top-16 hidden lg:block">
+          <HoloKanji
+            size={220}
+            items={[
+              { char: "授", meaning: "Clase" },
+              { char: "業", meaning: "Lección" },
+              { char: "学", meaning: "Aprender" },
+            ]}
+          />
+        </div>
+      </div>
 
       {isLoading ? (
         <p className="text-sm text-muted-foreground">Cargando…</p>
       ) : (
         courses?.map((course) => (
           <section key={course.id} className="space-y-6">
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3">
               <Badge variant="secondary" className="font-mono">
                 {course.jlptLevel}
               </Badge>
-              <p className="font-jp text-[11px] tracking-[0.3em] text-muted-foreground">
-                {course.jpTitle}
+              <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-neon-cyan">
+                <span className="font-jp">{course.jpTitle}</span>
               </p>
-              <h2 className="text-lg font-semibold tracking-tight">
+              <h2 className="font-display text-lg font-extrabold tracking-tight">
                 {course.title}
               </h2>
             </div>
@@ -72,14 +86,14 @@ function UnitBlock({ unit }: { unit: Unit }) {
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
-      className="relative overflow-hidden rounded-3xl glass p-6"
     >
+      <HudPanel glow className="p-6">
       <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="font-jp text-[11px] tracking-[0.3em] text-muted-foreground">
-            {unit.jpTitle ?? "ユニット"}
+        <div className="min-w-0">
+          <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-neon-cyan">
+            <span className="font-jp">{unit.jpTitle ?? "ユニット"}</span>
           </p>
-          <h3 className="mt-1 text-xl font-semibold tracking-tight">
+          <h3 className="mt-1 font-display text-xl font-extrabold tracking-tight">
             {unit.title}
           </h3>
           {unit.description ? (
@@ -90,7 +104,7 @@ function UnitBlock({ unit }: { unit: Unit }) {
         </div>
         <Badge
           variant={allDone ? "success" : "outline"}
-          className="font-mono text-[10px]"
+          className="shrink-0 font-mono text-[10px]"
         >
           {completedCount}/{totalCount}
         </Badge>
@@ -116,16 +130,19 @@ function UnitBlock({ unit }: { unit: Unit }) {
 
       {allDone ? (
         <Link to={`/exam/${unit.id}`} className="mt-5 block">
-          <div
+          <motion.div
+            whileHover={{ y: -2 }}
             className={cn(
-              "group flex items-center gap-3 rounded-2xl border border-warning/40 bg-warning/5 px-5 py-4",
-              "transition-all hover:bg-warning/10 hover:ring-1 hover:ring-warning/60"
+              "group relative flex items-center gap-3 overflow-hidden rounded-2xl border border-neon-amber/40 bg-neon-amber/5 px-5 py-4",
+              "transition-all hover:bg-neon-amber/10 hover:ring-1 hover:ring-neon-amber/60 hover:shadow-[0_0_30px_-8px_color-mix(in_oklch,var(--color-neon-amber)_55%,transparent)]"
             )}
           >
-            <div className="flex size-10 items-center justify-center rounded-xl bg-gradient-to-br from-warning to-streak text-warning-foreground shadow-[0_10px_30px_-8px_color-mix(in_oklch,var(--color-warning)_60%,transparent)]">
+            <span className="hud-corner left-2 top-2 border-l-2 border-t-2 border-neon-amber/50" />
+            <span className="hud-corner bottom-2 right-2 border-b-2 border-r-2 border-neon-amber/50" />
+            <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-warning to-streak text-warning-foreground shadow-[0_10px_30px_-8px_color-mix(in_oklch,var(--color-warning)_60%,transparent)]">
               <Sparkles className="size-4" />
             </div>
-            <div className="flex-1">
+            <div className="min-w-0 flex-1">
               <p className="text-sm font-semibold">
                 Examen de unidad — {unit.title}
               </p>
@@ -133,15 +150,15 @@ function UnitBlock({ unit }: { unit: Unit }) {
                 10 preguntas mezcladas. Pasas con 70% o más.
               </p>
             </div>
-            <ArrowRight className="size-4 text-warning transition-transform group-hover:translate-x-0.5" />
-          </div>
+            <ArrowRight className="size-4 shrink-0 text-warning transition-transform group-hover:translate-x-0.5" />
+          </motion.div>
         </Link>
       ) : (
         <div className="mt-5 flex items-center gap-3 rounded-2xl border border-dashed border-border/50 bg-card/40 px-5 py-4">
-          <div className="flex size-10 items-center justify-center rounded-xl bg-secondary/60 text-muted-foreground">
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-secondary/60 text-muted-foreground">
             <Sparkles className="size-4" />
           </div>
-          <div className="flex-1">
+          <div className="min-w-0 flex-1">
             <p className="text-sm font-semibold">
               Examen de unidad — {unit.title}
             </p>
@@ -149,9 +166,10 @@ function UnitBlock({ unit }: { unit: Unit }) {
               Termina las {totalCount} lecciones para desbloquear ({completedCount}/{totalCount})
             </p>
           </div>
-          <div className="text-xs text-muted-foreground">{pct}%</div>
+          <div className="shrink-0 font-mono text-xs tabular-nums text-neon-cyan">{pct}%</div>
         </div>
       )}
+      </HudPanel>
     </motion.div>
   );
 }
@@ -174,17 +192,19 @@ function LessonRow({
         : "";
 
   const inner = (
-    <div
+    <motion.div
+      whileHover={!locked ? { y: -2 } : undefined}
       className={cn(
         "group relative flex items-center gap-4 rounded-2xl border bg-card/60 px-4 py-3 transition-all",
-        !locked && "hover:border-primary/40 hover:bg-accent/30",
+        !locked &&
+          "hover:border-primary/40 hover:bg-accent/30 hover:shadow-[0_0_24px_-10px_color-mix(in_oklch,var(--color-primary)_60%,transparent)]",
         tone
       )}
     >
       <StatusDot status={lesson.status} locked={locked} index={index} />
-      <div className="flex-1">
-        <p className="font-jp text-[10px] tracking-[0.25em] text-muted-foreground">
-          {lesson.jpTitle ?? "授業"}
+      <div className="min-w-0 flex-1">
+        <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-neon-cyan/80">
+          <span className="font-jp">{lesson.jpTitle ?? "授業"}</span>
         </p>
         <p className="text-sm font-semibold leading-tight">{lesson.title}</p>
         {lesson.summary ? (
@@ -192,23 +212,23 @@ function LessonRow({
             {lesson.summary}
           </p>
         ) : null}
-        <div className="mt-1.5 flex items-center gap-3 text-[10px] text-muted-foreground">
+        <div className="mt-1.5 flex flex-wrap items-center gap-3 text-[10px] text-muted-foreground">
           <span className="inline-flex items-center gap-1">
             <Clock className="size-3" />
             {lesson.durationMinutes} min
           </span>
           <span>{lesson.activityCount} actividades</span>
           {lesson.bestScore != null ? (
-            <span className="text-warning">★ {lesson.bestScore}%</span>
+            <span className="text-neon-amber">★ {lesson.bestScore}%</span>
           ) : null}
         </div>
       </div>
       {!locked ? (
-        <ArrowRight className="size-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+        <ArrowRight className="size-4 shrink-0 text-neon-cyan transition-transform group-hover:translate-x-0.5" />
       ) : (
-        <Lock className="size-4 text-muted-foreground" />
+        <Lock className="size-4 shrink-0 text-muted-foreground" />
       )}
-    </div>
+    </motion.div>
   );
 
   if (locked) {
@@ -232,27 +252,27 @@ function StatusDot({
 }) {
   if (locked) {
     return (
-      <div className="flex size-9 items-center justify-center rounded-full bg-secondary/50 text-muted-foreground">
+      <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-secondary/50 text-muted-foreground">
         <Lock className="size-3.5" />
       </div>
     );
   }
   if (status === "completed") {
     return (
-      <div className="flex size-9 items-center justify-center rounded-full bg-gradient-to-br from-success to-neon-cyan text-success-foreground">
+      <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-success to-neon-cyan text-success-foreground shadow-[0_0_18px_-4px_color-mix(in_oklch,var(--color-neon-cyan)_70%,transparent)]">
         <Check className="size-4" />
       </div>
     );
   }
   if (status === "in_progress") {
     return (
-      <div className="flex size-9 items-center justify-center rounded-full bg-gradient-to-br from-primary via-neon-violet to-neon-cyan text-primary-foreground">
+      <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary via-neon-violet to-neon-cyan text-primary-foreground shadow-[0_0_20px_-4px_color-mix(in_oklch,var(--color-primary)_75%,transparent)]">
         <Play className="size-3.5" />
       </div>
     );
   }
   return (
-    <div className="flex size-9 items-center justify-center rounded-full border-2 border-border bg-background text-sm font-bold tabular-nums text-muted-foreground">
+    <div className="flex size-9 shrink-0 items-center justify-center rounded-full border-2 border-border bg-background font-mono text-sm font-bold tabular-nums text-muted-foreground">
       <Circle className="absolute size-3.5 opacity-0" />
       {index}
     </div>

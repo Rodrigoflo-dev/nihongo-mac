@@ -47,13 +47,24 @@ export function InsightsCard() {
       </p>
 
       {insights.focusPath ? (
-        <button
-          onClick={() => navigate(insights.focusPath!)}
-          className="mt-3 inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-primary via-neon-violet to-neon-cyan px-4 py-2 text-sm font-semibold text-primary-foreground transition-transform active:scale-[0.98]"
-        >
-          Reforzar {insights.focusLabel}
-          <ChevronRight className="size-4" />
-        </button>
+        <div className="group relative mt-3 inline-flex">
+          <span
+            aria-hidden
+            className="absolute -inset-0.5 bg-gradient-to-r from-neon-violet via-primary to-neon-cyan opacity-40 blur-md transition-opacity duration-300 group-hover:opacity-70"
+          />
+          <button
+            onClick={() => navigate(insights.focusPath!)}
+            className="cta-clip relative inline-flex items-center gap-1.5 overflow-hidden bg-gradient-to-r from-neon-violet via-primary to-neon-cyan px-5 py-2 text-sm font-extrabold text-background transition-all hover:brightness-110 active:scale-[0.98]"
+          >
+            <span
+              aria-hidden
+              className="absolute inset-x-0 top-0 h-px bg-white/70"
+            />
+            <span className="shimmer pointer-events-none absolute inset-0 opacity-40" />
+            <span className="relative">Reforzar {insights.focusLabel}</span>
+            <ChevronRight className="relative size-4 transition-transform group-hover:translate-x-0.5" />
+          </button>
+        </div>
       ) : null}
 
       {practiced.length > 0 ? (

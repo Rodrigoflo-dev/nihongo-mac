@@ -27,6 +27,23 @@ export function useLesson(lessonId: number | undefined) {
   });
 }
 
+/**
+ * Procedurally-generated practice exercises for a lesson. `seed` is fixed per
+ * lesson mount so retries within the session are stable, but every fresh entry
+ * gets a new seed → different questions each time, and different per user.
+ */
+export function useLessonExercises(
+  lessonId: number | undefined,
+  seed: number
+) {
+  return useQuery({
+    queryKey: ["lesson-exercises", lessonId, seed],
+    queryFn: () => api.generateLessonExercises(lessonId!, seed),
+    enabled: lessonId !== undefined,
+    staleTime: Infinity,
+  });
+}
+
 function invalidateAfter(qc: ReturnType<typeof useQueryClient>) {
   qc.invalidateQueries({ queryKey: ["courses"] });
   qc.invalidateQueries({ queryKey: ["next-lesson"] });

@@ -140,6 +140,10 @@ pub fn complete_reading_passage(
         )?;
 
         let now = Utc::now();
+        // Reading time isn't tracked client-side; estimate from passage length
+        // (reading + answering) so study time and active days still count.
+        let est_seconds = 60 + total * 30;
+        crate::commands::bump_daily_session(c, now, "reading", est_seconds)?;
         let xp = XP_READ_PASSAGE + if passed { XP_READ_QUIZ_PASS } else { 10 };
         let (effective, change) =
             award_xp_internal(c, xp, "reading_quiz", Some(&passage_id.to_string()), now)?;

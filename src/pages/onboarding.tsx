@@ -8,6 +8,8 @@ import { StepShell } from "@/components/onboarding/step-shell";
 import { ToggleCard } from "@/components/onboarding/toggle-card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { HoloKanji } from "@/components/visual/holo-kanji";
+import { HudPanel } from "@/components/visual/hud-panel";
 import {
   useCompleteOnboarding,
   useUserProfile,
@@ -108,16 +110,35 @@ export default function OnboardingPage() {
           primaryLabel="Comenzar"
           onPrimary={next}
         >
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.15 }}
-            className="grid grid-cols-3 gap-3"
-          >
-            <FeaturePill icon={<Target className="size-4" />} label="Misiones diarias" />
-            <FeaturePill icon={<Star className="size-4" />} label="Sube de nivel" />
-            <FeaturePill icon={<Sparkles className="size-4" />} label="Aprende por situaciones" />
-          </motion.div>
+          <div className="space-y-6">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.1, duration: 0.5 }}
+              className="hidden justify-center sm:flex"
+            >
+              <HoloKanji
+                size={240}
+                interval={2600}
+                items={[
+                  { char: "日", meaning: "Japón" },
+                  { char: "本", meaning: "Origen" },
+                  { char: "語", meaning: "Idioma" },
+                  { char: "学", meaning: "Aprender" },
+                ]}
+              />
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.15 }}
+              className="grid grid-cols-3 gap-3"
+            >
+              <FeaturePill icon={<Target className="size-4" />} label="Misiones diarias" />
+              <FeaturePill icon={<Star className="size-4" />} label="Sube de nivel" />
+              <FeaturePill icon={<Sparkles className="size-4" />} label="Aprende por situaciones" />
+            </motion.div>
+          </div>
         </StepShell>
       );
 
@@ -313,34 +334,38 @@ export default function OnboardingPage() {
           primaryLoading={completeOnboarding.isPending}
           onPrimary={handleComplete}
         >
-          <div className="rounded-xl border bg-card p-5">
-            <p className="font-jp text-[11px] tracking-[0.3em] text-muted-foreground">
-              あなたのプラン
-            </p>
-            <h3 className="mt-1 text-lg font-semibold">Tu plan</h3>
-            <dl className="mt-4 grid grid-cols-2 gap-y-3 text-sm">
-              <dt className="text-muted-foreground">Nombre</dt>
-              <dd className="font-medium">{name || "—"}</dd>
-              <dt className="text-muted-foreground">Nivel actual</dt>
-              <dd className="font-medium">{currentLevel}</dd>
-              <dt className="text-muted-foreground">Objetivo</dt>
-              <dd className="font-medium">{targetLevel}</dd>
-              <dt className="text-muted-foreground">Hiragana</dt>
-              <dd className="font-medium">
-                {knowsHiragana ? "Conocido" : "Empezar desde cero"}
-              </dd>
-              <dt className="text-muted-foreground">Katakana</dt>
-              <dd className="font-medium">
-                {knowsKatakana ? "Conocido" : "Empezar desde cero"}
-              </dd>
-              <dt className="text-muted-foreground">Diario</dt>
-              <dd className="font-medium">{minutes} min</dd>
-              <dt className="text-muted-foreground">Recordatorio</dt>
-              <dd className="font-medium">
-                {reminder ? reminder : "Sin recordatorio"}
-              </dd>
-            </dl>
-          </div>
+          <HudPanel glow className="p-5">
+            <div className="relative">
+              <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-neon-cyan">
+                <span className="font-jp">あなたのプラン</span>
+              </p>
+              <h3 className="mt-1 font-display text-lg font-extrabold tracking-tight">
+                Tu plan
+              </h3>
+              <dl className="mt-4 grid grid-cols-2 gap-y-3 text-sm">
+                <dt className="text-muted-foreground">Nombre</dt>
+                <dd className="font-medium">{name || "—"}</dd>
+                <dt className="text-muted-foreground">Nivel actual</dt>
+                <dd className="font-medium text-neon-cyan">{currentLevel}</dd>
+                <dt className="text-muted-foreground">Objetivo</dt>
+                <dd className="font-medium text-neon-violet">{targetLevel}</dd>
+                <dt className="text-muted-foreground">Hiragana</dt>
+                <dd className="font-medium">
+                  {knowsHiragana ? "Conocido" : "Empezar desde cero"}
+                </dd>
+                <dt className="text-muted-foreground">Katakana</dt>
+                <dd className="font-medium">
+                  {knowsKatakana ? "Conocido" : "Empezar desde cero"}
+                </dd>
+                <dt className="text-muted-foreground">Meta diaria</dt>
+                <dd className="font-medium">{minutes} min</dd>
+                <dt className="text-muted-foreground">Recordatorio</dt>
+                <dd className="font-medium">
+                  {reminder ? reminder : "Sin recordatorio"}
+                </dd>
+              </dl>
+            </div>
+          </HudPanel>
         </StepShell>
       );
   }
@@ -354,12 +379,18 @@ function FeaturePill({
   label: string;
 }) {
   return (
-    <div className="flex flex-col items-center gap-2 rounded-xl border bg-card px-3 py-4 text-center">
-      <div className="flex size-9 items-center justify-center rounded-md bg-primary/10 text-primary">
+    <motion.div
+      whileHover={{ y: -3 }}
+      transition={{ type: "spring", stiffness: 300, damping: 20 }}
+      className="group relative flex flex-col items-center gap-2 overflow-hidden rounded-xl border border-primary/20 glass px-3 py-4 text-center"
+    >
+      <span className="hud-corner left-2 top-2 border-l-2 border-t-2" />
+      <span className="hud-corner bottom-2 right-2 border-b-2 border-r-2" />
+      <div className="flex size-9 items-center justify-center rounded-md bg-primary/10 text-neon-cyan shadow-[0_0_18px_-4px_color-mix(in_oklch,var(--color-primary)_60%,transparent)] transition-transform group-hover:scale-110">
         {icon}
       </div>
       <p className="text-xs font-medium">{label}</p>
-    </div>
+    </motion.div>
   );
 }
 

@@ -51,7 +51,10 @@ pub fn update_user_profile(
                 knows_hiragana = COALESCE(?4, knows_hiragana),
                 knows_katakana = COALESCE(?5, knows_katakana),
                 daily_minutes_goal = COALESCE(?6, daily_minutes_goal),
-                reminder_time = COALESCE(?7, reminder_time),
+                -- reminder_time is set directly (not COALESCE) so the user can
+                -- both CHANGE it and CLEAR it (null). Settings always sends the
+                -- intended value, so this never wipes it unintentionally.
+                reminder_time = ?7,
                 locale = COALESCE(?8, locale),
                 updated_at = datetime('now')
              WHERE id = 1",

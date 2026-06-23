@@ -7,6 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { burstLevelUp, burstXp } from "@/components/visual/confetti";
+import { HoloKanji } from "@/components/visual/holo-kanji";
+import { HudPanel } from "@/components/visual/hud-panel";
 import { useMinigameBest, useRecordMinigameScore } from "@/hooks/use-minigames";
 import { useKanjiList } from "@/hooks/use-kanji";
 import { useUserProfile } from "@/hooks/use-user-profile";
@@ -198,18 +200,23 @@ export default function KanjiQuizGame() {
               +{difficultyBonusPercent(difficulty)}% XP
             </Badge>
           ) : null}
-          <span className="text-muted-foreground">Puntos: {score}</span>
+          <span className="font-mono text-neon-cyan">Puntos: {score}</span>
           {combo >= 3 ? (
-            <span className="rounded-full bg-warning/15 px-2 py-0.5 text-warning">
+            <motion.span
+              key={combo}
+              initial={{ scale: 0.7 }}
+              animate={{ scale: 1 }}
+              className="rounded-full border border-neon-amber/40 bg-neon-amber/15 px-2 py-0.5 font-mono uppercase tracking-wider text-neon-amber shadow-[0_0_16px_-4px_color-mix(in_oklch,var(--color-neon-amber)_70%,transparent)]"
+            >
               x{combo} combo
-            </span>
+            </motion.span>
           ) : null}
         </div>
       </div>
 
       <div>
-        <div className="flex items-center justify-between text-[11px] uppercase tracking-widest text-muted-foreground">
-          <span>漢字クイズ · {config.label}</span>
+        <div className="flex items-center justify-between font-mono text-[11px] uppercase tracking-[0.25em] text-neon-cyan">
+          <span className="font-jp tracking-[0.2em]">漢字クイズ · {config.label}</span>
           <span className="tabular-nums">{timeLeft}s</span>
         </div>
         <Progress
@@ -218,28 +225,32 @@ export default function KanjiQuizGame() {
         />
       </div>
 
-      <div
+      <HudPanel
+        glow
         className={cn(
-          "relative grid h-64 place-items-center overflow-hidden rounded-3xl glass-strong transition-colors",
+          "grid h-64 place-items-center transition-colors",
           feedback === "ok" && "bg-success/10",
           feedback === "bad" && "bg-destructive/10"
         )}
       >
-        <AnimatePresence mode="wait">
-          {question ? (
-            <motion.span
-              key={question.char}
-              initial={{ opacity: 0, scale: 0.85, y: 12 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.85, y: -12 }}
-              transition={{ duration: 0.18 }}
-              className="font-jp text-[9rem] leading-none"
-            >
-              {question.char}
-            </motion.span>
-          ) : null}
-        </AnimatePresence>
-      </div>
+        <div className="relative grid size-full place-items-center [perspective:1000px]">
+          <div className="pointer-events-none absolute inset-0 holo-grid opacity-40" />
+          <AnimatePresence mode="wait">
+            {question ? (
+              <motion.span
+                key={question.char}
+                initial={{ opacity: 0, scale: 0.85, y: 12, rotateX: -25 }}
+                animate={{ opacity: 1, scale: 1, y: 0, rotateX: 0 }}
+                exit={{ opacity: 0, scale: 0.85, y: -12, rotateX: 25 }}
+                transition={{ duration: 0.18 }}
+                className="relative z-10 font-jp text-[9rem] leading-none text-primary [text-shadow:0_0_28px_color-mix(in_oklch,var(--color-primary)_70%,transparent),0_0_60px_color-mix(in_oklch,var(--color-neon-violet)_45%,transparent)]"
+              >
+                {question.char}
+              </motion.span>
+            ) : null}
+          </AnimatePresence>
+        </div>
+      </HudPanel>
 
       <div className="grid grid-cols-2 gap-3">
         {question?.options.map((opt) => {
@@ -252,8 +263,8 @@ export default function KanjiQuizGame() {
               variant="outline"
               disabled={picked !== null}
               className={cn(
-                "h-16 text-base font-semibold",
-                picked && isCorrect && "border-success bg-success/15 text-success",
+                "h-16 border-primary/30 text-base font-semibold transition-all hover:border-neon-cyan hover:bg-neon-cyan/10 hover:text-neon-cyan hover:shadow-[0_0_24px_-6px_color-mix(in_oklch,var(--color-neon-cyan)_70%,transparent)]",
+                picked && isCorrect && "border-success bg-success/15 text-success shadow-[0_0_24px_-6px_color-mix(in_oklch,var(--color-success)_75%,transparent)]",
                 isPicked && !isCorrect && "border-destructive bg-destructive/15 text-destructive"
               )}
               onClick={() => answer(opt)}
@@ -280,42 +291,51 @@ function IntroCard({
 }) {
   return (
     <div className="mx-auto max-w-md py-8">
-      <div className="overflow-hidden rounded-3xl glass-strong p-8 text-center">
-        <div className="mx-auto flex size-16 items-center justify-center rounded-2xl bg-gradient-to-br from-neon-cyan via-primary to-success text-primary-foreground">
-          <Puzzle className="size-7" />
-        </div>
-        <p className="mt-4 font-jp text-[11px] tracking-[0.4em] text-primary">
-          漢字クイズ
-        </p>
-        <h2 className="mt-1 text-2xl font-semibold tracking-tight">Kanji Quiz</h2>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Aparece un kanji; elige su significado correcto antes de que acabe el
-          tiempo. 5 aciertos seguidos duplican los puntos.
-        </p>
-        {best > 0 ? (
-          <p className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-warning/15 px-3 py-1.5 text-sm text-warning">
-            <Trophy className="size-3.5" /> Tu récord: {best}
-          </p>
-        ) : null}
-        {!ready ? (
-          <p className="mt-3 rounded-lg bg-warning/10 px-3 py-2 text-xs text-warning">
-            Necesitas un poco más de kanji en tu nivel para jugar este modo.
-          </p>
-        ) : null}
-        <div className="mt-6 flex gap-2">
-          <Button variant="outline" className="flex-1" onClick={onExit}>
-            Salir
-          </Button>
-          <Button
-            className="flex-1 bg-gradient-to-br from-neon-cyan to-primary text-primary-foreground"
-            disabled={!ready}
-            onClick={onStart}
+      <HudPanel glow className="p-8 text-center">
+        <div className="relative">
+          <motion.div
+            initial={{ scale: 0.7, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ type: "spring", stiffness: 200, damping: 16 }}
+            className="animate-holo-float mx-auto flex size-16 items-center justify-center rounded-2xl bg-gradient-to-br from-neon-cyan via-primary to-success text-primary-foreground shadow-[0_0_30px_-6px_color-mix(in_oklch,var(--color-neon-cyan)_75%,transparent)]"
           >
-            <Play className="size-4" />
-            ¡Empezar!
-          </Button>
+            <Puzzle className="size-7" />
+          </motion.div>
+          <p className="mt-4 font-jp text-[11px] tracking-[0.4em] text-neon-cyan">
+            漢字クイズ
+          </p>
+          <h2 className="mt-1 font-display text-2xl font-extrabold tracking-tight">
+            Kanji Quiz
+          </h2>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Aparece un kanji; elige su significado correcto antes de que acabe el
+            tiempo. 5 aciertos seguidos duplican los puntos.
+          </p>
+          {best > 0 ? (
+            <p className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-neon-amber/40 bg-warning/15 px-3 py-1.5 text-sm text-neon-amber">
+              <Trophy className="size-3.5" /> Tu récord: {best}
+            </p>
+          ) : null}
+          {!ready ? (
+            <p className="mt-3 rounded-lg border border-warning/30 bg-warning/10 px-3 py-2 text-xs text-warning">
+              Necesitas un poco más de kanji en tu nivel para jugar este modo.
+            </p>
+          ) : null}
+          <div className="mt-6 flex gap-2">
+            <Button variant="outline" className="flex-1" onClick={onExit}>
+              Salir
+            </Button>
+            <Button
+              className="flex-1 bg-gradient-to-br from-neon-cyan to-primary text-primary-foreground shadow-[0_0_24px_-6px_color-mix(in_oklch,var(--color-neon-cyan)_70%,transparent)]"
+              disabled={!ready}
+              onClick={onStart}
+            >
+              <Play className="size-4" />
+              ¡Empezar!
+            </Button>
+          </div>
         </div>
-      </div>
+      </HudPanel>
     </div>
   );
 }
@@ -339,53 +359,64 @@ function ResultCard({
 }) {
   return (
     <div className="mx-auto max-w-md py-8">
-      <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="overflow-hidden rounded-3xl glass-strong p-8 text-center"
-      >
-        <p className="font-jp text-xs tracking-[0.4em] text-primary">時間切れ</p>
-        <h2 className="mt-2 text-2xl font-semibold">¡Tiempo!</h2>
-        <div className="mt-5 grid grid-cols-2 gap-3">
-          <div className="rounded-xl border bg-card/60 px-4 py-3">
-            <p className="text-[10px] uppercase tracking-widest text-muted-foreground">
-              Puntuación
-            </p>
-            <p className="mt-1 text-3xl font-bold tabular-nums">{score}</p>
-          </div>
-          <div className="rounded-xl border bg-card/60 px-4 py-3">
-            <p className="text-[10px] uppercase tracking-widest text-muted-foreground">
-              {newBest ? "¡Nuevo récord!" : "Tu récord"}
-            </p>
-            <p
-              className={cn(
-                "mt-1 text-3xl font-bold tabular-nums",
-                newBest && "text-warning"
-              )}
-            >
-              {bestScore}
-            </p>
-          </div>
-        </div>
-        <div className="mt-4 flex justify-center gap-2">
-          <div className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1.5 text-sm text-primary">
-            <Sparkles className="size-3.5" /> +{xp} XP
-          </div>
-          {stars > 0 ? (
-            <div className="inline-flex items-center gap-1.5 rounded-full bg-warning/15 px-3 py-1.5 text-sm text-warning">
-              <Star className="size-3.5 fill-current" /> +{stars}
+      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
+        <HudPanel glow className="p-8 text-center">
+          <div className="relative">
+            {newBest ? (
+              <div className="mb-2 flex justify-center">
+                <HoloKanji
+                  size={150}
+                  interval={2400}
+                  items={[{ char: "新", meaning: "Nuevo récord" }]}
+                />
+              </div>
+            ) : null}
+            <p className="font-jp text-xs tracking-[0.4em] text-neon-cyan">時間切れ</p>
+            <h2 className="mt-2 font-display text-2xl font-extrabold tracking-tight">
+              ¡Tiempo!
+            </h2>
+            <div className="mt-5 grid grid-cols-2 gap-3">
+              <div className="rounded-xl border border-primary/20 glass px-4 py-3">
+                <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-neon-cyan">
+                  Puntuación
+                </p>
+                <p className="mt-1 text-3xl font-bold tabular-nums">{score}</p>
+              </div>
+              <div className="rounded-xl border border-primary/20 glass px-4 py-3">
+                <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-neon-cyan">
+                  {newBest ? "¡Nuevo récord!" : "Tu récord"}
+                </p>
+                <p
+                  className={cn(
+                    "mt-1 text-3xl font-bold tabular-nums",
+                    newBest && "text-neon-amber"
+                  )}
+                >
+                  {bestScore}
+                </p>
+              </div>
             </div>
-          ) : null}
-        </div>
-        <div className="mt-7 flex gap-2">
-          <Button variant="outline" className="flex-1" onClick={onExit}>
-            Salir
-          </Button>
-          <Button className="flex-1" onClick={onPlayAgain}>
-            <RotateCcw className="size-3.5" />
-            Otra ronda
-          </Button>
-        </div>
+            <div className="mt-4 flex justify-center gap-2">
+              <div className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-3 py-1.5 text-sm text-neon-cyan">
+                <Sparkles className="size-3.5" /> +{xp} XP
+              </div>
+              {stars > 0 ? (
+                <div className="inline-flex items-center gap-1.5 rounded-full border border-neon-amber/40 bg-warning/15 px-3 py-1.5 text-sm text-neon-amber">
+                  <Star className="size-3.5 fill-current" /> +{stars}
+                </div>
+              ) : null}
+            </div>
+            <div className="mt-7 flex gap-2">
+              <Button variant="outline" className="flex-1" onClick={onExit}>
+                Salir
+              </Button>
+              <Button className="flex-1" onClick={onPlayAgain}>
+                <RotateCcw className="size-3.5" />
+                Otra ronda
+              </Button>
+            </div>
+          </div>
+        </HudPanel>
       </motion.div>
     </div>
   );

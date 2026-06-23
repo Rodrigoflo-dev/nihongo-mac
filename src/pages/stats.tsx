@@ -5,6 +5,8 @@ import { Award, Calendar, Clock, type LucideIcon, Sparkles } from "lucide-react"
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { PageHeader } from "@/components/layout/page-header";
+import { HudPanel } from "@/components/visual/hud-panel";
+import { HoloKanji } from "@/components/visual/holo-kanji";
 import { api } from "@/lib/api";
 import { useDashboardStats } from "@/hooks/use-dashboard-stats";
 import { cn } from "@/lib/utils";
@@ -24,19 +26,30 @@ export default function StatsPage() {
 
   return (
     <div className="mx-auto max-w-5xl space-y-10">
-      <PageHeader
-        eyebrow="進捗 — Progreso"
-        title={
-          <>
-            Tu evolución <span className="gradient-text">completa</span>
-          </>
-        }
-        description="Cuánto has invertido, días activos, kanjis dominados y los logros desbloqueados."
-      />
+      <div className="flex items-start justify-between gap-8">
+        <PageHeader
+          eyebrow="進捗 — Progreso"
+          title={
+            <>
+              Tu evolución <span className="gradient-text">completa</span>
+            </>
+          }
+          description="Cuánto has invertido, días activos, kanjis dominados y los logros desbloqueados."
+        />
+        <HoloKanji
+          size={170}
+          className="hidden lg:block"
+          items={[
+            { char: "統", meaning: "Datos" },
+            { char: "力", meaning: "Fuerza" },
+            { char: "伸", meaning: "Progreso" },
+          ]}
+        />
+      </div>
 
       {/* Lifetime tiles */}
       {stats ? (
-        <div className="grid grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <Tile
             icon={Clock}
             label="Tiempo aprendido"
@@ -75,10 +88,12 @@ export default function StatsPage() {
       {/* Heatmap */}
       <section className="space-y-4">
         <div>
-          <p className="font-jp text-[11px] tracking-[0.3em] text-muted-foreground">
+          <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-neon-cyan">
             活動 — Actividad
           </p>
-          <h2 className="text-lg font-semibold">Tu actividad de los últimos meses</h2>
+          <h2 className="mt-1 font-display text-lg font-extrabold tracking-tight">
+            Tu actividad de los últimos meses
+          </h2>
         </div>
         <Heatmap data={heatmap ?? []} />
       </section>
@@ -86,12 +101,14 @@ export default function StatsPage() {
       {/* Achievements grid */}
       <section className="space-y-4">
         <div>
-          <p className="font-jp text-[11px] tracking-[0.3em] text-muted-foreground">
+          <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-neon-cyan">
             実績 — Logros
           </p>
-          <h2 className="text-lg font-semibold">Logros</h2>
+          <h2 className="mt-1 font-display text-lg font-extrabold tracking-tight">
+            Logros
+          </h2>
         </div>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {achievements?.map((a) => <AchievementCard key={a.id} a={a} />)}
         </div>
       </section>
@@ -100,10 +117,10 @@ export default function StatsPage() {
 }
 
 const TONE: Record<string, string> = {
-  primary: "from-primary/30 to-primary/10 ring-primary/30",
-  cyan: "from-neon-cyan/30 to-primary/10 ring-neon-cyan/30",
-  violet: "from-neon-violet/30 to-primary/10 ring-neon-violet/30",
-  amber: "from-neon-amber/30 to-warning/10 ring-warning/30",
+  primary: "from-primary/30 to-primary/5 text-primary",
+  cyan: "from-neon-cyan/30 to-primary/5 text-neon-cyan",
+  violet: "from-neon-violet/30 to-primary/5 text-neon-violet",
+  amber: "from-neon-amber/30 to-warning/5 text-neon-amber",
 };
 
 function Tile({
@@ -121,23 +138,29 @@ function Tile({
     <motion.div
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
-      className={cn(
-        "relative overflow-hidden rounded-2xl glass p-4 ring-1",
-        TONE[tone] ?? TONE.primary
-      )}
+      whileHover={{ y: -3 }}
+      className="group relative overflow-hidden rounded-3xl glass-strong p-4"
     >
+      {/* glow blob */}
       <div
         className={cn(
-          "absolute -right-12 -top-12 size-32 rounded-full bg-gradient-to-br opacity-50 blur-2xl",
+          "absolute -right-12 -top-12 size-32 rounded-full bg-gradient-to-br opacity-40 blur-2xl transition-opacity group-hover:opacity-70",
           TONE[tone] ?? TONE.primary
         )}
       />
+      {/* hover corner brackets */}
+      <span className="hud-corner left-2 top-2 border-l-2 border-t-2 opacity-0 transition-opacity group-hover:opacity-100" />
+      <span className="hud-corner right-2 top-2 border-r-2 border-t-2 opacity-0 transition-opacity group-hover:opacity-100" />
+      <span className="hud-corner bottom-2 left-2 border-b-2 border-l-2 opacity-0 transition-opacity group-hover:opacity-100" />
+      <span className="hud-corner bottom-2 right-2 border-b-2 border-r-2 opacity-0 transition-opacity group-hover:opacity-100" />
       <div className="relative">
-        <div className="flex items-center gap-2 text-xs uppercase tracking-[0.12em] text-muted-foreground">
-          <Icon className="size-3.5" />
+        <div className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
+          <Icon className={cn("size-3.5", TONE[tone] ?? TONE.primary)} />
           {label}
         </div>
-        <p className="mt-2 text-2xl font-bold tabular-nums">{value}</p>
+        <p className="mt-2 font-display text-2xl font-extrabold tabular-nums">
+          {value}
+        </p>
       </div>
     </motion.div>
   );
@@ -159,30 +182,30 @@ function Heatmap({ data }: { data: { date: string; minutes: number }[] }) {
     if (m < 5) return "bg-primary/25";
     if (m < 15) return "bg-primary/45";
     if (m < 30) return "bg-primary/70";
-    return "bg-primary";
+    return "bg-primary shadow-[0_0_8px_color-mix(in_oklch,var(--color-primary)_70%,transparent)]";
   };
   return (
-    <div className="overflow-hidden rounded-2xl glass p-4">
+    <HudPanel glow className="p-4">
       <div className="grid grid-flow-col grid-rows-7 gap-1">
         {cells.map((c) => (
           <div
             key={c.date}
             title={`${c.date}: ${c.minutes} min`}
             className={cn(
-              "size-3 rounded-sm transition-colors",
+              "size-3 rounded-sm transition-all hover:scale-150 hover:ring-1 hover:ring-neon-cyan",
               tone(c.minutes)
             )}
           />
         ))}
       </div>
-      <div className="mt-3 flex items-center gap-2 text-[10px] text-muted-foreground">
+      <div className="mt-3 flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.15em] text-muted-foreground">
         <span>Menos</span>
         {[0, 5, 15, 30, 45].map((m) => (
           <div key={m} className={cn("size-3 rounded-sm", tone(m))} />
         ))}
         <span>Más</span>
       </div>
-    </div>
+    </HudPanel>
   );
 }
 
@@ -209,15 +232,23 @@ function AchievementCard({
     <motion.div
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
+      whileHover={{ y: -2 }}
       className={cn(
-        "relative overflow-hidden rounded-2xl glass p-4",
-        a.unlocked && "ring-1 ring-warning/40"
+        "group relative overflow-hidden rounded-3xl glass-strong p-4 transition-shadow",
+        a.unlocked &&
+          "shadow-[0_0_28px_-12px_color-mix(in_oklch,var(--color-warning)_60%,transparent)]"
       )}
     >
-      <div className="flex items-start gap-3">
+      {a.unlocked ? (
+        <>
+          <span className="hud-corner left-2 top-2 border-l-2 border-t-2 opacity-0 transition-opacity group-hover:opacity-100" />
+          <span className="hud-corner right-2 top-2 border-r-2 border-t-2 opacity-0 transition-opacity group-hover:opacity-100" />
+        </>
+      ) : null}
+      <div className="relative flex items-start gap-3">
         <div
           className={cn(
-            "flex size-10 items-center justify-center rounded-xl bg-gradient-to-br",
+            "flex size-10 items-center justify-center rounded-xl bg-gradient-to-br transition-transform group-hover:scale-110",
             tone,
             !a.unlocked && "opacity-40 grayscale"
           )}
@@ -226,7 +257,9 @@ function AchievementCard({
         </div>
         <div className="flex-1">
           <div className="flex items-center gap-2">
-            <p className="text-sm font-semibold">{a.title}</p>
+            <p className="font-display text-sm font-extrabold tracking-tight">
+              {a.title}
+            </p>
             {a.unlocked ? (
               <Badge variant="warning" className="text-[9px]">
                 Desbloqueado
@@ -238,7 +271,7 @@ function AchievementCard({
           ) : null}
           <div className="mt-2 flex items-center gap-2">
             <Progress value={pct} className="h-1 flex-1" />
-            <span className="text-[10px] tabular-nums text-muted-foreground">
+            <span className="font-mono text-[10px] tabular-nums text-muted-foreground">
               {a.progress}/{a.target}
             </span>
           </div>

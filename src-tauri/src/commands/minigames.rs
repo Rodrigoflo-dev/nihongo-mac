@@ -87,6 +87,7 @@ pub fn record_minigame_score(
         let new_best = score > previous_best;
 
         let now = Utc::now();
+        crate::commands::bump_daily_session(c, now, "game", duration_seconds.unwrap_or(0))?;
         let xp = xp_for_game(&game_key, score);
         let stars = stars_for_game(&game_key, score, previous_best);
 

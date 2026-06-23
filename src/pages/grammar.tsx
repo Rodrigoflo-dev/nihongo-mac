@@ -5,6 +5,8 @@ import { ArrowRight, BookOpen, Check, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { PageHeader } from "@/components/layout/page-header";
+import { HudPanel } from "@/components/visual/hud-panel";
+import { HoloKanji } from "@/components/visual/holo-kanji";
 import { useGrammarList } from "@/hooks/use-grammar";
 import { useUserProfile } from "@/hooks/use-user-profile";
 import type { GrammarListItem } from "@/lib/api";
@@ -25,22 +27,34 @@ export default function GrammarPage() {
 
   return (
     <div className="mx-auto max-w-5xl space-y-10">
-      <PageHeader
-        eyebrow={`文法 — ${level}`}
-        title={
-          <>
-            Gramática <span className="gradient-text">paso a paso</span>
-          </>
-        }
-        description="Explicaciones cortas, ejemplos reales y un quiz de tres preguntas para confirmar que entendiste. Al dominar una lección ganas XP."
-        actions={
-          stats ? (
-            <Badge variant="outline" className="font-mono">
-              {stats.mastered}/{stats.total} dominadas
-            </Badge>
-          ) : null
-        }
-      />
+      <div className="relative">
+        <PageHeader
+          eyebrow={`文法 — ${level}`}
+          title={
+            <>
+              Gramática <span className="gradient-text">paso a paso</span>
+            </>
+          }
+          description="Explicaciones cortas, ejemplos reales y un quiz de tres preguntas para confirmar que entendiste. Al dominar una lección ganas XP."
+          actions={
+            stats ? (
+              <Badge variant="outline" className="font-mono">
+                {stats.mastered}/{stats.total} dominadas
+              </Badge>
+            ) : null
+          }
+        />
+        <div className="pointer-events-none absolute -right-6 -top-16 hidden lg:block">
+          <HoloKanji
+            size={220}
+            items={[
+              { char: "文", meaning: "Gramática" },
+              { char: "語", meaning: "Idioma" },
+              { char: "訳", meaning: "Sentido" },
+            ]}
+          />
+        </div>
+      </div>
 
       {isLoading ? (
         <p className="text-sm text-muted-foreground">Cargando lecciones…</p>
@@ -69,53 +83,55 @@ function LessonCard({ lesson }: { lesson: GrammarListItem }) {
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
+      whileHover={{ y: -3 }}
     >
       <Link to={`/grammar/${lesson.id}`} className="block">
-        <div
+        <HudPanel
+          glow={lesson.status === "mastered"}
           className={cn(
-            "group relative overflow-hidden rounded-2xl glass p-5 transition-all",
-            "hover:ring-1 hover:ring-primary/40",
+            "group h-full p-5 transition-all hover:ring-1 hover:ring-primary/40",
+            "hover:shadow-[0_0_34px_-10px_color-mix(in_oklch,var(--color-primary)_55%,transparent)]",
             lesson.status === "mastered" && "ring-1 ring-success/30"
           )}
         >
           <div className="flex items-start gap-4">
             <div
               className={cn(
-                "flex size-11 items-center justify-center rounded-xl",
+                "flex size-11 shrink-0 items-center justify-center rounded-xl",
                 lesson.status === "mastered"
-                  ? "bg-success/15 text-success"
+                  ? "bg-success/15 text-success shadow-[0_0_18px_-6px_color-mix(in_oklch,var(--color-success)_70%,transparent)]"
                   : lesson.status === "learning"
-                    ? "bg-warning/15 text-warning"
+                    ? "bg-neon-amber/15 text-neon-amber"
                     : "bg-primary/10 text-primary"
               )}
             >
               <Icon className="size-5" />
             </div>
-            <div className="flex-1">
-              <p className="font-jp text-[10px] tracking-[0.3em] text-muted-foreground">
-                {lesson.structure ?? "—"}
+            <div className="min-w-0 flex-1">
+              <p className="truncate font-mono text-[10px] uppercase tracking-[0.25em] text-neon-cyan">
+                <span className="font-jp">{lesson.structure ?? "—"}</span>
               </p>
-              <p className="text-base font-semibold leading-tight">
+              <p className="font-display text-base font-extrabold leading-tight tracking-tight">
                 {lesson.title}
               </p>
-              <p className="mt-0.5 text-xs text-muted-foreground">
+              <p className="mt-0.5 truncate text-xs text-muted-foreground">
                 {lesson.category ?? "Gramática"}
               </p>
             </div>
-            <ArrowRight className="size-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+            <ArrowRight className="size-4 shrink-0 text-neon-cyan transition-transform group-hover:translate-x-0.5" />
           </div>
           <div className="mt-4 space-y-1.5">
             <div className="flex items-center justify-between text-[11px] text-muted-foreground">
               <Badge variant={statusBadge.tone} className="text-[10px]">
                 {statusBadge.label}
               </Badge>
-              <span className="tabular-nums">
+              <span className="font-mono tabular-nums">
                 Confianza {lesson.confidence}%
               </span>
             </div>
             <Progress value={lesson.confidence} className="h-1" />
           </div>
-        </div>
+        </HudPanel>
       </Link>
     </motion.div>
   );

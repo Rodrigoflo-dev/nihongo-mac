@@ -5,16 +5,11 @@ import { Plus, Sparkles } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { KanjiTile } from "@/components/kanji/kanji-tile";
 import { RomajiLine } from "@/components/lesson/romaji-line";
 import { PageHeader } from "@/components/layout/page-header";
+import { HudPanel } from "@/components/visual/hud-panel";
+import { HoloKanji } from "@/components/visual/holo-kanji";
 import { useIntroduceKanji, useKanjiList, useReviewQueue } from "@/hooks/use-kanji";
 import { useUserProfile } from "@/hooks/use-user-profile";
 import { cn } from "@/lib/utils";
@@ -52,6 +47,19 @@ export default function KanjiPage() {
   const learningCount = grouped.learning.length;
   const masteryPct = total > 0 ? Math.round((masteredCount / total) * 100) : 0;
 
+  const holoItems = useMemo(() => {
+    const source = [
+      ...grouped.learning,
+      ...grouped.mastered,
+      ...grouped.new,
+    ].slice(0, 6);
+    const mapped = source.map((item) => ({
+      char: item.kanji.character,
+      meaning: item.kanji.meaningEs,
+    }));
+    return mapped.length > 0 ? mapped : undefined;
+  }, [grouped]);
+
   if (isLoading) {
     return (
       <div className="mx-auto max-w-5xl space-y-10">
@@ -62,42 +70,46 @@ export default function KanjiPage() {
 
   return (
     <div className="mx-auto max-w-5xl space-y-10">
-      <PageHeader
-        eyebrow={`漢字 — ${level}`}
-        title="Catálogo de kanji"
-        description="Repaso por SRS, nuevos disponibles y los que ya tienes dominados."
-        actions={
-          <Button
-            size="lg"
-            disabled={dueCount === 0}
-            asChild={dueCount > 0}
-            variant={dueCount > 0 ? "default" : "outline"}
-          >
-            {dueCount > 0 ? (
-              <Link to="/kanji/review">
-                <Sparkles className="size-4" />
-                Empezar repaso ({dueCount})
-              </Link>
-            ) : (
-              <span>Sin repasos pendientes</span>
-            )}
-          </Button>
-        }
-      />
+      <div className="relative">
+        <PageHeader
+          eyebrow={`漢字 — ${level}`}
+          title={
+            <>
+              Catálogo de <span className="gradient-text">kanji</span>
+            </>
+          }
+          description="Repaso por SRS, nuevos disponibles y los que ya tienes dominados."
+          actions={
+            <Button
+              size="lg"
+              disabled={dueCount === 0}
+              asChild={dueCount > 0}
+              variant={dueCount > 0 ? "default" : "outline"}
+            >
+              {dueCount > 0 ? (
+                <Link to="/kanji/review">
+                  <Sparkles className="size-4" />
+                  Empezar repaso ({dueCount})
+                </Link>
+              ) : (
+                <span>Sin repasos pendientes</span>
+              )}
+            </Button>
+          }
+        />
+        <div className="pointer-events-none absolute -right-6 -top-16 hidden lg:block">
+          <HoloKanji size={220} items={holoItems} />
+        </div>
+      </div>
 
       {/* Mastery progress (gamified overview) */}
-      <motion.div
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
-        className="rounded-3xl glass-strong p-6"
-      >
+      <HudPanel glow className="p-6">
         <div className="flex items-end justify-between">
           <div>
-            <p className="font-jp text-[11px] tracking-[0.3em] text-muted-foreground">
-              漢字マスター — {level}
+            <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-neon-cyan">
+              <span className="font-jp">漢字マスター</span> — {level}
             </p>
-            <h2 className="mt-1 text-2xl font-bold tracking-tight">
+            <h2 className="mt-1 font-display text-2xl font-extrabold tracking-tight">
               {masteredCount}
               <span className="text-base font-medium text-muted-foreground">
                 {" "}/ {total} dominados
@@ -105,17 +117,17 @@ export default function KanjiPage() {
             </h2>
           </div>
           <div className="text-right">
-            <p className="text-3xl font-bold tabular-nums gradient-text">
+            <p className="font-display text-3xl font-extrabold tabular-nums gradient-text">
               {masteryPct}%
             </p>
-            <p className="text-[10px] uppercase tracking-widest text-muted-foreground">
+            <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
               del nivel
             </p>
           </div>
         </div>
-        <div className="mt-4 h-2.5 overflow-hidden rounded-full bg-secondary/50">
+        <div className="mt-4 h-2.5 overflow-hidden rounded-full bg-secondary/50 ring-1 ring-primary/15">
           <motion.div
-            className="h-full rounded-full bg-gradient-to-r from-success via-neon-cyan to-primary"
+            className="h-full rounded-full bg-gradient-to-r from-success via-neon-cyan to-primary shadow-[0_0_12px_color-mix(in_oklch,var(--color-primary)_60%,transparent)]"
             initial={{ width: 0 }}
             animate={{ width: `${Math.max(2, masteryPct)}%` }}
             transition={{ duration: 0.6, ease: "easeOut" }}
@@ -133,7 +145,7 @@ export default function KanjiPage() {
               ? `Tienes ${dueCount} repaso${dueCount === 1 ? "" : "s"} listo${dueCount === 1 ? "" : "s"} — cada repaso correcto sube tu dominio.`
               : "Introduce kanji nuevos y practícalos. Solo cuentan como “dominados” tras repasarlos bien varias veces (SRS)."}
         </p>
-      </motion.div>
+      </HudPanel>
 
       {grouped.learning.length > 0 ? (
         <Section
@@ -206,11 +218,9 @@ export default function KanjiPage() {
       ) : null}
 
       {list && list.length === 0 ? (
-        <Card>
-          <CardContent className="py-12 text-center text-sm text-muted-foreground">
-            Aún no hay kanji seedeados para este nivel.
-          </CardContent>
-        </Card>
+        <HudPanel className="py-12 text-center text-sm text-muted-foreground">
+          Aún no hay kanji seedeados para este nivel.
+        </HudPanel>
       ) : null}
     </div>
   );
@@ -226,18 +236,20 @@ function MasteryStat({
   tone: "primary" | "success" | "muted";
 }) {
   return (
-    <div className="rounded-xl border bg-card/50 px-3 py-2.5 text-center">
+    <div className="relative rounded-xl border border-primary/15 bg-card/40 px-3 py-2.5 text-center backdrop-blur-sm">
+      <span className="hud-corner left-1.5 top-1.5 border-l-2 border-t-2 opacity-50" />
+      <span className="hud-corner bottom-1.5 right-1.5 border-b-2 border-r-2 opacity-50" />
       <p
         className={cn(
-          "text-xl font-bold tabular-nums",
-          tone === "primary" && "text-primary",
+          "font-display text-xl font-extrabold tabular-nums",
+          tone === "primary" && "text-neon-violet",
           tone === "success" && "text-success",
           tone === "muted" && "text-foreground/70"
         )}
       >
         {value}
       </p>
-      <p className="text-[10px] uppercase tracking-widest text-muted-foreground">
+      <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
         {label}
       </p>
     </div>
@@ -260,22 +272,22 @@ function Section({ title, jp, description, actions, children }: SectionProps) {
       transition={{ duration: 0.4 }}
       className="space-y-4"
     >
-      <Card className="border-dashed bg-transparent shadow-none">
-        <CardHeader className="flex flex-row items-start justify-between space-y-0 py-2">
-          <div>
-            <p className="font-jp text-[11px] tracking-[0.3em] text-muted-foreground">
-              {jp}
-            </p>
-            <CardTitle className="mt-0.5 text-lg">{title}</CardTitle>
-            {description ? (
-              <CardDescription className="mt-0.5">{description}</CardDescription>
-            ) : null}
-          </div>
-          {actions ? (
-            <div className="flex items-center gap-2">{actions}</div>
+      <div className="flex flex-row items-start justify-between gap-3 border-l-2 border-primary/40 pl-3">
+        <div>
+          <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-neon-cyan">
+            <span className="font-jp">{jp}</span>
+          </p>
+          <h3 className="mt-0.5 font-display text-lg font-extrabold tracking-tight">
+            {title}
+          </h3>
+          {description ? (
+            <p className="mt-0.5 text-sm text-muted-foreground">{description}</p>
           ) : null}
-        </CardHeader>
-      </Card>
+        </div>
+        {actions ? (
+          <div className="flex items-center gap-2">{actions}</div>
+        ) : null}
+      </div>
       {children}
     </motion.section>
   );
@@ -292,11 +304,13 @@ function NewKanjiTile({
 }) {
   return (
     <motion.div
-      whileHover={{ y: -1 }}
-      className="group relative flex flex-col items-start gap-3 rounded-xl border bg-card p-4"
+      whileHover={{ y: -3, scale: 1.02 }}
+      className="group relative flex flex-col items-start gap-3 rounded-xl border border-primary/15 bg-card/60 p-4 backdrop-blur-sm transition-all hover:border-neon-cyan/50 hover:shadow-[0_0_28px_-6px_color-mix(in_oklch,var(--color-neon-cyan)_55%,transparent)]"
     >
+      <span className="hud-corner left-2 top-2 border-l-2 border-t-2 opacity-0 transition-opacity group-hover:opacity-70" />
+      <span className="hud-corner bottom-2 right-2 border-b-2 border-r-2 opacity-0 transition-opacity group-hover:opacity-70" />
       <div className="flex w-full items-start justify-between">
-        <span className="font-jp text-4xl leading-none">
+        <span className="font-jp text-4xl leading-none transition-[text-shadow] group-hover:[text-shadow:0_0_18px_color-mix(in_oklch,var(--color-primary)_70%,transparent)]">
           {item.kanji.character}
         </span>
         <Badge variant="secondary" className="text-[10px]">

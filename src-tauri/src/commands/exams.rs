@@ -178,6 +178,7 @@ pub fn complete_unit_exam(
         )?;
 
         let now = Utc::now();
+        crate::commands::bump_daily_session(c, now, "exam", result.seconds_spent)?;
         let xp = XP_EXAM_BASE
             + result.correct_count * XP_EXAM_PER_CORRECT
             + if passed { XP_EXAM_PASS_BONUS } else { 0 }

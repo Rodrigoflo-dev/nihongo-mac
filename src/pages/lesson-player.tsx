@@ -10,11 +10,36 @@ import {
   ActivityView,
   isActivityQuiz,
 } from "@/components/lesson/activities";
+import {
+  BandIntro,
+  DudasInterstitial,
+  type BandKey,
+  type DudaTopic,
+} from "@/components/lesson/lesson-interstitials";
 import { MeshBackground } from "@/components/visual/mesh-background";
 import { burstLevelUp, burstXp } from "@/components/visual/confetti";
-import { useCompleteLesson, useLesson, useStartLesson } from "@/hooks/use-lessons";
-import type { LessonCompletionResponse } from "@/lib/api";
+import {
+  useCompleteLesson,
+  useLesson,
+  useLessonExercises,
+  useStartLesson,
+} from "@/hooks/use-lessons";
+import type { Activity, ExerciseDifficulty, LessonCompletionResponse } from "@/lib/api";
 import { cn } from "@/lib/utils";
+
+/** A single screen in the lesson flow. */
+type Step =
+  | { kind: "activity"; activity: Activity; difficulty?: ExerciseDifficulty }
+  | { kind: "dudas"; topics: DudaTopic[] }
+  | { kind: "band"; band: ExerciseDifficulty };
+
+const EXPLANATION_KINDS = [
+  "intro_kanji",
+  "intro_vocab",
+  "intro_grammar",
+  "speaking",
+  "write_kanji",
+];
 
 export default function LessonPlayer() {
   const { id } = useParams<{ id: string }>();
@@ -35,6 +60,9 @@ export default function LessonPlayer() {
     null
   );
   const [confirmingExit, setConfirmingExit] = useState(false);
+  // New seed per lesson entry → fresh, randomized exercises every time.
+  const [seed, setSeed] = useState<number>(() => Math.floor(Math.random() * 1e9));
+  const { data: generated } = useLessonExercises(lessonId, seed);
 
   // Reset all player state when navigating to a different lesson (no full page
   // reload — a reload used to reset the session store and re-prompt the PIN).
@@ -48,40 +76,96 @@ export default function LessonPlayer() {
     setStartedAt(Date.now());
     setCompletion(null);
     setConfirmingExit(false);
+    setSeed(Math.floor(Math.random() * 1e9));
     if (lessonId) startLesson.mutate(lessonId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lessonId]);
 
   /**
-   * Make lessons feel less rote: keep intros (intro_kanji, intro_vocab,
-   * intro_grammar) in lesson-author order, but shuffle the practice block
-   * (quiz / listening / write_* / speaking) and keep the summary last.
-   * Shuffle once per lesson load — retries within an activity don't reshuffle.
+   * The lesson flow, split into two phases (point #4):
+   *   1. EXPLANATION — intros + speaking + write_kanji (teach the material).
+   *   2. A "¿Dudas?" gate, then 20 PROCEDURAL EXERCISES grouped into three
+   *      difficulty bands (fácil → medio → difícil, point #5), each announced
+   *      by a band intro. Generated server-side with a per-entry seed so the
+   *      questions are randomized and never identical between users (point #2).
+   * Summary stays last. While the exercises are still loading we just show the
+   * explanation + summary; the tail is inserted the moment they arrive (local
+   * SQLite, so effectively instant).
    */
-  const activities = useMemo(() => {
+  const steps = useMemo<Step[]>(() => {
     const all = lesson?.activities ?? [];
-    if (all.length === 0) return all;
-    type A = (typeof all)[number];
-    const isIntro = (a: A) =>
-      a.kind === "intro_kanji" ||
-      a.kind === "intro_vocab" ||
-      a.kind === "intro_grammar";
-    const isSummary = (a: A) => a.kind === "summary";
-    const intros = all.filter(isIntro);
-    const summaries = all.filter(isSummary);
-    const practice = all.filter((a) => !isIntro(a) && !isSummary(a));
-    for (let i = practice.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [practice[i], practice[j]] = [practice[j], practice[i]];
+    if (all.length === 0) return [];
+    const explanation = all.filter((a) => EXPLANATION_KINDS.includes(a.kind));
+    const summaries = all.filter((a) => a.kind === "summary");
+
+    const out: Step[] = explanation.map((activity) => ({
+      kind: "activity",
+      activity,
+    }));
+
+    // Build the exercise tail.
+    const exerciseSteps: Step[] = [];
+    if (generated && generated.length > 0) {
+      let lastBand: ExerciseDifficulty | null = null;
+      for (const g of generated) {
+        if (g.difficulty !== lastBand) {
+          exerciseSteps.push({ kind: "band", band: g.difficulty });
+          lastBand = g.difficulty;
+        }
+        exerciseSteps.push({
+          kind: "activity",
+          activity: g.activity,
+          difficulty: g.difficulty,
+        });
+      }
+    } else if (generated && generated.length === 0) {
+      // Generator returned nothing (rare) → fall back to the lesson's own
+      // practice activities so the lesson still has exercises.
+      for (const a of all.filter((x) => isActivityQuiz(x))) {
+        exerciseSteps.push({ kind: "activity", activity: a });
+      }
     }
-    return [...intros, ...practice, ...summaries];
-  }, [lesson]);
-  const current = activities[step];
-  const isLast = step >= activities.length - 1;
+
+    if (exerciseSteps.length > 0) {
+      const topics: DudaTopic[] = [];
+      out.forEach((s, idx) => {
+        if (s.kind !== "activity") return;
+        const a = s.activity;
+        if (a.kind === "intro_kanji")
+          topics.push({ label: a.meaning, jp: a.kanjiChar, keywords: `${a.meaning} ${a.onyomi.join(" ")} ${a.kunyomi.join(" ")} kanji lectura`, stepIndex: idx });
+        else if (a.kind === "intro_vocab")
+          topics.push({ label: a.meaning, jp: a.word, keywords: `${a.meaning} ${a.reading} ${a.word} palabra vocabulario`, stepIndex: idx });
+        else if (a.kind === "intro_grammar")
+          topics.push({ label: a.title, jp: a.pattern, keywords: `${a.title} ${a.pattern} gramatica`, stepIndex: idx });
+      });
+      out.push({ kind: "dudas", topics });
+      out.push(...exerciseSteps);
+    }
+
+    out.push(...summaries.map((activity) => ({ kind: "activity", activity } as Step)));
+    return out;
+  }, [lesson, generated]);
+
+  const currentStep = steps[step];
+  const current =
+    currentStep?.kind === "activity" ? currentStep.activity : null;
+  const isLast = step >= steps.length - 1;
   const isQuiz = current ? isActivityQuiz(current) : false;
   const isSummary = current?.kind === "summary";
 
-  if (isLoading || !lesson || !current) {
+  // Exercise numbering for the header ("Ejercicio 5 / 20").
+  const exerciseSteps = steps.filter(
+    (s) => s.kind === "activity" && s.difficulty
+  );
+  const totalExercises = exerciseSteps.length;
+  const exerciseNumber =
+    currentStep?.kind === "activity" && currentStep.difficulty
+      ? steps
+          .slice(0, step + 1)
+          .filter((s) => s.kind === "activity" && s.difficulty).length
+      : 0;
+
+  if (isLoading || !lesson || !currentStep) {
     return (
       <div className="relative grid h-screen w-screen place-items-center bg-background text-foreground">
         <MeshBackground />
@@ -117,8 +201,10 @@ export default function LessonPlayer() {
     );
   }
 
-  const totalQuizzes = activities.filter(isActivityQuiz).length;
-  const progress = ((step + 1) / activities.length) * 100;
+  const totalQuizzes = steps.filter(
+    (s) => s.kind === "activity" && isActivityQuiz(s.activity)
+  ).length;
+  const progress = ((step + 1) / steps.length) * 100;
 
   const handleNext = async () => {
     if (isSummary) {
@@ -172,25 +258,37 @@ export default function LessonPlayer() {
   };
 
   let buttonLabel: string;
+  let buttonJp = "次へ";
   let buttonDisabled = false;
   let buttonIcon: React.ReactNode = <ArrowRight className="size-5" />;
   if (isSummary) {
-    buttonLabel = complete.isPending ? "Guardando…" : "Terminar lección 🎉";
+    buttonLabel = complete.isPending ? "Guardando…" : "Terminar lección";
+    buttonJp = "完了";
     buttonDisabled = complete.isPending;
     buttonIcon = <Trophy className="size-5" />;
   } else if (isQuiz) {
     if (!verified) {
       buttonLabel = "Comprobar";
+      buttonJp = "確認";
       buttonDisabled = answered === null;
       buttonIcon = <Check className="size-5" />;
     } else if (answered && !answered.correct) {
       buttonLabel = "Intentar de nuevo";
+      buttonJp = "再挑戦";
       buttonIcon = <RotateCcw className="size-5" />;
     } else {
-      buttonLabel = isLast ? "Finalizar" : "¡Continuar!";
+      buttonLabel = isLast ? "Finalizar" : "Continuar";
+      buttonJp = isLast ? "完了" : "次へ";
     }
+  } else if (currentStep.kind === "dudas") {
+    buttonLabel = "Empezar ejercicios";
+    buttonJp = "始める";
+  } else if (currentStep.kind === "band") {
+    buttonLabel = "¡Vamos!";
+    buttonJp = "よし";
   } else {
     buttonLabel = isLast ? "Finalizar" : "Continuar";
+    buttonJp = isLast ? "完了" : "次へ";
   }
 
   return (
@@ -222,68 +320,124 @@ export default function LessonPlayer() {
           </p>
           <p className="font-display text-sm font-bold leading-tight">{lesson.title}</p>
         </div>
-        <p className="font-mono text-xs tabular-nums text-neon-cyan/80">
-          {String(step + 1).padStart(2, "0")} / {String(activities.length).padStart(2, "0")}
-        </p>
+        {exerciseNumber > 0 ? (
+          <p className="font-mono text-xs tabular-nums text-neon-cyan/80">
+            Ejercicio {exerciseNumber} / {totalExercises}
+          </p>
+        ) : (
+          <p className="font-mono text-xs uppercase tracking-[0.2em] text-neon-cyan/70">
+            Aprende
+          </p>
+        )}
       </header>
 
       <div className="relative z-10 px-8 pt-3">
         <Progress value={progress} className="h-1" />
       </div>
 
-      <main className="relative z-10 flex-1 overflow-y-auto px-8 py-8">
+      <main className="relative z-10 flex-1 overflow-y-auto px-8 pt-8 pb-28">
         <div className="flex min-h-full items-center justify-center">
           <AnimatePresence mode="wait">
-            <ActivityView
-              key={`${current.id}-${attemptForStep}`}
-              activity={current}
-              verified={verified}
-              attempt={attemptForStep}
-              onAnswer={(correct) => setAnswered({ correct })}
-            />
+            {currentStep.kind === "activity" && current ? (
+              <ActivityView
+                key={`${current.id}-${attemptForStep}`}
+                activity={current}
+                verified={verified}
+                attempt={attemptForStep}
+                onAnswer={(correct) => setAnswered({ correct })}
+              />
+            ) : currentStep.kind === "dudas" ? (
+              <DudasInterstitial
+                key="dudas"
+                topics={currentStep.topics}
+                onJump={(target) => {
+                  setVerified(false);
+                  setAnswered(null);
+                  setAttemptForStep(0);
+                  setStep(target);
+                }}
+              />
+            ) : currentStep.kind === "band" ? (
+              <BandIntro key={`band-${currentStep.band}`} band={currentStep.band as BandKey} />
+            ) : null}
           </AnimatePresence>
         </div>
       </main>
 
-      <footer className="relative z-10 px-8 pb-8 pt-4">
-        <div className="mx-auto max-w-2xl space-y-3">
-          {isQuiz && verified && answered ? (
-            <div
-              className={`rounded-xl px-4 py-2 text-center text-sm font-medium ${
-                answered.correct
-                  ? "bg-success/15 text-success"
-                  : "bg-destructive/15 text-destructive"
-              }`}
-            >
-              {answered.correct
-                ? "¡Correcto!"
-                : attemptForStep === 0
-                  ? "Casi — lee la explicación e inténtalo otra vez."
-                  : `Intento ${attemptForStep + 1} — sigue tratando, ya casi.`}
-            </div>
+      {/* Bottom-left status: quiz feedback pill, or a subtle error counter */}
+      <div className="pointer-events-none absolute bottom-7 left-8 z-30 max-w-[55%]">
+        {isQuiz && verified && answered ? (
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.25 }}
+            className={cn(
+              "inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold backdrop-blur-md ring-1",
+              answered.correct
+                ? "bg-success/20 text-success ring-success/40"
+                : "bg-destructive/20 text-destructive ring-destructive/40"
+            )}
+          >
+            {answered.correct
+              ? "¡Correcto!"
+              : attemptForStep === 0
+                ? "Casi — lee la explicación e inténtalo otra vez."
+                : `Intento ${attemptForStep + 1} — sigue tratando, ya casi.`}
+          </motion.div>
+        ) : wrongAttempts > 0 && !isSummary ? (
+          <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+            {wrongAttempts} {wrongAttempts === 1 ? "error" : "errores"} en esta lección
+          </p>
+        ) : null}
+      </div>
+
+      {/* Floating action button — bottom-right corner, frees the center */}
+      <motion.div
+        whileTap={{ scale: buttonDisabled ? 1 : 0.95 }}
+        className="group absolute bottom-6 right-6 z-30"
+      >
+        {/* Outer pulsing neon glow (behind, not clipped) */}
+        {!buttonDisabled ? (
+          <span
+            aria-hidden
+            className="animate-glow-pulse absolute -inset-1 bg-gradient-to-r from-neon-violet via-primary to-neon-cyan opacity-50 blur-lg transition-opacity duration-300 group-hover:opacity-80"
+          />
+        ) : null}
+        <Button
+          size="xl"
+          className={cn(
+            "cta-clip relative h-14 overflow-hidden rounded-none px-6 bg-gradient-to-r from-neon-violet via-primary to-neon-cyan text-background transition-all",
+            !buttonDisabled && "hover:brightness-110"
+          )}
+          disabled={buttonDisabled}
+          onClick={handleNext}
+        >
+          <span
+            aria-hidden
+            className="absolute inset-x-0 top-0 h-px bg-white/70"
+          />
+          {!buttonDisabled ? (
+            <span className="shimmer pointer-events-none absolute inset-0 opacity-40" />
           ) : null}
-          <motion.div whileTap={{ scale: buttonDisabled ? 1 : 0.97 }}>
-            <Button
-              size="xl"
-              className={cn(
-                "w-full gap-2 bg-gradient-to-r from-primary via-neon-violet to-neon-cyan text-base font-semibold tracking-wide text-primary-foreground transition-all",
-                "shadow-[0_18px_45px_-12px_color-mix(in_oklch,var(--color-primary)_70%,transparent)]",
-                !buttonDisabled && "hover:brightness-110 hover:shadow-[0_22px_55px_-10px_color-mix(in_oklch,var(--color-primary)_85%,transparent)]"
-              )}
-              disabled={buttonDisabled}
-              onClick={handleNext}
-            >
+          <span
+            aria-hidden
+            className="absolute right-1.5 top-1.5 size-2 border-r-2 border-t-2 border-background/40"
+          />
+          <span
+            aria-hidden
+            className="absolute bottom-1.5 left-1.5 size-2 border-b-2 border-l-2 border-background/40"
+          />
+          <span className="relative flex flex-col items-center leading-none">
+            <span className="flex items-center gap-2 text-sm font-extrabold tracking-wide">
               {buttonLabel}
               {buttonIcon}
-            </Button>
-          </motion.div>
-          {wrongAttempts > 0 && !isSummary ? (
-            <p className="text-center text-[10px] text-muted-foreground">
-              {wrongAttempts} {wrongAttempts === 1 ? "error" : "errores"} en esta lección
-            </p>
-          ) : null}
-        </div>
-      </footer>
+            </span>
+            <span className="mt-0.5 font-mono text-[10px] font-semibold tracking-[0.3em] opacity-75">
+              {buttonJp}
+            </span>
+          </span>
+        </Button>
+      </motion.div>
 
       {/* Custom exit confirmation modal (window.confirm doesn't render in
           Tauri's WKWebView, so we ship our own). */}

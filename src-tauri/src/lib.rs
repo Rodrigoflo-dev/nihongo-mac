@@ -86,6 +86,8 @@ pub fn run() {
             commands::lessons::start_lesson,
             commands::lessons::complete_lesson,
             commands::lessons::get_next_lesson,
+            // procedural exercise generator
+            commands::exercises::generate_lesson_exercises,
             // unit exams
             commands::exams::get_unit_exam,
             commands::exams::complete_unit_exam,

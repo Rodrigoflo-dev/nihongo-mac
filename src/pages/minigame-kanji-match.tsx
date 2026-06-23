@@ -7,6 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { burstLevelUp, burstXp } from "@/components/visual/confetti";
+import { HoloKanji } from "@/components/visual/holo-kanji";
+import { HudPanel } from "@/components/visual/hud-panel";
 import { useMinigameBest, useRecordMinigameScore } from "@/hooks/use-minigames";
 import {
   DIFFICULTY_COLORS,
@@ -211,9 +213,9 @@ export default function KanjiMatchGame() {
               +{difficultyBonusPercent(difficulty)}% XP
             </Badge>
           ) : null}
-          <span>Mov: {moves}</span>
+          <span className="font-mono text-neon-cyan">Mov: {moves}</span>
           {typeof best === "number" && best > 0 ? (
-            <span className="inline-flex items-center gap-1 text-warning">
+            <span className="inline-flex items-center gap-1 text-neon-amber">
               <Trophy className="size-3" /> {best}
             </span>
           ) : null}
@@ -221,8 +223,8 @@ export default function KanjiMatchGame() {
       </div>
 
       <div>
-        <div className="flex items-center justify-between text-[11px] uppercase tracking-widest text-muted-foreground">
-          <span>漢字あわせ · {config.label}</span>
+        <div className="flex items-center justify-between font-mono text-[11px] uppercase tracking-[0.25em] text-neon-cyan">
+          <span className="font-jp tracking-[0.2em]">漢字あわせ · {config.label}</span>
           <span>
             {matchedCount / 2} / {config.pairs} pares
           </span>
@@ -251,15 +253,17 @@ export default function KanjiMatchGame() {
                 style={{ transformStyle: "preserve-3d" }}
               >
                 <div
-                  className="absolute inset-0 flex items-center justify-center rounded-2xl border bg-gradient-to-br from-primary/40 via-neon-violet/30 to-neon-cyan/30 text-primary-foreground"
+                  className="absolute inset-0 flex items-center justify-center overflow-hidden rounded-2xl border border-primary/40 bg-gradient-to-br from-primary/40 via-neon-violet/30 to-neon-cyan/30 text-primary-foreground shadow-[0_0_24px_-8px_color-mix(in_oklch,var(--color-primary)_70%,transparent)]"
                   style={{ backfaceVisibility: "hidden" }}
                 >
-                  <span className="font-jp text-2xl opacity-60">？</span>
+                  <span className="pointer-events-none absolute inset-0 holo-grid opacity-50" />
+                  <span className="relative font-jp text-2xl text-neon-cyan opacity-70">？</span>
                 </div>
                 <div
                   className={cn(
-                    "absolute inset-0 flex items-center justify-center rounded-2xl border bg-card p-2 text-center",
-                    card.matched && "ring-2 ring-success bg-success/10"
+                    "absolute inset-0 flex items-center justify-center rounded-2xl border border-primary/30 glass-strong p-2 text-center",
+                    card.matched &&
+                      "border-success/60 bg-success/10 ring-2 ring-success shadow-[0_0_28px_-6px_color-mix(in_oklch,var(--color-success)_75%,transparent)]"
                   )}
                   style={{
                     backfaceVisibility: "hidden",
@@ -267,7 +271,9 @@ export default function KanjiMatchGame() {
                   }}
                 >
                   {card.isKanji ? (
-                    <span className="font-jp text-5xl">{card.display}</span>
+                    <span className="font-jp text-5xl text-primary [text-shadow:0_0_18px_color-mix(in_oklch,var(--color-primary)_55%,transparent)]">
+                      {card.display}
+                    </span>
                   ) : (
                     <span className="text-sm font-medium">{card.display}</span>
                   )}
@@ -306,55 +312,64 @@ function ResultCard({
   onExit: () => void;
 }) {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="overflow-hidden rounded-3xl glass-strong p-8 text-center"
-    >
-      <p className="font-jp text-xs tracking-[0.4em] text-primary">
-        ゲームクリア
-      </p>
-      <h2 className="mt-2 text-2xl font-semibold">¡Ganaste!</h2>
-      <div className="mt-5 grid grid-cols-2 gap-3">
-        <div className="rounded-xl border bg-card/60 px-4 py-3">
-          <p className="text-[10px] uppercase tracking-widest text-muted-foreground">
-            Puntuación
-          </p>
-          <p className="mt-1 text-2xl font-bold tabular-nums">{score}</p>
-        </div>
-        <div className="rounded-xl border bg-card/60 px-4 py-3">
-          <p className="text-[10px] uppercase tracking-widest text-muted-foreground">
-            {newBest ? "¡Nuevo récord!" : "Tu récord"}
-          </p>
-          <p
-            className={cn(
-              "mt-1 text-2xl font-bold tabular-nums",
-              newBest && "text-warning"
-            )}
-          >
-            {best}
-          </p>
-        </div>
-      </div>
-      <div className="mt-4 flex justify-center gap-2">
-        <div className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1.5 text-sm text-primary">
-          <Sparkles className="size-3.5" /> +{xp} XP
-        </div>
-        {stars > 0 ? (
-          <div className="inline-flex items-center gap-1.5 rounded-full bg-warning/15 px-3 py-1.5 text-sm text-warning">
-            <Star className="size-3.5 fill-current" /> +{stars}
+    <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
+      <HudPanel glow className="p-8 text-center">
+        <div className="relative">
+          <div className="mb-1 flex justify-center">
+            <HoloKanji
+              size={150}
+              interval={2400}
+              items={[{ char: "勝", meaning: "Victoria" }]}
+            />
           </div>
-        ) : null}
-      </div>
-      <div className="mt-7 flex gap-2">
-        <Button variant="outline" className="flex-1" onClick={onExit}>
-          Salir
-        </Button>
-        <Button className="flex-1" onClick={onPlayAgain}>
-          <RotateCcw className="size-3.5" />
-          Otra ronda
-        </Button>
-      </div>
+          <p className="font-jp text-xs tracking-[0.4em] text-neon-cyan">
+            ゲームクリア
+          </p>
+          <h2 className="mt-2 font-display text-2xl font-extrabold tracking-tight">
+            ¡Ganaste!
+          </h2>
+          <div className="mt-5 grid grid-cols-2 gap-3">
+            <div className="rounded-xl border border-primary/20 glass px-4 py-3">
+              <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-neon-cyan">
+                Puntuación
+              </p>
+              <p className="mt-1 text-2xl font-bold tabular-nums">{score}</p>
+            </div>
+            <div className="rounded-xl border border-primary/20 glass px-4 py-3">
+              <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-neon-cyan">
+                {newBest ? "¡Nuevo récord!" : "Tu récord"}
+              </p>
+              <p
+                className={cn(
+                  "mt-1 text-2xl font-bold tabular-nums",
+                  newBest && "text-neon-amber"
+                )}
+              >
+                {best}
+              </p>
+            </div>
+          </div>
+          <div className="mt-4 flex justify-center gap-2">
+            <div className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-3 py-1.5 text-sm text-neon-cyan">
+              <Sparkles className="size-3.5" /> +{xp} XP
+            </div>
+            {stars > 0 ? (
+              <div className="inline-flex items-center gap-1.5 rounded-full border border-neon-amber/40 bg-warning/15 px-3 py-1.5 text-sm text-neon-amber">
+                <Star className="size-3.5 fill-current" /> +{stars}
+              </div>
+            ) : null}
+          </div>
+          <div className="mt-7 flex gap-2">
+            <Button variant="outline" className="flex-1" onClick={onExit}>
+              Salir
+            </Button>
+            <Button className="flex-1" onClick={onPlayAgain}>
+              <RotateCcw className="size-3.5" />
+              Otra ronda
+            </Button>
+          </div>
+        </div>
+      </HudPanel>
     </motion.div>
   );
 }

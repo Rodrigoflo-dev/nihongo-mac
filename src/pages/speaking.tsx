@@ -5,6 +5,8 @@ import { CheckCircle2, Mic, Square, Volume2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/layout/page-header";
+import { HudPanel } from "@/components/visual/hud-panel";
+import { HoloKanji } from "@/components/visual/holo-kanji";
 import { usePlayTts } from "@/hooks/use-listening";
 import { useVoiceRecorder } from "@/hooks/use-voice-recorder";
 import { cn } from "@/lib/utils";
@@ -71,20 +73,31 @@ export default function SpeakingPage() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-10">
-      <PageHeader
-        eyebrow="会話 — Speaking"
-        title={
-          <>
-            Practica tu <span className="gradient-text">pronunciación</span>
-          </>
-        }
-        description="Escucha la frase, grábate y compara. Usa el micrófono de tu Mac — la grabación nunca sale de tu equipo."
-        actions={
-          <Badge variant="outline" className="text-[10px]">
-            Frase {idx + 1} / {PHRASES.length}
-          </Badge>
-        }
-      />
+      <div className="flex items-start justify-between gap-8">
+        <PageHeader
+          eyebrow="会話 — Speaking"
+          title={
+            <>
+              Practica tu <span className="gradient-text">pronunciación</span>
+            </>
+          }
+          description="Escucha la frase, grábate y compara. Usa el micrófono de tu Mac — la grabación nunca sale de tu equipo."
+          actions={
+            <Badge variant="outline" className="border-neon-cyan/40 font-mono text-[10px] text-neon-cyan">
+              Frase {idx + 1} / {PHRASES.length}
+            </Badge>
+          }
+        />
+        <HoloKanji
+          size={180}
+          className="hidden lg:block"
+          items={[
+            { char: "話", meaning: "Hablar" },
+            { char: "声", meaning: "Voz" },
+            { char: "口", meaning: "Boca" },
+          ]}
+        />
+      </div>
 
       {rec.error ? (
         <div className="rounded-2xl border border-warning/40 bg-warning/5 px-4 py-3 text-sm text-warning">
@@ -102,24 +115,37 @@ export default function SpeakingPage() {
           className="space-y-8"
         >
           {/* Phrase card */}
-          <div className="relative overflow-hidden rounded-3xl glass-strong p-10 text-center">
-            <p className="font-jp text-[10px] tracking-[0.4em] text-muted-foreground">
+          <HudPanel glow className="p-10 text-center">
+            <div className="holo-grid pointer-events-none absolute inset-0 opacity-40" />
+            <div className="relative">
+            <p className="font-mono text-[10px] uppercase tracking-[0.4em] text-neon-cyan">
               れんしゅう
             </p>
-            <p className="mt-2 font-jp text-4xl leading-tight">{phrase.jp}</p>
+            <p
+              className="mt-2 font-jp text-4xl font-bold leading-tight text-primary"
+              style={{
+                textShadow:
+                  "0 0 18px color-mix(in oklch, var(--color-primary) 60%, transparent), 0 0 40px color-mix(in oklch, var(--color-neon-violet) 40%, transparent)",
+              }}
+            >
+              {phrase.jp}
+            </p>
             <p className="mt-3 font-jp text-sm tracking-wider text-muted-foreground">
               {phrase.reading}
             </p>
             <p className="mt-2 text-sm text-muted-foreground">{phrase.meaning}</p>
             <Button
-              className="mt-5"
+              className="relative mt-5"
               variant="outline"
               onClick={() =>
                 play.mutate({ text: phrase.jp, voice: phrase.voice, rate: 160 })
               }
               disabled={play.isPending}
             >
-              <Volume2 className="size-4" />
+              {play.isPending ? (
+                <span className="absolute inset-0 animate-pulse rounded-md ring-1 ring-neon-cyan/40" />
+              ) : null}
+              <Volume2 className={cn("size-4", play.isPending && "animate-pulse")} />
               {play.isPending ? "Reproduciendo…" : "Escuchar nativa"}
             </Button>
             {play.ttsError ? (
@@ -127,7 +153,8 @@ export default function SpeakingPage() {
                 {play.ttsError}
               </p>
             ) : null}
-          </div>
+            </div>
+          </HudPanel>
 
           {/* Recorder */}
           <div className="grid grid-cols-1 gap-4 md:grid-cols-[1fr_1fr_auto] md:items-center">
@@ -176,14 +203,15 @@ function RecordPanel({
   onStop: () => void;
 }) {
   return (
-    <div className="space-y-3 rounded-2xl glass p-5 text-center">
-      <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+    <HudPanel scanline={false} className="p-5 text-center">
+      <div className="space-y-3">
+      <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-neon-cyan">
         Tu grabación
       </p>
       <button
         onClick={recording ? onStop : onStart}
         className={cn(
-          "relative mx-auto flex size-20 items-center justify-center rounded-full transition-all",
+          "relative mx-auto flex size-20 items-center justify-center rounded-full transition-all hover:scale-105",
           recording
             ? "bg-destructive text-destructive-foreground"
             : "bg-gradient-to-br from-primary via-neon-violet to-neon-cyan text-primary-foreground"
@@ -196,7 +224,15 @@ function RecordPanel({
             : undefined
         }
       >
-        {recording ? <Square className="size-7" /> : <Mic className="size-7" />}
+        {recording ? (
+          <span className="absolute inset-0 animate-ping rounded-full bg-destructive/40" />
+        ) : null}
+        {recording ? (
+          <Square className="relative size-7" />
+        ) : (
+          <Mic className="relative size-7" />
+        )}
+        <span className="absolute inset-0 rounded-full ring-1 ring-white/20" />
       </button>
       {recording ? (
         <div className="mx-auto flex h-1.5 w-24 items-center overflow-hidden rounded-full bg-secondary/50">
@@ -206,17 +242,19 @@ function RecordPanel({
           />
         </div>
       ) : null}
-      <p className="text-xs text-muted-foreground">
+      <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
         {recording ? "Grabando…" : recordedUrl ? "Listo" : "Pulsa para grabar"}
       </p>
-    </div>
+      </div>
+    </HudPanel>
   );
 }
 
 function PlaybackPanel({ recordedUrl }: { recordedUrl: string | null }) {
   return (
-    <div className="space-y-3 rounded-2xl glass p-5 text-center">
-      <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+    <HudPanel scanline={false} className="p-5 text-center">
+      <div className="space-y-3">
+      <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-neon-cyan">
         Reproducir
       </p>
       {recordedUrl ? (
@@ -230,6 +268,7 @@ function PlaybackPanel({ recordedUrl }: { recordedUrl: string | null }) {
       ) : (
         <p className="py-6 text-xs text-muted-foreground">Aún sin grabación</p>
       )}
-    </div>
+      </div>
+    </HudPanel>
   );
 }

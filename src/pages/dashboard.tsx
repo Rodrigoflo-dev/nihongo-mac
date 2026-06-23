@@ -1,5 +1,7 @@
 import { motion } from "framer-motion";
-import { Calendar, Clock, Sparkles, Star, Trophy } from "lucide-react";
+import { Calendar, Clock, Sparkles, Trophy } from "lucide-react";
+
+import { CurrencyIcon } from "@/components/visual/currency-icon";
 
 import { Progress } from "@/components/ui/progress";
 import { InsightsCard } from "@/components/dashboard/insights-card";
@@ -89,8 +91,8 @@ export default function DashboardPage() {
           value={stats.lifetime.totalKanjiMastered}
         />
         <StatTile
-          icon={<Star className="size-3.5 fill-warning text-warning" />}
-          label="Estrellas"
+          icon={<CurrencyIcon className="size-3.5" />}
+          label="Monedas"
           value={stats.player.stars}
         />
       </motion.div>

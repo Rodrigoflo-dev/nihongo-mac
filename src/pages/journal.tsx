@@ -13,6 +13,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { PageHeader } from "@/components/layout/page-header";
+import { HudPanel } from "@/components/visual/hud-panel";
+import { HoloKanji } from "@/components/visual/holo-kanji";
 import { burstLevelUp, burstXp } from "@/components/visual/confetti";
 import { usePlayTts } from "@/hooks/use-listening";
 import {
@@ -53,49 +55,74 @@ export default function JournalPage() {
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
-        className="rounded-3xl glass-strong p-6"
       >
-        <div className="flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-muted-foreground">
-          <Feather className="size-3.5" />
-          Nueva entrada
-        </div>
-        <textarea
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          rows={5}
-          placeholder="今日は…"
-          className="mt-3 w-full resize-none bg-transparent font-jp text-xl leading-relaxed outline-none placeholder:text-muted-foreground/40"
-          autoFocus
-        />
-        <Separator className="my-4" />
-        <div className="flex items-center justify-between">
-          <p className="text-xs text-muted-foreground">
-            {text.length} caracteres
-          </p>
-          <Button
-            disabled={!text.trim() || create.isPending}
-            onClick={handleSubmit}
-            className="bg-gradient-to-br from-primary via-primary to-neon-violet"
-          >
-            {create.isPending ? (
-              <>
-                <Sparkles className="size-4 animate-pulse" />
-                Guardando…
-              </>
-            ) : (
-              <>
-                <Send className="size-4" />
-                Guardar entrada
-              </>
-            )}
-          </Button>
-        </div>
+        <HudPanel glow className="holo-grid p-6">
+          <div
+            aria-hidden
+            className="pointer-events-none absolute -right-24 -top-24 size-64 rounded-full bg-gradient-to-br from-primary/30 via-neon-violet/20 to-transparent blur-3xl"
+          />
+          <div className="relative flex items-start gap-6">
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.25em] text-neon-cyan">
+                <Feather className="size-3.5" />
+                Nueva entrada
+              </div>
+              <textarea
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                rows={5}
+                placeholder="今日は…"
+                className="mt-3 w-full resize-none bg-transparent font-jp text-xl leading-relaxed outline-none placeholder:text-muted-foreground/40"
+                autoFocus
+              />
+              <Separator className="my-4" />
+              <div className="flex items-center justify-between">
+                <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
+                  {text.length} caracteres
+                </p>
+                <Button
+                  disabled={!text.trim() || create.isPending}
+                  onClick={handleSubmit}
+                  className="bg-gradient-to-br from-primary via-primary to-neon-violet shadow-[0_0_24px_-8px_color-mix(in_oklch,var(--color-primary)_70%,transparent)]"
+                >
+                  {create.isPending ? (
+                    <>
+                      <Sparkles className="size-4 animate-pulse" />
+                      Guardando…
+                    </>
+                  ) : (
+                    <>
+                      <Send className="size-4" />
+                      Guardar entrada
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+            <HoloKanji
+              size={150}
+              className="hidden shrink-0 self-center lg:block"
+              items={[
+                { char: "日", meaning: "Día" },
+                { char: "記", meaning: "Registro" },
+                { char: "書", meaning: "Escribir" },
+              ]}
+            />
+          </div>
+        </HudPanel>
       </motion.div>
 
       {/* Entries */}
       <section className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-base font-semibold tracking-tight">Historial</h2>
+          <div>
+            <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-neon-cyan">
+              履歴
+            </p>
+            <h2 className="font-display text-lg font-extrabold tracking-tight">
+              Historial
+            </h2>
+          </div>
           <Badge variant="outline" className="text-[10px]">
             {entries?.length ?? 0} entradas
           </Badge>
@@ -129,73 +156,76 @@ function EntryCard({
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className="space-y-4 rounded-2xl glass p-5"
     >
-      <div className="flex items-start justify-between">
-        <p className="font-jp text-base leading-relaxed">{entry.textJp}</p>
-        <div className="flex gap-1">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() =>
-              play.mutate({ text: entry.textJp, voice: "Kyoko", rate: 160 })
-            }
-          >
-            <Volume2 className="size-3.5" />
-          </Button>
-          <Button variant="ghost" size="icon" onClick={onDelete}>
-            <Trash2 className="size-3.5" />
-          </Button>
-        </div>
-      </div>
-      {entry.textTranslation ? (
-        <p className="text-sm text-muted-foreground">{entry.textTranslation}</p>
-      ) : null}
-      {entry.aiFeedback ? (
-        <div className="flex items-start gap-3 rounded-xl bg-primary/5 px-3 py-2 text-sm">
-          <Sparkles className="size-4 shrink-0 text-primary" />
-          <span>{entry.aiFeedback}</span>
-        </div>
-      ) : null}
-      {entry.corrections.length > 0 ? (
-        <div className="space-y-2">
-          <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-            Correcciones
-          </p>
-          {entry.corrections.map((c, idx) => (
-            <div
-              key={idx}
-              className="space-y-1 rounded-xl border border-warning/30 bg-warning/5 px-3 py-2 text-sm"
-            >
-              <div className="flex flex-wrap items-baseline gap-2">
-                <span className="font-jp text-base text-destructive line-through">
-                  {c.original}
-                </span>
-                <span className="font-jp text-base text-success">
-                  → {c.corrected}
-                </span>
-                {c.category ? (
-                  <Badge variant="outline" className="text-[10px]">
-                    {c.category}
-                  </Badge>
-                ) : null}
-              </div>
-              <p className="text-xs text-muted-foreground">{c.explanation}</p>
+      <HudPanel scanline={false} className="group p-5 transition-shadow duration-300 hover:shadow-[0_0_32px_-12px_color-mix(in_oklch,var(--color-primary)_45%,transparent)]">
+        <div className="relative space-y-4">
+          <div className="flex items-start justify-between">
+            <p className="font-jp text-base leading-relaxed">{entry.textJp}</p>
+            <div className="flex gap-1">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() =>
+                  play.mutate({ text: entry.textJp, voice: "Kyoko", rate: 160 })
+                }
+              >
+                <Volume2 className="size-3.5" />
+              </Button>
+              <Button variant="ghost" size="icon" onClick={onDelete}>
+                <Trash2 className="size-3.5" />
+              </Button>
             </div>
-          ))}
+          </div>
+          {entry.textTranslation ? (
+            <p className="text-sm text-muted-foreground">{entry.textTranslation}</p>
+          ) : null}
+          {entry.aiFeedback ? (
+            <div className="flex items-start gap-3 rounded-xl border border-primary/20 bg-primary/5 px-3 py-2 text-sm">
+              <Sparkles className="size-4 shrink-0 text-primary" />
+              <span>{entry.aiFeedback}</span>
+            </div>
+          ) : null}
+          {entry.corrections.length > 0 ? (
+            <div className="space-y-2">
+              <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-neon-amber">
+                Correcciones
+              </p>
+              {entry.corrections.map((c, idx) => (
+                <div
+                  key={idx}
+                  className="space-y-1 rounded-xl border border-warning/30 bg-warning/5 px-3 py-2 text-sm"
+                >
+                  <div className="flex flex-wrap items-baseline gap-2">
+                    <span className="font-jp text-base text-destructive line-through">
+                      {c.original}
+                    </span>
+                    <span className="font-jp text-base text-success">
+                      → {c.corrected}
+                    </span>
+                    {c.category ? (
+                      <Badge variant="outline" className="text-[10px]">
+                        {c.category}
+                      </Badge>
+                    ) : null}
+                  </div>
+                  <p className="text-xs text-muted-foreground">{c.explanation}</p>
+                </div>
+              ))}
+            </div>
+          ) : entry.aiFeedback ? null : (
+            <p className="text-xs text-success">
+              <Check className="mr-1 inline size-3" />
+              Sin correcciones
+            </p>
+          )}
+          <p className="font-mono text-[10px] uppercase tracking-[0.15em] text-muted-foreground">
+            {new Date(entry.createdAt).toLocaleString("es-ES", {
+              dateStyle: "medium",
+              timeStyle: "short",
+            })}
+          </p>
         </div>
-      ) : entry.aiFeedback ? null : (
-        <p className="text-xs text-success">
-          <Check className="mr-1 inline size-3" />
-          Sin correcciones
-        </p>
-      )}
-      <p className="text-[10px] text-muted-foreground">
-        {new Date(entry.createdAt).toLocaleString("es-ES", {
-          dateStyle: "medium",
-          timeStyle: "short",
-        })}
-      </p>
+      </HudPanel>
     </motion.div>
   );
 }

@@ -138,6 +138,52 @@
   --sidebar-ring: oklch(0.74 0.22 285);
 }
 
+/* ---------------------------------------------------------------------------
+   Unlockable ACCENT THEMES (Tienda). Set via data-accent on <html>; each shifts
+   the hue-bearing tokens so the whole app re-skins (buttons, glows, gradients,
+   sidebar, charts). Works on top of light/dark. "aether" is the default.
+   --------------------------------------------------------------------------- */
+[data-accent="sakura"] {
+  --primary: oklch(0.74 0.2 350);
+  --ring: oklch(0.74 0.2 350);
+  --neon-violet: oklch(0.78 0.24 345);
+  --neon-cyan: oklch(0.82 0.16 25);
+  --sidebar-primary: oklch(0.74 0.2 350);
+  --chart-1: oklch(0.74 0.2 350);
+}
+[data-accent="matcha"] {
+  --primary: oklch(0.72 0.16 150);
+  --ring: oklch(0.72 0.16 150);
+  --neon-violet: oklch(0.78 0.18 155);
+  --neon-cyan: oklch(0.84 0.16 185);
+  --sidebar-primary: oklch(0.72 0.16 150);
+  --chart-1: oklch(0.72 0.16 150);
+}
+[data-accent="sunset"] {
+  --primary: oklch(0.75 0.18 55);
+  --ring: oklch(0.75 0.18 55);
+  --neon-violet: oklch(0.78 0.2 35);
+  --neon-cyan: oklch(0.85 0.18 75);
+  --sidebar-primary: oklch(0.75 0.18 55);
+  --chart-1: oklch(0.75 0.18 55);
+}
+[data-accent="koi"] {
+  --primary: oklch(0.68 0.22 25);
+  --ring: oklch(0.68 0.22 25);
+  --neon-violet: oklch(0.72 0.24 10);
+  --neon-cyan: oklch(0.82 0.18 60);
+  --sidebar-primary: oklch(0.68 0.22 25);
+  --chart-1: oklch(0.68 0.22 25);
+}
+[data-accent="sumi"] {
+  --primary: oklch(0.7 0.04 260);
+  --ring: oklch(0.7 0.04 260);
+  --neon-violet: oklch(0.74 0.05 270);
+  --neon-cyan: oklch(0.82 0.05 230);
+  --sidebar-primary: oklch(0.7 0.04 260);
+  --chart-1: oklch(0.7 0.04 260);
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -310,6 +356,13 @@
   body,
   #root {
     height: 100%;
+  }
+
+  /* Accessibility zoom: scales fonts AND boxes proportionally because Tailwind
+     uses rem for both text and spacing. Driven by --ui-scale (default 1),
+     persisted in localStorage and set on <html> by the UiScaleProvider. */
+  html {
+    font-size: calc(100% * var(--ui-scale, 1));
   }
 
   body {
@@ -514,6 +567,18 @@
     transparent 75%
   );
   mask-image: radial-gradient(ellipse at 50% 0%, black 0%, transparent 75%);
+}
+
+/* Angular "mecha/HUD" corner clip for futuristic CTAs (cuts TL + BR corners) */
+@utility cta-clip {
+  clip-path: polygon(
+    14px 0,
+    100% 0,
+    100% calc(100% - 14px),
+    calc(100% - 14px) 100%,
+    0 100%,
+    0 14px
+  );
 }
 
 /* HUD corner brackets for panels (cyberpunk framing) */

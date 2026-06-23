@@ -4,8 +4,8 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Check, Sparkles, Star, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { HudPanel } from "@/components/visual/hud-panel";
 import { GradeButtons } from "@/components/kanji/grade-buttons";
 import { ReviewCard } from "@/components/kanji/review-card";
 import { useReviewKanji, useReviewQueue } from "@/hooks/use-kanji";
@@ -53,17 +53,21 @@ export default function KanjiReviewPage() {
   if (queueDue.length === 0 && pending.length === 0 && !done) {
     return (
       <div className="mx-auto grid h-full max-w-xl place-items-center">
-        <Card>
-          <CardContent className="grid place-items-center gap-4 p-10 text-center">
-            <Sparkles className="size-8 text-primary" />
-            <h2 className="text-xl font-semibold">Sin repasos pendientes</h2>
+        <HudPanel glow className="w-full">
+          <div className="grid place-items-center gap-4 p-10 text-center">
+            <div className="grid size-14 place-items-center rounded-2xl border border-primary/30 bg-primary/10 text-primary shadow-[0_0_30px_-8px_color-mix(in_oklch,var(--color-primary)_60%,transparent)]">
+              <Sparkles className="size-7" />
+            </div>
+            <h2 className="font-display text-xl font-extrabold tracking-tight">
+              Sin repasos pendientes
+            </h2>
             <p className="text-balance text-sm text-muted-foreground">
               No tienes kanjis vencidos hoy. Aprende algunos nuevos desde el
               catálogo para empezar a construir tu pool.
             </p>
             <Button onClick={() => navigate("/kanji")}>Ir al catálogo</Button>
-          </CardContent>
-        </Card>
+          </div>
+        </HudPanel>
       </div>
     );
   }
@@ -78,13 +82,13 @@ export default function KanjiReviewPage() {
     const completedWeekly = awards.flatMap((a) => a.completedWeekly);
     return (
       <div className="mx-auto grid h-full max-w-xl place-items-center">
-        <Card className="w-full">
-          <CardContent className="grid gap-5 p-10 text-center">
-            <p className="font-jp text-xs tracking-[0.3em] text-primary">
-              よくできました
+        <HudPanel glow className="w-full">
+          <div className="grid gap-5 p-10 text-center">
+            <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-neon-cyan">
+              <span className="font-jp">よくできました</span>
             </p>
-            <h2 className="text-2xl font-semibold tracking-tight">
-              Sesión completada
+            <h2 className="font-display text-2xl font-extrabold tracking-tight">
+              Sesión <span className="gradient-text">completada</span>
             </h2>
             <p className="text-sm text-muted-foreground">
               {completed.length} kanji{completed.length === 1 ? "" : "s"} repasado
@@ -103,7 +107,7 @@ export default function KanjiReviewPage() {
               />
             </div>
             {leveledUp ? (
-              <p className="rounded-lg bg-primary/10 px-3 py-2 text-sm font-medium text-primary">
+              <p className="rounded-lg border border-primary/40 bg-primary/10 px-3 py-2 text-sm font-semibold text-primary shadow-[0_0_24px_-8px_color-mix(in_oklch,var(--color-primary)_70%,transparent)]">
                 ¡Subiste de nivel!
               </p>
             ) : null}
@@ -136,8 +140,8 @@ export default function KanjiReviewPage() {
                 Catálogo
               </Button>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </HudPanel>
       </div>
     );
   }
@@ -176,11 +180,11 @@ export default function KanjiReviewPage() {
         >
           <X className="size-3.5" /> Salir
         </Button>
-        <p className="text-xs tabular-nums text-muted-foreground">
+        <p className="font-mono text-[11px] uppercase tracking-[0.25em] tabular-nums text-neon-cyan">
           {pendingIdx + 1} / {pending.length}
         </p>
       </div>
-      <Progress value={progress} className="h-1" />
+      <Progress value={progress} className="h-1 ring-1 ring-primary/15" />
 
       <div className="grid flex-1 place-items-center">
         <AnimatePresence mode="wait">
@@ -224,12 +228,14 @@ function SummaryStat({
   value: string;
 }) {
   return (
-    <div className="flex flex-col gap-1 rounded-lg border bg-card/60 px-3 py-3">
-      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+    <div className="relative flex flex-col gap-1 rounded-lg border border-primary/15 bg-card/50 px-3 py-3 backdrop-blur-sm">
+      <span className="hud-corner left-1.5 top-1.5 border-l-2 border-t-2 opacity-50" />
+      <span className="hud-corner bottom-1.5 right-1.5 border-b-2 border-r-2 opacity-50" />
+      <div className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
         {icon}
         <span>{label}</span>
       </div>
-      <p className="text-lg font-semibold tabular-nums">{value}</p>
+      <p className="font-display text-lg font-extrabold tabular-nums">{value}</p>
     </div>
   );
 }

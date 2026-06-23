@@ -254,6 +254,13 @@ export type Activity =
       learned: string[];
     };
 
+export type ExerciseDifficulty = "facil" | "medio" | "dificil";
+
+export interface GeneratedExercise {
+  activity: Activity;
+  difficulty: ExerciseDifficulty;
+}
+
 export interface LessonSummary {
   id: number;
   unitId: number;
@@ -675,6 +682,8 @@ export const api = {
   // Lessons (guided e-learning)
   listCourses: () => invoke<Course[]>("list_courses"),
   getLesson: (lessonId: number) => invoke<Lesson>("get_lesson", { lessonId }),
+  generateLessonExercises: (lessonId: number, seed: number) =>
+    invoke<GeneratedExercise[]>("generate_lesson_exercises", { lessonId, seed }),
   startLesson: (lessonId: number) =>
     invoke<Lesson>("start_lesson", { lessonId }),
   completeLesson: (result: LessonResult) =>

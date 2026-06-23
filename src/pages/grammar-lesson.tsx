@@ -6,6 +6,8 @@ import { Check, Sparkles, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { HudPanel } from "@/components/visual/hud-panel";
+import { HoloKanji } from "@/components/visual/holo-kanji";
 import { RomajiLine } from "@/components/lesson/romaji-line";
 import {
   useGrammarLesson,
@@ -128,14 +130,28 @@ function LessonView({
         </Badge>
       </div>
 
-      <div className="space-y-3">
-        <p className="font-jp text-[11px] tracking-[0.3em] text-muted-foreground">
-          {lesson.structure ?? lesson.category ?? "Gramática"}
-        </p>
-        <h1 className="text-balance text-3xl font-semibold leading-tight tracking-tight">
-          {lesson.title}
-        </h1>
-      </div>
+      <HudPanel glow className="p-6 sm:p-8">
+        <div className="flex items-center justify-between gap-6">
+          <div className="min-w-0 space-y-3">
+            <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-neon-cyan">
+              <span className="font-jp">
+                {lesson.structure ?? lesson.category ?? "Gramática"}
+              </span>
+            </p>
+            <h1 className="text-balance font-display text-3xl font-extrabold leading-tight tracking-tight">
+              {lesson.title}
+            </h1>
+          </div>
+          <HoloKanji
+            size={150}
+            className="hidden shrink-0 sm:block"
+            items={[
+              { char: "文", meaning: "Gramática" },
+              { char: "法", meaning: "Regla" },
+            ]}
+          />
+        </div>
+      </HudPanel>
 
       <article className="prose-sm max-w-none text-sm leading-relaxed text-foreground">
         {lesson.explanationMd.replace(/\\n/g, "\n").split("\n").map((line, i) => {
@@ -143,7 +159,7 @@ function LessonView({
             return (
               <h2
                 key={i}
-                className="mt-6 text-lg font-semibold tracking-tight first:mt-0"
+                className="mt-6 font-display text-lg font-extrabold tracking-tight first:mt-0"
               >
                 {line.replace("## ", "")}
               </h2>
@@ -153,7 +169,7 @@ function LessonView({
             return (
               <blockquote
                 key={i}
-                className="my-3 rounded-lg border-l-2 border-primary bg-primary/5 px-4 py-2 font-jp text-base"
+                className="my-3 rounded-lg border-l-2 border-neon-cyan bg-primary/5 px-4 py-2 font-jp text-base shadow-[inset_0_0_24px_-16px_color-mix(in_oklch,var(--color-neon-cyan)_70%,transparent)]"
               >
                 {line.replace("> ", "")}
               </blockquote>
@@ -176,14 +192,15 @@ function LessonView({
       </article>
 
       <section className="space-y-3">
-        <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+        <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-neon-cyan">
           Ejemplos
         </p>
         <div className="space-y-2">
           {lesson.examples.map((ex) => (
-            <div
+            <motion.div
               key={ex.jp}
-              className="rounded-xl glass px-4 py-3"
+              whileHover={{ x: 3 }}
+              className="rounded-xl border-l-2 border-primary/50 glass px-4 py-3 transition-all hover:border-neon-cyan hover:shadow-[0_0_24px_-12px_color-mix(in_oklch,var(--color-primary)_60%,transparent)]"
             >
               <p className="font-jp text-lg leading-snug">{ex.jp}</p>
               <p className="font-jp text-xs text-muted-foreground">
@@ -191,14 +208,14 @@ function LessonView({
               </p>
               <RomajiLine reading={ex.reading} />
               <p className="mt-1 text-sm text-muted-foreground">{ex.meaning}</p>
-            </div>
+            </motion.div>
           ))}
         </div>
       </section>
 
       <Button
         size="xl"
-        className="w-full bg-gradient-to-br from-primary via-primary to-neon-violet"
+        className="w-full bg-gradient-to-br from-primary via-primary to-neon-violet shadow-[0_0_40px_-12px_color-mix(in_oklch,var(--color-primary)_70%,transparent)]"
         onClick={onStartQuiz}
       >
         <Sparkles className="size-4" /> Empezar quiz ({lesson.quiz.length} preguntas)
@@ -272,11 +289,11 @@ function QuizView({
       className="mx-auto max-w-2xl space-y-8"
     >
       <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+        <div className="flex items-center justify-between gap-3">
+          <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-neon-cyan">
             Quiz · pregunta {questionIdx + 1} de {total}
           </p>
-          <Badge variant="outline" className="font-mono text-[10px]">
+          <Badge variant="outline" className="shrink-0 font-mono text-[10px]">
             {lesson.title}
           </Badge>
         </div>
@@ -308,18 +325,20 @@ function QuizView({
 
           <div className="grid gap-3">
             {q.options.map((opt, idx) => (
-              <button
+              <motion.button
                 key={idx}
+                whileHover={{ y: -2 }}
+                whileTap={{ scale: 0.99 }}
                 onClick={() => onSelect(q.id, idx)}
                 className={cn(
                   "rounded-xl border bg-card/60 px-5 py-4 text-left transition-all",
-                  "hover:border-primary/40 hover:bg-accent/40",
+                  "hover:border-primary/40 hover:bg-accent/40 hover:shadow-[0_0_24px_-12px_color-mix(in_oklch,var(--color-primary)_60%,transparent)]",
                   selected === idx &&
-                    "border-primary ring-2 ring-primary/20 bg-primary/5"
+                    "border-neon-cyan bg-primary/5 ring-2 ring-neon-cyan/30 shadow-[0_0_28px_-10px_color-mix(in_oklch,var(--color-neon-cyan)_65%,transparent)]"
                 )}
               >
                 <span className="font-jp text-base">{opt.text}</span>
-              </button>
+              </motion.button>
             ))}
           </div>
         </motion.div>
@@ -360,12 +379,16 @@ function ResultView({
       transition={{ duration: 0.4 }}
       className="mx-auto grid h-full max-w-lg place-items-center"
     >
-      <div className="w-full overflow-hidden rounded-3xl glass-strong p-10 text-center">
-        <p className="font-jp text-xs tracking-[0.4em] text-primary">
+      <HudPanel glow className="w-full p-10 text-center">
+        <p className="font-jp text-xs tracking-[0.4em] text-neon-cyan">
           {result.passed ? "合格" : "もう一度"}
         </p>
-        <h2 className="mt-2 text-3xl font-semibold tracking-tight">
-          {result.passed ? "¡Lección dominada!" : "Casi"}
+        <h2 className="mt-2 font-display text-3xl font-extrabold tracking-tight">
+          {result.passed ? (
+            <span className="gradient-text">¡Lección dominada!</span>
+          ) : (
+            "Casi"
+          )}
         </h2>
         <p className="mt-2 text-sm text-muted-foreground">
           {lesson.title}
@@ -383,7 +406,7 @@ function ResultView({
           />
         </div>
 
-        <div className="mt-5 inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1.5 text-sm font-medium text-primary">
+        <div className="mt-5 inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1.5 text-sm font-medium text-primary shadow-[0_0_24px_-8px_color-mix(in_oklch,var(--color-primary)_70%,transparent)]">
           <Sparkles className="size-4" />
           +{result.award.xpAmount} XP
         </div>
@@ -402,7 +425,7 @@ function ResultView({
             <Check className="size-4" /> Listo
           </Button>
         </div>
-      </div>
+      </HudPanel>
     </motion.div>
   );
 }
@@ -418,14 +441,14 @@ function Metric({
 }) {
   return (
     <div className="rounded-xl border bg-card/50 px-4 py-3">
-      <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+      <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-neon-cyan/70">
         {label}
       </p>
       <p
         className={cn(
-          "mt-1 text-xl font-semibold tabular-nums",
+          "mt-1 font-display text-xl font-extrabold tabular-nums",
           tone === "success" && "text-success",
-          tone === "warning" && "text-warning"
+          tone === "warning" && "text-neon-amber"
         )}
       >
         {value}

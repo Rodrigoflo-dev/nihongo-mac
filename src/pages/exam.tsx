@@ -13,6 +13,8 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { ActivityView, isActivityQuiz } from "@/components/lesson/activities";
 import { MeshBackground } from "@/components/visual/mesh-background";
+import { HudPanel } from "@/components/visual/hud-panel";
+import { HoloKanji } from "@/components/visual/holo-kanji";
 import { burstLevelUp, burstXp } from "@/components/visual/confetti";
 import { useCompleteUnitExam, useUnitExam } from "@/hooks/use-exams";
 import type { UnitExamResult } from "@/lib/api";
@@ -42,7 +44,9 @@ export default function ExamPage() {
     return (
       <div className="relative grid h-screen w-screen place-items-center bg-background text-foreground">
         <MeshBackground />
-        <p className="text-sm text-muted-foreground">読み込み中…</p>
+        <p className="relative z-10 font-mono text-[11px] uppercase tracking-[0.3em] text-neon-cyan">
+          読み込み中…
+        </p>
       </div>
     );
   }
@@ -51,17 +55,26 @@ export default function ExamPage() {
     return (
       <div className="relative grid h-screen w-screen place-items-center bg-background text-foreground">
         <MeshBackground />
-        <div className="relative z-10 max-w-md p-8 text-center">
-          <GraduationCap className="mx-auto size-12 text-muted-foreground" />
-          <h2 className="mt-4 text-xl font-semibold">Examen bloqueado</h2>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Termina todas las lecciones de "{exam.unitTitle}" para desbloquear
-            el examen.
-          </p>
-          <Button className="mt-5" onClick={() => navigate("/learn")}>
-            Ir al curso
-          </Button>
-        </div>
+        <HudPanel glow className="relative z-10 mx-8 max-w-md p-8 text-center">
+          <div className="relative">
+            <div className="mx-auto grid size-14 place-items-center rounded-2xl bg-gradient-to-br from-primary/30 to-neon-violet/10 text-primary">
+              <GraduationCap className="size-7" />
+            </div>
+            <p className="mt-4 font-mono text-[11px] uppercase tracking-[0.25em] text-neon-cyan">
+              試験 · Bloqueado
+            </p>
+            <h2 className="mt-1 font-display text-xl font-extrabold tracking-tight">
+              Examen bloqueado
+            </h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Termina todas las lecciones de "{exam.unitTitle}" para desbloquear
+              el examen.
+            </p>
+            <Button className="mt-5" onClick={() => navigate("/learn")}>
+              Ir al curso
+            </Button>
+          </div>
+        </HudPanel>
       </div>
     );
   }
@@ -105,7 +118,9 @@ export default function ExamPage() {
     return (
       <div className="relative grid h-screen w-screen place-items-center bg-background text-foreground">
         <MeshBackground />
-        <p className="text-sm text-muted-foreground">Calificando…</p>
+        <p className="relative z-10 font-mono text-[11px] uppercase tracking-[0.3em] text-neon-cyan">
+          Calificando…
+        </p>
       </div>
     );
   }
@@ -154,14 +169,14 @@ export default function ExamPage() {
           <X className="size-3.5" /> Salir
         </Button>
         <div className="flex-1">
-          <p className="font-jp text-[10px] tracking-[0.3em] text-primary">
+          <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-neon-cyan">
             試験 · Examen
           </p>
-          <p className="text-sm font-semibold leading-tight">
+          <p className="font-display text-sm font-extrabold leading-tight tracking-tight">
             {exam.unitTitle}
           </p>
         </div>
-        <p className="text-xs tabular-nums text-muted-foreground">
+        <p className="font-mono text-xs tabular-nums tracking-[0.2em] text-muted-foreground">
           {step + 1} / {total}
         </p>
       </header>
@@ -186,10 +201,10 @@ export default function ExamPage() {
         <div className="mx-auto max-w-2xl space-y-3">
           {isQuiz && verified && answered ? (
             <div
-              className={`rounded-xl px-4 py-2 text-center text-sm font-medium ${
+              className={`rounded-xl border px-4 py-2 text-center text-sm font-medium backdrop-blur-sm ${
                 answered.correct
-                  ? "bg-success/15 text-success"
-                  : "bg-destructive/15 text-destructive"
+                  ? "border-success/40 bg-success/15 text-success shadow-[0_0_24px_-10px_color-mix(in_oklch,var(--color-success)_70%,transparent)]"
+                  : "border-destructive/40 bg-destructive/15 text-destructive shadow-[0_0_24px_-10px_color-mix(in_oklch,var(--color-destructive)_70%,transparent)]"
               }`}
             >
               {answered.correct
@@ -210,11 +225,12 @@ export default function ExamPage() {
 
       {confirmingExit ? (
         <div className="absolute inset-0 z-50 grid place-items-center bg-background/70 backdrop-blur-sm">
-          <div className="mx-8 w-full max-w-sm rounded-2xl glass-strong p-6 text-center">
-            <p className="font-jp text-[10px] tracking-[0.4em] text-warning">
+          <HudPanel glow className="mx-8 w-full max-w-sm p-6 text-center">
+            <div className="relative">
+            <p className="font-mono text-[10px] uppercase tracking-[0.35em] text-neon-amber">
               試験
             </p>
-            <h2 className="mt-2 text-xl font-semibold">
+            <h2 className="mt-2 font-display text-xl font-extrabold tracking-tight">
               ¿Salir del examen?
             </h2>
             <p className="mt-2 text-sm text-muted-foreground">
@@ -237,7 +253,8 @@ export default function ExamPage() {
                 <X className="size-3.5" /> Salir
               </Button>
             </div>
-          </div>
+            </div>
+          </HudPanel>
         </div>
       ) : null}
     </div>
@@ -259,9 +276,27 @@ function CompletionScreen({
     <div className="relative grid h-screen w-screen place-items-center bg-background text-foreground">
       <MeshBackground />
       <div className="relative z-10 w-full max-w-xl px-8">
-        <div className="overflow-hidden rounded-3xl glass-strong p-10 text-center">
-          <p className="font-jp text-xs tracking-[0.4em] text-warning">試験</p>
-          <h1 className="mt-2 text-3xl font-semibold tracking-tight">
+        <HudPanel glow className="p-10 text-center">
+          <div className="relative">
+          <HoloKanji
+            size={150}
+            className="mx-auto"
+            items={
+              completion.passed
+                ? [
+                    { char: "合", meaning: "Aprobado" },
+                    { char: "試", meaning: "Examen" },
+                  ]
+                : [
+                    { char: "試", meaning: "Examen" },
+                    { char: "再", meaning: "Reintentar" },
+                  ]
+            }
+          />
+          <p className="mt-6 font-mono text-[11px] uppercase tracking-[0.35em] text-neon-amber">
+            試験 · Resultado
+          </p>
+          <h1 className="mt-1 font-display text-3xl font-extrabold tracking-tight">
             {completion.passed ? "¡Examen aprobado!" : "No aprobado"}
           </h1>
           <p className="mt-2 text-sm text-muted-foreground">{unitTitle}</p>
@@ -312,7 +347,8 @@ function CompletionScreen({
               Al curso
             </Button>
           </div>
-        </div>
+          </div>
+        </HudPanel>
       </div>
     </div>
   );
@@ -330,13 +366,15 @@ function Metric({
   tone?: "success" | "warning";
 }) {
   return (
-    <div className="rounded-xl border bg-card/60 px-4 py-3">
-      <div className="flex items-center justify-between text-[10px] uppercase tracking-widest text-muted-foreground">
+    <div className="group relative overflow-hidden rounded-2xl glass px-4 py-3 text-left transition-shadow hover:shadow-[0_0_24px_-12px_color-mix(in_oklch,var(--color-primary)_60%,transparent)]">
+      <span className="hud-corner left-2 top-2 border-l-2 border-t-2 opacity-0 transition-opacity group-hover:opacity-100" />
+      <span className="hud-corner bottom-2 right-2 border-b-2 border-r-2 opacity-0 transition-opacity group-hover:opacity-100" />
+      <div className="flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
         <span>{label}</span>
         {icon}
       </div>
       <p
-        className={`mt-1 text-xl font-bold tabular-nums ${
+        className={`mt-1 font-display text-xl font-extrabold tabular-nums ${
           tone === "success"
             ? "text-success"
             : tone === "warning"

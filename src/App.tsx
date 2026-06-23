@@ -6,7 +6,6 @@ import { OnboardingGate } from "@/components/layout/onboarding-gate";
 import DashboardPage from "@/pages/dashboard";
 import GrammarPage from "@/pages/grammar";
 import GrammarLessonPage from "@/pages/grammar-lesson";
-import JournalPage from "@/pages/journal";
 import KanjiPage from "@/pages/kanji";
 import KanjiReviewPage from "@/pages/kanji-review";
 import ExamPage from "@/pages/exam";
@@ -42,7 +41,6 @@ function App() {
             <Route path="/kanji/review" element={<KanjiReviewPage />} />
             <Route path="/grammar" element={<GrammarPage />} />
             <Route path="/grammar/:id" element={<GrammarLessonPage />} />
-            <Route path="/journal" element={<JournalPage />} />
             <Route path="/reading" element={<ReadingPage />} />
             <Route path="/listening" element={<ListeningPage />} />
             <Route path="/speaking" element={<SpeakingPage />} />

@@ -215,6 +215,7 @@ pub fn complete_lesson(
         )?;
 
         let now = Utc::now();
+        crate::commands::bump_daily_session(c, now, "lesson", result.seconds_spent)?;
         let xp = XP_LESSON_COMPLETE_BASE
             + result.correct_count * XP_LESSON_PER_CORRECT
             + if perfect { XP_LESSON_PERFECT_BONUS } else { 0 };
@@ -346,6 +347,37 @@ mod tests {
         crate::db::migrations::run(&conn).expect("migrations run clean");
         crate::seed::run_if_empty(&conn).expect("seed runs clean");
         conn
+    }
+
+    /// Study time + active days must be recorded for EVERY activity type, not
+    /// just kanji review (regression: "Tiempo aprendido" / "Días activos" stuck
+    /// at 0 because only kanji called bump_daily_session). Verifies the shared
+    /// helper accumulates minutes, counts the day once, and tracks per-skill.
+    #[test]
+    fn bump_daily_session_accumulates_minutes_and_one_day() {
+        use chrono::TimeZone;
+        let conn = fresh_db();
+        let now = chrono::Utc.with_ymd_and_hms(2026, 6, 23, 10, 0, 0).unwrap();
+
+        // Two activities the same day: a 5-min lesson and a 3-min listening.
+        crate::commands::bump_daily_session(&conn, now, "lesson", 300).unwrap();
+        crate::commands::bump_daily_session(&conn, now, "listening", 180).unwrap();
+
+        let (days, minutes, activities, listening): (i64, i64, i64, i64) = conn
+            .query_row(
+                "SELECT COUNT(*), COALESCE(SUM(minutes_studied),0),
+                        COALESCE(SUM(activities_completed),0),
+                        COALESCE(SUM(listening_minutes),0)
+                   FROM daily_sessions",
+                [],
+                |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?)),
+            )
+            .unwrap();
+
+        assert_eq!(days, 1, "same day must be a single row");
+        assert_eq!(minutes, 8, "5 min + 3 min should accumulate to 8");
+        assert_eq!(activities, 2, "both activities counted");
+        assert_eq!(listening, 3, "listening minutes tracked separately");
     }
 
     /// Every lesson's activities_json must parse into LessonActivities and have

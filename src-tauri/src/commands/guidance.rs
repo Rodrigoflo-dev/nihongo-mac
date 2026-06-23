@@ -144,12 +144,6 @@ fn compute(c: &Connection) -> AppResult<NextAction> {
         "SELECT COUNT(*) FROM grammar_progress WHERE status = 'mastered'",
     )?;
 
-    let journal_today = count_param(
-        c,
-        "SELECT COUNT(*) FROM journal_entries WHERE entry_date = ?1",
-        &chrono::Utc::now().format("%Y-%m-%d").to_string(),
-    )?;
-
     let listening_done = count(
         c,
         "SELECT COUNT(*) FROM activity_log WHERE activity_type = 'listening'",
@@ -238,23 +232,7 @@ fn compute(c: &Connection) -> AppResult<NextAction> {
         });
     }
 
-    // 5. Journal: no entry today, has some grammar
-    if journal_today == 0 && grammar_started >= 1 {
-        return Ok(NextAction {
-            key: "write_journal".into(),
-            title: "Escribe una frase de hoy".into(),
-            subtitle: "Aplica lo aprendido. Escribe una sola frase sobre tu día — yo corrijo.".into(),
-            jp_subtitle: "今日の日記".into(),
-            cta_label: "Abrir diario".into(),
-            module_path: "/journal".into(),
-            icon: "feather".into(),
-            urgency: "medium".into(),
-            estimated_minutes: 5,
-            kanji_hint: "日".into(),
-        });
-    }
-
-    // 6. Listening unlock: grammar progressing, no listening yet
+    // 5. Listening unlock: grammar progressing, no listening yet
     if grammar_mastered >= 3 && listening_done == 0 {
         return Ok(NextAction {
             key: "unlock_listening".into(),
