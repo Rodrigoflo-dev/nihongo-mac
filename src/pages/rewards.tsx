@@ -136,7 +136,12 @@ export default function RewardsPage() {
       </motion.div>
 
       {/* Profile customization — avatar, photo upload, card background */}
-      <ProfileSection level={player?.level ?? 1} />
+      <ProfileSection
+        rewards={rewards ?? []}
+        stars={player?.stars ?? 0}
+        buying={purchase.isPending}
+        onBuy={(id) => purchase.mutate(id)}
+      />
 
       {/* Personalización — accent themes that re-skin the whole app */}
       <ThemesSection rewards={rewards ?? []} level={player?.level ?? 1} />
@@ -155,15 +160,17 @@ export default function RewardsPage() {
           <p className="text-sm text-muted-foreground">Cargando…</p>
         ) : (
           <div className="grid grid-cols-3 gap-4">
-            {rewards?.map((r) => (
-              <RewardCard
-                key={r.id}
-                reward={r}
-                stars={player?.stars ?? 0}
-                disabled={purchase.isPending}
-                onBuy={() => purchase.mutate(r.id)}
-              />
-            ))}
+            {rewards
+              ?.filter((r) => r.kind !== "avatar" && r.kind !== "background")
+              .map((r) => (
+                <RewardCard
+                  key={r.id}
+                  reward={r}
+                  stars={player?.stars ?? 0}
+                  disabled={purchase.isPending}
+                  onBuy={() => purchase.mutate(r.id)}
+                />
+              ))}
           </div>
         )}
       </section>
@@ -261,11 +268,27 @@ function ThemesSection({
 }
 
 /** Profile customization: equipped avatar (kana, 3D orb, or your photo) + the
- *  profile-card background. Items unlock by LEVEL (earned by learning). */
-function ProfileSection({ level }: { level: number }) {
+ *  profile-card background. Locked items are BOUGHT with coins (purchase_reward);
+ *  free defaults equip instantly. Owned = a default or an owned reward. */
+function ProfileSection({
+  rewards,
+  stars,
+  buying,
+  onBuy,
+}: {
+  rewards: Reward[];
+  stars: number;
+  buying: boolean;
+  onBuy: (rewardId: number) => void;
+}) {
   const { avatarId, setAvatarId, backgroundId, setBackgroundId, photo, setPhoto } =
     useCosmetics();
   const fileRef = useRef<HTMLInputElement>(null);
+
+  const rewardByKey = (key: string | null) =>
+    key ? rewards.find((r) => r.key === key) : undefined;
+  const owns = (key: string | null) =>
+    key === null || (rewardByKey(key)?.ownedQuantity ?? 0) > 0;
 
   const onUpload = (file: File | undefined) => {
     if (!file) return;
@@ -288,7 +311,7 @@ function ProfileSection({ level }: { level: number }) {
               BACKGROUNDS.find((b) => b.id === backgroundId)?.className
             )}
           >
-            <PlayerAvatar level={level} size={88} />
+            <PlayerAvatar size={88} />
           </div>
           <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-neon-cyan">
             Vista previa
@@ -304,8 +327,8 @@ function ProfileSection({ level }: { level: number }) {
               Personaliza tu avatar
             </h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              Desbloqueas avatares y fondos al subir de nivel aprendiendo. ¡Hasta
-              puedes usar tu propia foto!
+              Compra avatares y fondos con las monedas que ganas aprendiendo.
+              Toca uno que tengas para equiparlo. ¡Hasta puedes usar tu foto!
             </p>
           </div>
 
@@ -316,35 +339,47 @@ function ProfileSection({ level }: { level: number }) {
             </p>
             <div className="flex flex-wrap gap-2">
               {AVATARS.map((a) => {
-                const unlocked = level >= a.unlockLevel;
                 const isPhoto = a.kind === "photo";
+                const owned = owns(a.rewardKey);
                 const selected = avatarId === a.id;
+                const reward = rewardByKey(a.rewardKey);
+                const canAfford = stars >= a.cost;
                 return (
                   <button
                     key={a.id}
-                    disabled={!unlocked}
-                    title={unlocked ? a.label : `Nivel ${a.unlockLevel}`}
+                    disabled={buying || (!owned && !canAfford)}
+                    title={
+                      owned
+                        ? a.label
+                        : `${a.label} — ${a.cost} monedas`
+                    }
                     onClick={() => {
-                      if (!unlocked) return;
-                      if (isPhoto) fileRef.current?.click();
-                      else setAvatarId(a.id);
+                      if (owned) {
+                        if (isPhoto) fileRef.current?.click();
+                        else setAvatarId(a.id);
+                      } else if (reward && canAfford) {
+                        onBuy(reward.id);
+                      }
                     }}
                     className={cn(
                       "relative grid size-12 place-items-center rounded-xl border transition-all",
                       selected
                         ? "border-primary ring-2 ring-primary/40"
                         : "border-border/60 hover:border-primary/40",
-                      !unlocked && "opacity-50"
+                      !owned && !canAfford && "opacity-50"
                     )}
                   >
-                    {isPhoto ? (
+                    {isPhoto && owned ? (
                       <Upload className="size-4 text-muted-foreground" />
                     ) : (
-                      <PlayerAvatar avatarId={a.id} level={level} size={40} />
+                      <PlayerAvatar avatarId={a.id} size={40} />
                     )}
-                    {!unlocked ? (
-                      <span className="absolute -bottom-1 -right-1 grid size-4 place-items-center rounded-full bg-background ring-1 ring-border">
-                        <Lock className="size-2.5 text-muted-foreground" />
+                    {!owned ? (
+                      <span className="absolute -bottom-1 -right-1 inline-flex items-center gap-0.5 rounded-full bg-background px-1 py-px ring-1 ring-border">
+                        <CurrencyIcon className="size-2" />
+                        <span className="text-[8px] font-bold tabular-nums">
+                          {a.cost}
+                        </span>
                       </span>
                     ) : null}
                   </button>
@@ -375,33 +410,40 @@ function ProfileSection({ level }: { level: number }) {
             </p>
             <div className="flex flex-wrap gap-2">
               {BACKGROUNDS.map((b) => {
-                const unlocked = level >= b.unlockLevel;
+                const owned = owns(b.rewardKey);
                 const selected = backgroundId === b.id;
+                const reward = rewardByKey(b.rewardKey);
+                const canAfford = stars >= b.cost;
                 return (
                   <button
                     key={b.id}
-                    disabled={!unlocked}
-                    title={unlocked ? b.label : `Nivel ${b.unlockLevel}`}
-                    onClick={() => unlocked && setBackgroundId(b.id)}
+                    disabled={buying || (!owned && !canAfford)}
+                    title={owned ? b.label : `${b.label} — ${b.cost} monedas`}
+                    onClick={() => {
+                      if (owned) setBackgroundId(b.id);
+                      else if (reward && canAfford) onBuy(reward.id);
+                    }}
                     className={cn(
                       "relative grid h-12 w-16 place-items-center overflow-hidden rounded-xl border transition-all",
                       selected
                         ? "border-primary ring-2 ring-primary/40"
                         : "border-border/60 hover:border-primary/40",
-                      !unlocked && "opacity-50"
+                      !owned && !canAfford && "opacity-50"
                     )}
                   >
                     <span
-                      className={cn(
-                        "absolute inset-0",
-                        b.className || "bg-card/60"
-                      )}
+                      className={cn("absolute inset-0", b.className || "bg-card/60")}
                     />
-                    {!unlocked ? (
-                      <Lock className="relative size-3.5 text-muted-foreground" />
-                    ) : (
+                    {owned ? (
                       <span className="relative font-mono text-[8px] uppercase tracking-wider text-foreground/70">
                         {b.label.split(" ")[0]}
+                      </span>
+                    ) : (
+                      <span className="relative inline-flex items-center gap-0.5 rounded-full bg-background/80 px-1 py-px">
+                        <CurrencyIcon className="size-2" />
+                        <span className="text-[8px] font-bold tabular-nums">
+                          {b.cost}
+                        </span>
                       </span>
                     )}
                   </button>

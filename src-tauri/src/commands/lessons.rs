@@ -349,6 +349,26 @@ mod tests {
         conn
     }
 
+    /// Store cosmetics (avatars/backgrounds) + extra themes must be seeded and
+    /// buyable (have a positive cost) so the profile customization works.
+    #[test]
+    fn store_cosmetics_and_themes_seeded() {
+        let conn = fresh_db();
+        let count = |kind: &str| -> i64 {
+            conn.query_row(
+                "SELECT COUNT(*) FROM rewards WHERE kind = ?1 AND cost > 0",
+                [kind],
+                |r| r.get(0),
+            )
+            .unwrap()
+        };
+        assert!(count("avatar") >= 9, "avatars should be buyable in the store");
+        assert!(count("background") >= 4, "backgrounds should be buyable");
+        // Every theme except the base Aether is buyable: sakura, sumi, koi,
+        // matcha, sunset = 5.
+        assert!(count("theme") >= 5, "all non-base themes should be buyable");
+    }
+
     /// Study time + active days must be recorded for EVERY activity type, not
     /// just kanji review (regression: "Tiempo aprendido" / "Días activos" stuck
     /// at 0 because only kanji called bump_daily_session). Verifies the shared
