@@ -436,9 +436,13 @@ function IntroVocab({
               例 · Ejemplo
             </p>
             <p className="mt-1.5 font-jp text-lg">{activity.example}</p>
-            <p className="mt-1 font-mono text-xs text-muted-foreground">
-              {toRomaji(activity.example)}
-            </p>
+            {/* Only show romaji for kana-only examples — converting mixed
+                kanji+kana produces junk like "私ha学生desu.". */}
+            {!/[㐀-鿿]/.test(activity.example) ? (
+              <p className="mt-1 font-mono text-xs text-muted-foreground">
+                {toRomaji(activity.example)}
+              </p>
+            ) : null}
           </div>
         ) : null}
       </HudPanel>

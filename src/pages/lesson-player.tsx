@@ -61,6 +61,9 @@ export default function LessonPlayer() {
     null
   );
   const [confirmingExit, setConfirmingExit] = useState(false);
+  // When the user jumps from an exercise to "review this", remember which step
+  // to return to so they don't have to walk back through the lesson.
+  const [returnToStep, setReturnToStep] = useState<number | null>(null);
   // New seed per lesson entry → fresh, randomized exercises every time.
   const [seed, setSeed] = useState<number>(() => Math.floor(Math.random() * 1e9));
   const { data: generated } = useLessonExercises(lessonId, seed);
@@ -77,6 +80,7 @@ export default function LessonPlayer() {
     setStartedAt(Date.now());
     setCompletion(null);
     setConfirmingExit(false);
+    setReturnToStep(null);
     setSeed(Math.floor(Math.random() * 1e9));
     if (lessonId) startLesson.mutate(lessonId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -266,6 +270,7 @@ export default function LessonPlayer() {
   const handleLearn = (target: string) => {
     const idx = learnIndex.get(target);
     if (idx !== undefined) {
+      setReturnToStep(step); // remember the exercise to come back to
       setVerified(false);
       setAnswered(null);
       setAttemptForStep(0);
@@ -367,6 +372,28 @@ export default function LessonPlayer() {
       <div className="relative z-10 px-8 pt-3">
         <Progress value={progress} className="h-1" />
       </div>
+
+      {/* "Volver a la pregunta" — appears after you jump to review an item, so
+          you return straight to the exercise instead of walking the lesson. */}
+      {returnToStep !== null && step !== returnToStep ? (
+        <div className="pointer-events-none absolute left-1/2 top-20 z-30 -translate-x-1/2">
+          <motion.button
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            onClick={() => {
+              setVerified(false);
+              setAnswered(null);
+              setAttemptForStep(0);
+              setStep(returnToStep);
+              setReturnToStep(null);
+            }}
+            className="pointer-events-auto inline-flex items-center gap-2 rounded-full border border-neon-cyan/40 bg-background/80 px-4 py-2 text-sm font-semibold text-neon-cyan shadow-lg backdrop-blur-md transition-colors hover:bg-neon-cyan/15"
+          >
+            <ArrowLeft className="size-4" />
+            Volver a la pregunta
+          </motion.button>
+        </div>
+      ) : null}
 
       <main className="relative z-10 flex-1 overflow-y-auto px-8 pt-8 pb-28">
         <div className="flex min-h-full items-center justify-center">
