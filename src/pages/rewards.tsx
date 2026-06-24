@@ -88,8 +88,10 @@ export default function RewardsPage() {
           jp="二倍経験値"
           description={
             player?.doubleXpActive
-              ? "Activo ahora. Cada XP cuenta el doble."
-              : "Activa un boost cuando tengas uno disponible."
+              ? "Activo ahora. Cada XP cuenta el doble durante 24h."
+              : (player?.doubleXpAvailable ?? 0) > 0
+                ? `Tienes ${player?.doubleXpAvailable} boost(s). Actívalo para duplicar tu XP 24h.`
+                : "Cómpralo abajo en el catálogo y luego actívalo aquí."
           }
           icon={Sparkles}
           tone="from-streak/30 to-neon-pink/20"
@@ -99,11 +101,17 @@ export default function RewardsPage() {
               variant="outline"
               size="sm"
               disabled={
-                player?.doubleXpActive || activateDoubleXp.isPending
+                player?.doubleXpActive ||
+                (player?.doubleXpAvailable ?? 0) <= 0 ||
+                activateDoubleXp.isPending
               }
               onClick={() => activateDoubleXp.mutate()}
             >
-              Activar
+              {player?.doubleXpActive
+                ? "Activo"
+                : (player?.doubleXpAvailable ?? 0) > 0
+                  ? `Activar (${player?.doubleXpAvailable})`
+                  : "Cómpralo abajo ↓"}
             </Button>
           }
         />
@@ -129,7 +137,11 @@ export default function RewardsPage() {
               }
               onClick={() => claimRestDay.mutate()}
             >
-              {player?.restDayActiveToday ? "Activo hoy" : "Tomar hoy"}
+              {player?.restDayActiveToday
+                ? "Activo hoy"
+                : (player?.restDaysAvailable ?? 0) > 0
+                  ? "Tomar hoy"
+                  : "Cómpralo abajo ↓"}
             </Button>
           }
         />

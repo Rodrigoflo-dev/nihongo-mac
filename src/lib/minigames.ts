@@ -53,6 +53,16 @@ export const MINIGAMES: MinigameDef[] = [
     icon: "puzzle",
     tone: "from-neon-cyan/40 to-success/20 ring-neon-cyan/30",
   },
+  {
+    key: "katakana_speed",
+    title: "Katakana Speed",
+    jp: "カタカナ早撃ち",
+    description: "Time attack. Identifica el romaji del katakana que aparece.",
+    difficulties: ["easy", "medium", "hard"],
+    path: "/play/katakana-speed",
+    icon: "zap",
+    tone: "from-neon-pink/40 to-neon-violet/20 ring-neon-pink/30",
+  },
 ];
 
 /** Days since epoch — deterministic per local calendar day */

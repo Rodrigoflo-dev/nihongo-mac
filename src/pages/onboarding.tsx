@@ -118,7 +118,7 @@ export default function OnboardingPage() {
               className="hidden justify-center sm:flex"
             >
               <HoloKanji
-                size={240}
+                size={170}
                 interval={2600}
                 items={[
                   { char: "日", meaning: "Japón" },

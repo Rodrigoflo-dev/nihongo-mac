@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowLeft, Play, RotateCcw, Sparkles, Star, Trophy, Zap } from "lucide-react";
 
@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { burstLevelUp, burstXp } from "@/components/visual/confetti";
+import { GameSummary } from "@/components/play/game-summary";
 import { HoloKanji } from "@/components/visual/holo-kanji";
 import { HudPanel } from "@/components/visual/hud-panel";
 import { useMinigameBest, useRecordMinigameScore } from "@/hooks/use-minigames";
@@ -92,10 +93,61 @@ const YOUON_HIRAGANA: { kana: string; romaji: string }[] = [
   { kana: "りゃ", romaji: "rya" }, { kana: "りゅ", romaji: "ryu" }, { kana: "りょ", romaji: "ryo" },
 ];
 
-function buildPool(includeDakuten: boolean, includeYouon: boolean) {
-  const pool = [...BASIC_HIRAGANA];
-  if (includeDakuten) pool.push(...DAKUTEN_HIRAGANA);
-  if (includeYouon) pool.push(...YOUON_HIRAGANA);
+const BASIC_KATAKANA: { kana: string; romaji: string }[] = [
+  { kana: "ア", romaji: "a" }, { kana: "イ", romaji: "i" }, { kana: "ウ", romaji: "u" },
+  { kana: "エ", romaji: "e" }, { kana: "オ", romaji: "o" },
+  { kana: "カ", romaji: "ka" }, { kana: "キ", romaji: "ki" }, { kana: "ク", romaji: "ku" },
+  { kana: "ケ", romaji: "ke" }, { kana: "コ", romaji: "ko" },
+  { kana: "サ", romaji: "sa" }, { kana: "シ", romaji: "shi" }, { kana: "ス", romaji: "su" },
+  { kana: "セ", romaji: "se" }, { kana: "ソ", romaji: "so" },
+  { kana: "タ", romaji: "ta" }, { kana: "チ", romaji: "chi" }, { kana: "ツ", romaji: "tsu" },
+  { kana: "テ", romaji: "te" }, { kana: "ト", romaji: "to" },
+  { kana: "ナ", romaji: "na" }, { kana: "ニ", romaji: "ni" }, { kana: "ヌ", romaji: "nu" },
+  { kana: "ネ", romaji: "ne" }, { kana: "ノ", romaji: "no" },
+  { kana: "ハ", romaji: "ha" }, { kana: "ヒ", romaji: "hi" }, { kana: "フ", romaji: "fu" },
+  { kana: "ヘ", romaji: "he" }, { kana: "ホ", romaji: "ho" },
+  { kana: "マ", romaji: "ma" }, { kana: "ミ", romaji: "mi" }, { kana: "ム", romaji: "mu" },
+  { kana: "メ", romaji: "me" }, { kana: "モ", romaji: "mo" },
+  { kana: "ヤ", romaji: "ya" }, { kana: "ユ", romaji: "yu" }, { kana: "ヨ", romaji: "yo" },
+  { kana: "ラ", romaji: "ra" }, { kana: "リ", romaji: "ri" }, { kana: "ル", romaji: "ru" },
+  { kana: "レ", romaji: "re" }, { kana: "ロ", romaji: "ro" },
+  { kana: "ワ", romaji: "wa" }, { kana: "ヲ", romaji: "wo" }, { kana: "ン", romaji: "n" },
+];
+
+const DAKUTEN_KATAKANA: { kana: string; romaji: string }[] = [
+  { kana: "ガ", romaji: "ga" }, { kana: "ギ", romaji: "gi" }, { kana: "グ", romaji: "gu" },
+  { kana: "ゲ", romaji: "ge" }, { kana: "ゴ", romaji: "go" },
+  { kana: "ザ", romaji: "za" }, { kana: "ジ", romaji: "ji" }, { kana: "ズ", romaji: "zu" },
+  { kana: "ゼ", romaji: "ze" }, { kana: "ゾ", romaji: "zo" },
+  { kana: "ダ", romaji: "da" }, { kana: "デ", romaji: "de" }, { kana: "ド", romaji: "do" },
+  { kana: "バ", romaji: "ba" }, { kana: "ビ", romaji: "bi" }, { kana: "ブ", romaji: "bu" },
+  { kana: "ベ", romaji: "be" }, { kana: "ボ", romaji: "bo" },
+  { kana: "パ", romaji: "pa" }, { kana: "ピ", romaji: "pi" }, { kana: "プ", romaji: "pu" },
+  { kana: "ペ", romaji: "pe" }, { kana: "ポ", romaji: "po" },
+];
+
+const YOUON_KATAKANA: { kana: string; romaji: string }[] = [
+  { kana: "キャ", romaji: "kya" }, { kana: "キュ", romaji: "kyu" }, { kana: "キョ", romaji: "kyo" },
+  { kana: "シャ", romaji: "sha" }, { kana: "シュ", romaji: "shu" }, { kana: "ショ", romaji: "sho" },
+  { kana: "チャ", romaji: "cha" }, { kana: "チュ", romaji: "chu" }, { kana: "チョ", romaji: "cho" },
+  { kana: "ニャ", romaji: "nya" }, { kana: "ニュ", romaji: "nyu" }, { kana: "ニョ", romaji: "nyo" },
+  { kana: "ヒャ", romaji: "hya" }, { kana: "ヒュ", romaji: "hyu" }, { kana: "ヒョ", romaji: "hyo" },
+  { kana: "ミャ", romaji: "mya" }, { kana: "ミュ", romaji: "myu" }, { kana: "ミョ", romaji: "myo" },
+  { kana: "リャ", romaji: "rya" }, { kana: "リュ", romaji: "ryu" }, { kana: "リョ", romaji: "ryo" },
+];
+
+function buildPool(
+  script: "hiragana" | "katakana",
+  includeDakuten: boolean,
+  includeYouon: boolean
+) {
+  const [basic, dakuten, youon] =
+    script === "katakana"
+      ? [BASIC_KATAKANA, DAKUTEN_KATAKANA, YOUON_KATAKANA]
+      : [BASIC_HIRAGANA, DAKUTEN_HIRAGANA, YOUON_HIRAGANA];
+  const pool = [...basic];
+  if (includeDakuten) pool.push(...dakuten);
+  if (includeYouon) pool.push(...youon);
   return pool;
 }
 
@@ -125,17 +177,24 @@ type Phase = "idle" | "playing" | "done";
 
 export default function HiraganaSpeedGame() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
+  // Same engine drives both kana games, selected by the route.
+  const script: "hiragana" | "katakana" = location.pathname.includes("katakana")
+    ? "katakana"
+    : "hiragana";
+  const baseKey = script === "katakana" ? "katakana_speed" : "hiragana_speed";
+  const titleJp = script === "katakana" ? "カタカナ早撃ち" : "ひらがな早撃ち";
   const difficulty: Difficulty =
     (searchParams.get("d") as Difficulty) || "medium";
   const config = HIRAGANA_SPEED_CONFIG[difficulty];
-  const gameKey = `hiragana_speed_${difficulty}`;
-  const featuredDailyBonus = isDailyFeatured("hiragana_speed") ? 1.25 : 1.0;
-  const featuredWeeklyBonus = isWeeklyFeatured("hiragana_speed") ? 1.5 : 1.0;
+  const gameKey = `${baseKey}_${difficulty}`;
+  const featuredDailyBonus = isDailyFeatured(baseKey) ? 1.25 : 1.0;
+  const featuredWeeklyBonus = isWeeklyFeatured(baseKey) ? 1.5 : 1.0;
 
   const pool = useMemo(
-    () => buildPool(config.includeDakuten, config.includeYouon),
-    [config.includeDakuten, config.includeYouon]
+    () => buildPool(script, config.includeDakuten, config.includeYouon),
+    [script, config.includeDakuten, config.includeYouon]
   );
 
   const { data: best } = useMinigameBest(gameKey);
@@ -145,6 +204,8 @@ export default function HiraganaSpeedGame() {
   const [timeLeft, setTimeLeft] = useState<number>(config.seconds);
   const [score, setScore] = useState(0);
   const [combo, setCombo] = useState(0);
+  const [correctCount, setCorrectCount] = useState(0);
+  const [wrongCount, setWrongCount] = useState(0);
   const [question, setQuestion] = useState<ReturnType<typeof pickQuestion> | null>(
     null
   );
@@ -191,6 +252,8 @@ export default function HiraganaSpeedGame() {
   const start = () => {
     setScore(0);
     setCombo(0);
+    setCorrectCount(0);
+    setWrongCount(0);
     setTimeLeft(config.seconds);
     setQuestion(pickQuestion(pool, null));
     setFeedback(null);
@@ -204,9 +267,11 @@ export default function HiraganaSpeedGame() {
       const points = 1 + Math.floor(combo / 5);
       setScore((s) => s + points);
       setCombo((c) => c + 1);
+      setCorrectCount((n) => n + 1);
       setFeedback("ok");
     } else {
       setCombo(0);
+      setWrongCount((n) => n + 1);
       setFeedback("bad");
     }
     setTimeout(() => {
@@ -224,6 +289,9 @@ export default function HiraganaSpeedGame() {
     return (
       <IntroCard
         best={best ?? 0}
+        titleJp={titleJp}
+        title={script === "katakana" ? "Katakana Speed" : "Hiragana Speed"}
+        kanaName={script === "katakana" ? "katakana" : "hiragana"}
         onStart={start}
         onExit={() => navigate("/play")}
       />
@@ -238,6 +306,8 @@ export default function HiraganaSpeedGame() {
         newBest={submitted.newBest}
         xp={submitted.xp}
         stars={submitted.stars}
+        correct={correctCount}
+        wrong={wrongCount}
         onPlayAgain={start}
         onExit={() => navigate("/play")}
       />
@@ -256,8 +326,7 @@ export default function HiraganaSpeedGame() {
               {DIFFICULTY_LABELS[difficulty]}
             </span>
           </Badge>
-          {isDailyFeatured("hiragana_speed") ||
-          isWeeklyFeatured("hiragana_speed") ? (
+          {isDailyFeatured(baseKey) || isWeeklyFeatured(baseKey) ? (
             <Badge variant="warning" className="text-[10px]">
               +{difficultyBonusPercent(difficulty)}% XP
             </Badge>
@@ -278,7 +347,7 @@ export default function HiraganaSpeedGame() {
 
       <div>
         <div className="flex items-center justify-between font-mono text-[11px] uppercase tracking-[0.25em] text-neon-cyan">
-          <span className="font-jp tracking-[0.2em]">ひらがな早撃ち · {config.label}</span>
+          <span className="font-jp tracking-[0.2em]">{titleJp} · {config.label}</span>
           <span className="tabular-nums">{timeLeft}s</span>
         </div>
         <Progress
@@ -333,10 +402,16 @@ export default function HiraganaSpeedGame() {
 
 function IntroCard({
   best,
+  titleJp,
+  title,
+  kanaName,
   onStart,
   onExit,
 }: {
   best: number;
+  titleJp: string;
+  title: string;
+  kanaName: string;
   onStart: () => void;
   onExit: () => void;
 }) {
@@ -353,14 +428,14 @@ function IntroCard({
             <Zap className="size-7" />
           </motion.div>
           <p className="mt-4 font-jp text-[11px] tracking-[0.4em] text-neon-amber">
-            ひらがな早撃ち
+            {titleJp}
           </p>
           <h2 className="mt-1 font-display text-2xl font-extrabold tracking-tight">
-            Hiragana Speed
+            {title}
           </h2>
           <p className="mt-2 text-sm text-muted-foreground">
-            30 segundos. Identifica el romaji del hiragana que aparece. Combo de
-            5 correctas seguidas duplica los puntos.
+            Time attack. Identifica el romaji del {kanaName} que aparece. Combo
+            de 5 correctas seguidas duplica los puntos.
           </p>
           {best > 0 ? (
             <p className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-neon-amber/40 bg-warning/15 px-3 py-1.5 text-sm text-neon-amber">
@@ -391,6 +466,8 @@ function ResultCard({
   newBest,
   xp,
   stars,
+  correct,
+  wrong,
   onPlayAgain,
   onExit,
 }: {
@@ -399,6 +476,8 @@ function ResultCard({
   newBest: boolean;
   xp: number;
   stars: number;
+  correct: number;
+  wrong: number;
   onPlayAgain: () => void;
   onExit: () => void;
 }) {
@@ -453,6 +532,10 @@ function ResultCard({
                   <Star className="size-3.5 fill-current" /> +{stars}
                 </div>
               ) : null}
+            </div>
+
+            <div className="mt-5">
+              <GameSummary correct={correct} wrong={wrong} />
             </div>
             <div className="mt-7 flex gap-2">
               <Button variant="outline" className="flex-1" onClick={onExit}>

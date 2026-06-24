@@ -47,6 +47,7 @@ function App() {
             <Route path="/play" element={<PlayPage />} />
             <Route path="/play/kanji-match" element={<KanjiMatchGame />} />
             <Route path="/play/hiragana-speed" element={<HiraganaSpeedGame />} />
+            <Route path="/play/katakana-speed" element={<HiraganaSpeedGame />} />
             <Route path="/play/kanji-quiz" element={<KanjiQuizGame />} />
             <Route path="/rewards" element={<RewardsPage />} />
             <Route path="/stats" element={<StatsPage />} />

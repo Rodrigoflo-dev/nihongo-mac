@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { burstLevelUp, burstXp } from "@/components/visual/confetti";
+import { GameSummary } from "@/components/play/game-summary";
 import { HoloKanji } from "@/components/visual/holo-kanji";
 import { HudPanel } from "@/components/visual/hud-panel";
 import { useMinigameBest, useRecordMinigameScore } from "@/hooks/use-minigames";
@@ -187,6 +188,8 @@ export default function KanjiMatchGame() {
           xp={submitted.xp}
           stars={submitted.stars}
           newBest={submitted.newBest}
+          correct={config.pairs}
+          wrong={Math.max(0, moves - config.pairs)}
           onPlayAgain={reset}
           onExit={() => navigate("/play")}
         />
@@ -300,6 +303,8 @@ function ResultCard({
   xp,
   stars,
   newBest,
+  correct,
+  wrong,
   onPlayAgain,
   onExit,
 }: {
@@ -308,6 +313,8 @@ function ResultCard({
   xp: number;
   stars: number;
   newBest: boolean;
+  correct: number;
+  wrong: number;
   onPlayAgain: () => void;
   onExit: () => void;
 }) {
@@ -359,6 +366,11 @@ function ResultCard({
               </div>
             ) : null}
           </div>
+
+          <div className="mt-5">
+            <GameSummary correct={correct} wrong={wrong} unit="pares" />
+          </div>
+
           <div className="mt-7 flex gap-2">
             <Button variant="outline" className="flex-1" onClick={onExit}>
               Salir

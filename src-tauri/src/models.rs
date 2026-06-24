@@ -61,6 +61,8 @@ pub struct PlayerState {
     pub rest_day_active_today: bool,
     pub double_xp_until: Option<String>,
     pub double_xp_active: bool,
+    /// Unused "XP doble" boosts the player has bought and can activate.
+    pub double_xp_available: i64,
     pub last_level_up_at: Option<String>,
 }
 

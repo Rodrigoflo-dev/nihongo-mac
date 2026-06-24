@@ -158,6 +158,17 @@ pub fn read_player_state(conn: &Connection) -> AppResult<PlayerState> {
     let now = Utc::now();
     let today = now.format("%Y-%m-%d").to_string();
 
+    // Unused XP-doble boosts the player can activate.
+    let double_xp_available: i64 = conn
+        .query_row(
+            "SELECT COUNT(*) FROM reward_purchases p
+               JOIN rewards r ON r.id = p.reward_id
+              WHERE p.used_at IS NULL AND r.kind = 'double_xp_24h'",
+            [],
+            |r| r.get(0),
+        )
+        .unwrap_or(0);
+
     conn.query_row(
         "SELECT level, total_xp, current_level_xp, stars, title, title_jp,
                 rest_days_available, rest_day_active_on, double_xp_until,
@@ -204,6 +215,7 @@ pub fn read_player_state(conn: &Connection) -> AppResult<PlayerState> {
                 rest_day_active_today,
                 double_xp_until,
                 double_xp_active,
+                double_xp_available,
                 last_level_up_at,
             })
         },

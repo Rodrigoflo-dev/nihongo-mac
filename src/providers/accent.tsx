@@ -27,11 +27,11 @@ export interface AccentDef {
 // comes first. Each has its own ambient animation (see AccentFX).
 export const ACCENTS: AccentDef[] = [
   { key: "aether", label: "Aether", jp: "標準", swatch: "from-neon-violet to-neon-cyan", requires: null, unlockLevel: 1, fx: "Chispas neón" },
-  { key: "matcha", label: "Matcha", jp: "抹茶", swatch: "from-green-400 to-emerald-300", requires: "theme_matcha", unlockLevel: 4, fx: "Hojas de té flotando" },
-  { key: "sunset", label: "Atardecer", jp: "夕焼け", swatch: "from-amber-400 to-orange-300", requires: "theme_sunset", unlockLevel: 6, fx: "Rayos cálidos y motas doradas" },
-  { key: "sakura", label: "Sakura", jp: "桜", swatch: "from-pink-400 to-rose-300", requires: "theme_sakura", unlockLevel: 8, fx: "Pétalos de cerezo cayendo" },
-  { key: "koi", label: "Koi", jp: "鯉", swatch: "from-red-500 to-orange-400", requires: "theme_koi", unlockLevel: 10, fx: "Burbujas acuáticas" },
-  { key: "sumi", label: "Sumi-e", jp: "墨絵", swatch: "from-slate-400 to-slate-300", requires: "theme_sumi", unlockLevel: 12, fx: "Manchas de tinta" },
+  { key: "matcha", label: "Matcha", jp: "抹茶", swatch: "from-green-400 to-emerald-300", requires: "theme_matcha", unlockLevel: 8, fx: "Hojas de té flotando" },
+  { key: "sunset", label: "Atardecer", jp: "夕焼け", swatch: "from-amber-400 to-orange-300", requires: "theme_sunset", unlockLevel: 15, fx: "Rayos cálidos y motas doradas" },
+  { key: "sakura", label: "Sakura", jp: "桜", swatch: "from-pink-400 to-rose-300", requires: "theme_sakura", unlockLevel: 22, fx: "Pétalos de cerezo cayendo" },
+  { key: "koi", label: "Koi", jp: "鯉", swatch: "from-red-500 to-orange-400", requires: "theme_koi", unlockLevel: 30, fx: "Burbujas acuáticas" },
+  { key: "sumi", label: "Sumi-e", jp: "墨絵", swatch: "from-slate-400 to-slate-300", requires: "theme_sumi", unlockLevel: 40, fx: "Manchas de tinta" },
 ];
 
 const STORAGE_KEY = "nihongo-accent";

@@ -44,9 +44,9 @@ export default function GrammarPage() {
             ) : null
           }
         />
-        <div className="pointer-events-none absolute -right-6 -top-16 hidden lg:block">
+        <div className="pointer-events-none absolute -right-2 -top-6 hidden lg:block">
           <HoloKanji
-            size={220}
+            size={120}
             items={[
               { char: "文", meaning: "Gramática" },
               { char: "語", meaning: "Idioma" },

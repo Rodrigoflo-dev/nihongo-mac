@@ -61,6 +61,7 @@ export interface PlayerState {
   restDayActiveToday: boolean;
   doubleXpUntil: string | null;
   doubleXpActive: boolean;
+  doubleXpAvailable: number;
   lastLevelUpAt: string | null;
 }
 

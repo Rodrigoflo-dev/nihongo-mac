@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { burstLevelUp, burstXp } from "@/components/visual/confetti";
+import { GameSummary } from "@/components/play/game-summary";
 import { HoloKanji } from "@/components/visual/holo-kanji";
 import { HudPanel } from "@/components/visual/hud-panel";
 import { useMinigameBest, useRecordMinigameScore } from "@/hooks/use-minigames";
@@ -84,6 +85,8 @@ export default function KanjiQuizGame() {
   const [timeLeft, setTimeLeft] = useState<number>(config.seconds);
   const [score, setScore] = useState(0);
   const [combo, setCombo] = useState(0);
+  const [correctCount, setCorrectCount] = useState(0);
+  const [wrongCount, setWrongCount] = useState(0);
   const [question, setQuestion] = useState<ReturnType<typeof pickQuestion> | null>(null);
   const [picked, setPicked] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<"ok" | "bad" | null>(null);
@@ -126,6 +129,8 @@ export default function KanjiQuizGame() {
     if (pool.length < 4) return;
     setScore(0);
     setCombo(0);
+    setCorrectCount(0);
+    setWrongCount(0);
     setTimeLeft(config.seconds);
     setQuestion(pickQuestion(pool, null));
     setPicked(null);
@@ -141,9 +146,11 @@ export default function KanjiQuizGame() {
       const points = 1 + Math.floor(combo / 5);
       setScore((s) => s + points);
       setCombo((c) => c + 1);
+      setCorrectCount((n) => n + 1);
       setFeedback("ok");
     } else {
       setCombo(0);
+      setWrongCount((n) => n + 1);
       setFeedback("bad");
     }
     setTimeout(() => {
@@ -177,6 +184,8 @@ export default function KanjiQuizGame() {
         newBest={submitted.newBest}
         xp={submitted.xp}
         stars={submitted.stars}
+        correct={correctCount}
+        wrong={wrongCount}
         onPlayAgain={start}
         onExit={() => navigate("/play")}
       />
@@ -346,6 +355,8 @@ function ResultCard({
   newBest,
   xp,
   stars,
+  correct,
+  wrong,
   onPlayAgain,
   onExit,
 }: {
@@ -354,6 +365,8 @@ function ResultCard({
   newBest: boolean;
   xp: number;
   stars: number;
+  correct: number;
+  wrong: number;
   onPlayAgain: () => void;
   onExit: () => void;
 }) {
@@ -406,6 +419,11 @@ function ResultCard({
                 </div>
               ) : null}
             </div>
+
+            <div className="mt-5">
+              <GameSummary correct={correct} wrong={wrong} />
+            </div>
+
             <div className="mt-7 flex gap-2">
               <Button variant="outline" className="flex-1" onClick={onExit}>
                 Salir

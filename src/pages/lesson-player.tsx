@@ -390,7 +390,9 @@ export default function LessonPlayer() {
             className="pointer-events-auto inline-flex items-center gap-2 rounded-full border border-neon-cyan/40 bg-background/80 px-4 py-2 text-sm font-semibold text-neon-cyan shadow-lg backdrop-blur-md transition-colors hover:bg-neon-cyan/15"
           >
             <ArrowLeft className="size-4" />
-            Volver a la pregunta
+            {steps[returnToStep]?.kind === "dudas"
+              ? "Volver a las dudas"
+              : "Volver a la pregunta"}
           </motion.button>
         </div>
       ) : null}
@@ -412,6 +414,7 @@ export default function LessonPlayer() {
                 key="dudas"
                 topics={currentStep.topics}
                 onJump={(target) => {
+                  setReturnToStep(step); // remember the dudas slide
                   setVerified(false);
                   setAnswered(null);
                   setAttemptForStep(0);
