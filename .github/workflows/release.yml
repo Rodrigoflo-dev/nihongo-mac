@@ -1,0 +1,74 @@
+name: Build & release macOS
+
+on:
+  # Run on tag push like v1.7.0 → creates a published Release with the .dmg
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Set up Rust (stable)
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Add Apple targets (universal build for Intel + Apple Silicon)
+        run: rustup target add aarch64-apple-darwin x86_64-apple-darwin
+
+      - name: Cache Cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            src-tauri/target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('src-tauri/Cargo.toml') }}
+          restore-keys: ${{ runner.os }}-cargo-
+
+      - name: Install npm dependencies
+        run: npm ci
+
+      - name: Build Tauri (macOS universal)
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: "Nihongo ${{ github.ref_name }} (macOS)"
+          releaseBody: |
+            ## Descarga (macOS — Intel y Apple Silicon)
+
+            Baja el **`.dmg`**, ábrelo y arrastra **Nihongo** a Aplicaciones.
+
+            ### ⚠️ Primera apertura (importante)
+            La app no está firmada con un certificado de Apple (de pago), así que
+            macOS la bloquea la primera vez. Para abrirla:
+
+            1. En **Aplicaciones**, haz **clic derecho sobre Nihongo → Abrir**, y
+               confirma **"Abrir"** en el aviso. (Solo la primera vez.)
+            2. Si sale *"Nihongo está dañada y no se puede abrir"*, abre la app
+               **Terminal** y pega esto (luego Enter):
+               ```
+               xattr -dr com.apple.quarantine /Applications/Nihongo.app
+               ```
+               y vuelve a abrirla.
+
+            ### Datos locales
+            Tu progreso vive en `~/Library/Application Support/com.nihongo.app/nihongo.db`.
+          releaseDraft: false
+          prerelease: false
+          # Universal binary → runs on both Apple Silicon and Intel Macs
+          args: "--target universal-apple-darwin"
