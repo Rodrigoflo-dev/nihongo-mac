@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { motion } from "framer-motion";
 import {
   Coffee,
@@ -51,6 +51,9 @@ export default function RewardsPage() {
   const purchase = usePurchaseReward();
   const activateDoubleXp = useActivateDoubleXp();
   const claimRestDay = useClaimRestDay();
+  // Pending purchase awaiting confirmation (so nobody spends coins by accident).
+  const [confirmBuy, setConfirmBuy] = useState<Reward | null>(null);
+  const requestBuy = (r: Reward) => setConfirmBuy(r);
 
   return (
     <div className="mx-auto max-w-5xl space-y-10">
@@ -152,7 +155,7 @@ export default function RewardsPage() {
         rewards={rewards ?? []}
         stars={player?.stars ?? 0}
         buying={purchase.isPending}
-        onBuy={(id) => purchase.mutate(id)}
+        onBuy={requestBuy}
       />
 
       {/* Personalización — accent themes that re-skin the whole app */}
@@ -180,12 +183,26 @@ export default function RewardsPage() {
                   reward={r}
                   stars={player?.stars ?? 0}
                   disabled={purchase.isPending}
-                  onBuy={() => purchase.mutate(r.id)}
+                  onBuy={() => requestBuy(r)}
                 />
               ))}
           </div>
         )}
       </section>
+
+      {/* Purchase confirmation — avoids accidental coin spends */}
+      {confirmBuy ? (
+        <BuyConfirm
+          reward={confirmBuy}
+          stars={player?.stars ?? 0}
+          pending={purchase.isPending}
+          onCancel={() => setConfirmBuy(null)}
+          onConfirm={() => {
+            const id = confirmBuy.id;
+            purchase.mutate(id, { onSettled: () => setConfirmBuy(null) });
+          }}
+        />
+      ) : null}
     </div>
   );
 }
@@ -291,7 +308,7 @@ function ProfileSection({
   rewards: Reward[];
   stars: number;
   buying: boolean;
-  onBuy: (rewardId: number) => void;
+  onBuy: (reward: Reward) => void;
 }) {
   const { avatarId, setAvatarId, backgroundId, setBackgroundId, photo, setPhoto } =
     useCosmetics();
@@ -370,7 +387,7 @@ function ProfileSection({
                         if (isPhoto) fileRef.current?.click();
                         else setAvatarId(a.id);
                       } else if (reward && canAfford) {
-                        onBuy(reward.id);
+                        onBuy(reward);
                       }
                     }}
                     className={cn(
@@ -433,7 +450,7 @@ function ProfileSection({
                     title={owned ? b.label : `${b.label} — ${b.cost} monedas`}
                     onClick={() => {
                       if (owned) setBackgroundId(b.id);
-                      else if (reward && canAfford) onBuy(reward.id);
+                      else if (reward && canAfford) onBuy(reward);
                     }}
                     className={cn(
                       "relative grid h-12 w-16 place-items-center overflow-hidden rounded-xl border transition-all",
@@ -514,6 +531,94 @@ function ActiveCard({
         </div>
       </div>
     </HudPanel>
+  );
+}
+
+/** Confirmation dialog before spending coins — with a preview of the item. */
+function BuyConfirm({
+  reward,
+  stars,
+  pending,
+  onCancel,
+  onConfirm,
+}: {
+  reward: Reward;
+  stars: number;
+  pending: boolean;
+  onCancel: () => void;
+  onConfirm: () => void;
+}) {
+  const canAfford = stars >= reward.cost;
+
+  // Visual preview by kind.
+  let preview: React.ReactNode = null;
+  if (reward.kind === "avatar") {
+    const id = reward.key.replace(/^av_/, "");
+    preview = <PlayerAvatar avatarId={id} size={72} />;
+  } else if (reward.kind === "background") {
+    const bg = BACKGROUNDS.find((b) => "bg_" + b.id === reward.key);
+    preview = (
+      <div className={cn("size-[72px] overflow-hidden rounded-2xl border border-border/50", bg?.className || "bg-card/60")} />
+    );
+  } else if (reward.kind === "theme") {
+    const acc = ACCENTS.find((a) => a.requires === reward.key);
+    preview = (
+      <div className={cn("size-[72px] rounded-full bg-gradient-to-br shadow-lg", acc?.swatch ?? "from-neon-violet to-neon-cyan")} />
+    );
+  } else {
+    preview = (
+      <div className="flex size-[72px] items-center justify-center rounded-2xl border border-primary/20 bg-background/40 text-primary">
+        <Gift className="size-8" />
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-50 grid place-items-center bg-background/70 p-6 backdrop-blur-sm"
+      onClick={onCancel}
+    >
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95, y: 10 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-sm"
+      >
+        <HudPanel glow className="p-6 text-center">
+          <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-neon-cyan">
+            確認 · Confirmar compra
+          </p>
+          <div className="mt-4 flex justify-center">{preview}</div>
+          <h2 className="mt-4 font-display text-xl font-extrabold tracking-tight">
+            {reward.name}
+          </h2>
+          <p className="mt-1 text-sm text-muted-foreground">{reward.description}</p>
+
+          <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-warning/12 px-4 py-2 ring-1 ring-inset ring-warning/20">
+            <CurrencyIcon className="size-4" />
+            <span className="font-bold tabular-nums">{reward.cost}</span>
+          </div>
+          <p className="mt-2 text-xs text-muted-foreground">
+            {canAfford
+              ? `Te quedarán ${stars - reward.cost} monedas.`
+              : `Te faltan ${reward.cost - stars} monedas.`}
+          </p>
+
+          <div className="mt-6 flex gap-2">
+            <Button variant="outline" className="flex-1" onClick={onCancel}>
+              Cancelar
+            </Button>
+            <Button
+              className="flex-1"
+              disabled={!canAfford || pending}
+              onClick={onConfirm}
+            >
+              {pending ? "Comprando…" : "Sí, comprar"}
+            </Button>
+          </div>
+        </HudPanel>
+      </motion.div>
+    </div>
   );
 }
 
