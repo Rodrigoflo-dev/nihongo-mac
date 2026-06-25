@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { CheckCircle2, Mic, Square, Volume2 } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Mic, Square, Volume2 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -55,6 +55,41 @@ const PHRASES: SpeakingPhrase[] = [
     meaning: "Disculpe, ¿dónde está el baño?",
     voice: "Otoya",
   },
+  {
+    id: "p6",
+    jp: "これはいくらですか。",
+    reading: "kore wa ikura desu ka",
+    meaning: "¿Cuánto cuesta esto?",
+    voice: "Kyoko",
+  },
+  {
+    id: "p7",
+    jp: "もう一度お願いします。",
+    reading: "mou ichido onegai shimasu",
+    meaning: "Una vez más, por favor.",
+    voice: "Otoya",
+  },
+  {
+    id: "p8",
+    jp: "日本語が少し分かります。",
+    reading: "nihongo ga sukoshi wakarimasu",
+    meaning: "Entiendo un poco de japonés.",
+    voice: "Kyoko",
+  },
+  {
+    id: "p9",
+    jp: "駅はどこですか。",
+    reading: "eki wa doko desu ka",
+    meaning: "¿Dónde está la estación?",
+    voice: "Otoya",
+  },
+  {
+    id: "p10",
+    jp: "お会計をお願いします。",
+    reading: "okaikei wo onegai shimasu",
+    meaning: "La cuenta, por favor.",
+    voice: "Kyoko",
+  },
 ];
 
 export default function SpeakingPage() {
@@ -70,6 +105,7 @@ export default function SpeakingPage() {
   }, [idx]);
 
   const next = () => setIdx((i) => (i + 1) % PHRASES.length);
+  const prev = () => setIdx((i) => (i - 1 + PHRASES.length) % PHRASES.length);
 
   return (
     <div className="mx-auto max-w-3xl space-y-10">
@@ -153,6 +189,46 @@ export default function SpeakingPage() {
                 {play.ttsError}
               </p>
             ) : null}
+
+            {/* Pronunciation drill: replay at different speeds + syllable guide */}
+            <div className="mt-6 border-t border-border/40 pt-5">
+              <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-neon-cyan">
+                発音 · Ejercicio de pronunciación
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Escúchala lento y repite parte por parte.
+              </p>
+              <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
+                {[
+                  { label: "Lento", rate: 95 },
+                  { label: "Normal", rate: 160 },
+                  { label: "Rápido", rate: 210 },
+                ].map((s) => (
+                  <Button
+                    key={s.label}
+                    size="sm"
+                    variant="outline"
+                    disabled={play.isPending}
+                    onClick={() =>
+                      play.mutate({ text: phrase.jp, voice: phrase.voice, rate: s.rate })
+                    }
+                  >
+                    <Volume2 className="size-3.5" />
+                    {s.label}
+                  </Button>
+                ))}
+              </div>
+              <div className="mt-3 flex flex-wrap justify-center gap-1.5">
+                {phrase.reading.split(/[\s,、。]+/).filter(Boolean).map((part, i) => (
+                  <span
+                    key={i}
+                    className="rounded-md border border-neon-cyan/30 bg-neon-cyan/5 px-2 py-1 font-mono text-xs text-neon-cyan/90"
+                  >
+                    {part}
+                  </span>
+                ))}
+              </div>
+            </div>
             </div>
           </HudPanel>
 
@@ -166,15 +242,26 @@ export default function SpeakingPage() {
               onStop={rec.stop}
             />
             <PlaybackPanel recordedUrl={rec.recordedUrl} />
-            <Button
-              size="lg"
-              variant="outline"
-              onClick={next}
-              className="h-full"
-            >
-              Siguiente
-              <CheckCircle2 className="size-4" />
-            </Button>
+            <div className="flex h-full flex-col gap-2">
+              <Button
+                size="lg"
+                variant="ghost"
+                onClick={prev}
+                className="flex-1"
+              >
+                <ArrowLeft className="size-4" />
+                Atrás
+              </Button>
+              <Button
+                size="lg"
+                variant="outline"
+                onClick={next}
+                className="flex-1"
+              >
+                Siguiente
+                <CheckCircle2 className="size-4" />
+              </Button>
+            </div>
           </div>
 
           {rec.recording && rec.silent ? (

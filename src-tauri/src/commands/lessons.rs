@@ -392,6 +392,35 @@ mod tests {
         conn
     }
 
+    /// Reading + listening must have enough content (10 each) with valid
+    /// comprehension questions, so the practice sections feel complete.
+    #[test]
+    fn reading_and_listening_have_enough_content() {
+        let conn = fresh_db();
+        let count = |table: &str| -> i64 {
+            conn.query_row(&format!("SELECT COUNT(*) FROM {table}"), [], |r| r.get(0))
+                .unwrap()
+        };
+        assert!(count("reading_passages") >= 10, "expected >=10 reading passages");
+        assert!(count("listening_dialogues") >= 10, "expected >=10 listening dialogues");
+        // Every passage/dialogue must have a non-empty questions JSON object.
+        for table in ["reading_passages", "listening_dialogues"] {
+            let mut stmt = conn
+                .prepare(&format!("SELECT questions FROM {table}"))
+                .unwrap();
+            let rows = stmt
+                .query_map([], |r| r.get::<_, Option<String>>(0))
+                .unwrap();
+            for q in rows {
+                let json = q.unwrap().unwrap_or_default();
+                assert!(
+                    json.contains("\"questions\""),
+                    "{table} row missing questions JSON"
+                );
+            }
+        }
+    }
+
     /// Store cosmetics (avatars/backgrounds) + extra themes must be seeded and
     /// buyable (have a positive cost) so the profile customization works.
     #[test]

@@ -63,6 +63,26 @@ export const MINIGAMES: MinigameDef[] = [
     icon: "zap",
     tone: "from-neon-pink/40 to-neon-violet/20 ring-neon-pink/30",
   },
+  {
+    key: "sentence_complete",
+    title: "Completa la frase",
+    jp: "文を完成",
+    description: "Elige la partícula o palabra que completa la frase (は・を・に・で…).",
+    difficulties: ["easy", "medium", "hard"],
+    path: "/play/sentence-complete",
+    icon: "puzzle",
+    tone: "from-success/40 to-neon-cyan/20 ring-success/30",
+  },
+  {
+    key: "response",
+    title: "Responde",
+    jp: "返事ゲーム",
+    description: "Escucha lo que dicen y elige la respuesta natural — como una conversación.",
+    difficulties: ["easy", "medium", "hard"],
+    path: "/play/response",
+    icon: "headphones",
+    tone: "from-neon-cyan/40 to-primary/20 ring-neon-cyan/30",
+  },
 ];
 
 /** Days since epoch — deterministic per local calendar day */

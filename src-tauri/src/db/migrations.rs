@@ -99,6 +99,11 @@ const MIGRATIONS: &[(u32, &str, &str)] = &[
         "019_theme_prices",
         include_str!("../../migrations/019_theme_prices.sql"),
     ),
+    (
+        20,
+        "020_more_reading_listening",
+        include_str!("../../migrations/020_more_reading_listening.sql"),
+    ),
 ];
 
 /// Run all pending migrations against the connection.

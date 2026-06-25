@@ -12,6 +12,8 @@ import ExamPage from "@/pages/exam";
 import HiraganaSpeedGame from "@/pages/minigame-hiragana-speed";
 import KanjiMatchGame from "@/pages/minigame-kanji-match";
 import KanjiQuizGame from "@/pages/minigame-kanji-quiz";
+import SentenceCompleteGame from "@/pages/minigame-sentence";
+import ResponseGame from "@/pages/minigame-response";
 import LearnPage from "@/pages/learn";
 import LessonPlayer from "@/pages/lesson-player";
 import ReviewLessonsPage from "@/pages/review-lessons";
@@ -48,6 +50,8 @@ function App() {
             <Route path="/play/kanji-match" element={<KanjiMatchGame />} />
             <Route path="/play/hiragana-speed" element={<HiraganaSpeedGame />} />
             <Route path="/play/katakana-speed" element={<HiraganaSpeedGame />} />
+            <Route path="/play/sentence-complete" element={<SentenceCompleteGame />} />
+            <Route path="/play/response" element={<ResponseGame />} />
             <Route path="/play/kanji-quiz" element={<KanjiQuizGame />} />
             <Route path="/rewards" element={<RewardsPage />} />
             <Route path="/stats" element={<StatsPage />} />
