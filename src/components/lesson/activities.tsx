@@ -61,7 +61,12 @@ function TtsErrorNote({ message }: { message: string | null }) {
 // ---------------------------------------------------------------------------
 
 function normalizeSentence(s: string): string {
-  return s.trim().replace(/[。、.\s]+$/g, "").replace(/\s+/g, "");
+  return s
+    .trim()
+    // strip the apostrophe wanakana inserts to disambiguate ん (kon'nichiwa)
+    .replace(/['’ʼ]/g, "")
+    .replace(/[。、.\s]+$/g, "")
+    .replace(/\s+/g, "");
 }
 
 function levenshtein(a: string, b: string): number {

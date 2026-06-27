@@ -6,9 +6,13 @@ import { Progress } from "@/components/ui/progress";
 import { PlayerAvatar } from "@/components/profile/player-avatar";
 import { CurrencyBadge } from "@/components/visual/currency-icon";
 import { usePlayer } from "@/hooks/use-player";
+import { BACKGROUNDS, useCosmetics } from "@/providers/cosmetics";
+import { cn } from "@/lib/utils";
 
 export function SidebarPlayer() {
   const { data: player } = usePlayer();
+  const { backgroundId } = useCosmetics();
+  const bg = BACKGROUNDS.find((b) => b.id === backgroundId);
 
   if (!player) {
     return <div className="h-[96px] px-3" data-tauri-no-drag />;
@@ -33,6 +37,11 @@ export function SidebarPlayer() {
         className="group relative block overflow-hidden rounded-xl glass transition-shadow hover:shadow-[0_0_28px_-10px_color-mix(in_oklch,var(--color-primary)_70%,transparent)]"
         title="Personaliza tu perfil"
       >
+        {/* Equipped profile background (matches the store preview) */}
+        {bg?.className ? (
+          <span aria-hidden className={cn("absolute inset-0 opacity-70", bg.className)} />
+        ) : null}
+
         {/* "Personalizar" affordance */}
         <span className="absolute right-2 top-2 z-10 flex items-center gap-1 rounded-full bg-background/50 px-1.5 py-0.5 font-mono text-[8px] uppercase tracking-[0.15em] text-muted-foreground opacity-0 backdrop-blur transition-opacity group-hover:opacity-100">
           <Settings2 className="size-2.5" />

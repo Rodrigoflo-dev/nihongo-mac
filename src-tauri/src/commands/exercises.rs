@@ -23,6 +23,54 @@ use crate::db::DbState;
 use crate::error::AppResult;
 use crate::models::{Activity, LessonActivities};
 
+/// Real-life situational questions ("en esta situación, ¿qué dices?"). Verified
+/// fixed conversation responses, mixed into every round for practical practice.
+const SITUATIONS: &[(&str, &str, [&str; 3])] = &[
+    ("Alguien te dice «おはようございます». ¿Qué respondes?", "おはようございます。", ["さようなら。", "おやすみなさい。", "いただきます。"]),
+    ("El empleado dice «いらっしゃいませ» y quieres un café. ¿Qué dices?", "コーヒーをください。", ["ありがとう。", "さようなら。", "はじめまして。"]),
+    ("Te presentan a alguien por primera vez. ¿Qué dices?", "はじめまして。", ["おかえりなさい。", "いただきます。", "おやすみ。"]),
+    ("Alguien te ayudó. ¿Cómo agradeces de forma cortés?", "ありがとうございます。", ["すみません。", "ごめんなさい。", "いただきます。"]),
+    ("Vas a empezar a comer. ¿Qué dices?", "いただきます。", ["ごちそうさま。", "おやすみ。", "ただいま。"]),
+    ("Terminaste de comer. ¿Qué dices?", "ごちそうさまでした。", ["いただきます。", "こんばんは。", "はじめまして。"]),
+    ("Llegas a casa. ¿Qué dices?", "ただいま。", ["いってきます。", "さようなら。", "こんにちは。"]),
+    ("Alguien sale de casa y dice «いってきます». ¿Qué respondes?", "いってらっしゃい。", ["おかえりなさい。", "ただいま。", "おやすみ。"]),
+    ("Es de noche y te vas a dormir. ¿Qué dices?", "おやすみなさい。", ["こんにちは。", "いってきます。", "はじめまして。"]),
+    ("Quieres preguntar cuánto cuesta algo. ¿Qué dices?", "いくらですか。", ["どこですか。", "なんじですか。", "だれですか。"]),
+    ("Necesitas disculparte para llamar la atención. ¿Qué dices?", "すみません。", ["おはよう。", "ありがとう。", "いただきます。"]),
+    ("Te despides de alguien al irte. ¿Qué dices?", "さようなら。", ["おはよう。", "ただいま。", "いただきます。"]),
+];
+
+fn build_situation(rng: &mut StdRng, idx: usize) -> Activity {
+    let (prompt, correct, distractors) = SITUATIONS[rng.gen_range(0..SITUATIONS.len())];
+    let mut options: Vec<String> = vec![correct.to_string()];
+    options.extend(distractors.iter().map(|s| s.to_string()));
+    options.shuffle(rng);
+    let correct_index = options
+        .iter()
+        .position(|o| o == correct)
+        .unwrap_or(0);
+    Activity::Quiz {
+        id: format!("gen-sit-{idx}"),
+        prompt: prompt.to_string(),
+        prompt_jp: None,
+        options,
+        correct_index,
+        explanation: Some(format!("En esa situación se dice «{correct}».")),
+    }
+}
+
+/// Clean, common Spanish meanings used as plausible wrong options for the
+/// "¿qué significa?" questions (keeps distractors in Spanish, never English).
+const COMMON_MEANINGS: &[&str] = &[
+    "agua", "fuego", "montaña", "río", "persona", "día", "mes", "año", "sol",
+    "luna", "libro", "escuela", "estudiante", "profesor", "amigo", "casa",
+    "coche", "tren", "comida", "perro", "gato", "grande", "pequeño", "nuevo",
+    "viejo", "blanco", "negro", "rojo", "azul", "comer", "beber", "ir", "venir",
+    "ver", "hablar", "leer", "escribir", "comprar", "dinero", "tiempo",
+    "mañana", "tarde", "noche", "gracias", "adiós", "arriba", "abajo", "salir",
+    "entrar", "tienda", "estación", "trabajo", "ciudad", "país", "mano", "ojo",
+];
+
 const TOTAL: usize = 20;
 const N_FACIL: usize = 7;
 const N_MEDIO: usize = 7;
@@ -56,11 +104,20 @@ struct Item {
 
 /// Take the first gloss from a "a / b, c" style meaning string.
 fn primary_gloss(s: &str) -> String {
-    s.split(['/', ',', '；', ';', '・'])
+    // Take the first sense…
+    let first = s
+        .split(['/', ',', '；', ';', '・'])
         .map(|x| x.trim())
         .find(|x| !x.is_empty())
-        .unwrap_or(s.trim())
-        .to_string()
+        .unwrap_or(s.trim());
+    // …and drop any parenthetical note so options are short and never show a
+    // half-open paren like "Buenos días (formal".
+    let cut = first.split(['(', '（']).next().unwrap_or(first).trim();
+    if cut.is_empty() {
+        first.to_string()
+    } else {
+        cut.to_string()
+    }
 }
 
 fn parse_json_array(s: &Option<String>) -> Vec<String> {
@@ -392,6 +449,12 @@ fn build_write_reading(idx: usize, item: &Item) -> Option<Activity> {
     if item.reading.is_empty() {
         return None;
     }
+    // Only ask for the reading of words that actually contain KANJI. Asking the
+    // reading of an already-kana word (こんにちは) is pointless and the romaji
+    // input mangles particles like は→wa, blocking the learner.
+    if !item.jp.chars().any(is_kanji_char) || item.reading == item.jp {
+        return None;
+    }
     let accepted: Vec<String> = item
         .reading
         .split(['／', '/', '・', ';', '；', ',', '、'])
@@ -528,10 +591,12 @@ pub fn generate(conn: &Connection, lesson_id: i64, seed: u64) -> Vec<GeneratedEx
         return vec![];
     }
 
-    // Distractor pools (level-appropriate). Catalog guarantees these are full.
-    let meaning_pool: Vec<String> = catalog
+    // Meaning distractors: taught meanings + a curated CLEAN Spanish list. We do
+    // NOT use the kanji catalog here — its long tail has English fallbacks
+    // ("Interval") that made wrong options obvious and ugly.
+    let meaning_pool: Vec<String> = COMMON_MEANINGS
         .iter()
-        .map(|i| i.meaning.clone())
+        .map(|s| s.to_string())
         .chain(items.iter().map(|i| i.meaning.clone()))
         .collect();
     let kanji_pool: Vec<String> = catalog
@@ -583,6 +648,19 @@ pub fn generate(conn: &Connection, lesson_id: i64, seed: u64) -> Vec<GeneratedEx
                 made += 1;
             }
         }
+    }
+
+    // Mix in 2 real-life situational questions (one in fácil, one in medio) so
+    // practice always includes "en esta situación, ¿qué dices?".
+    if out.len() >= 12 {
+        out[2] = GeneratedExercise {
+            activity: build_situation(&mut rng, global_idx),
+            difficulty: "facil".to_string(),
+        };
+        out[10] = GeneratedExercise {
+            activity: build_situation(&mut rng, global_idx + 1),
+            difficulty: "medio".to_string(),
+        };
     }
     out
 }
@@ -673,11 +751,17 @@ mod tests {
         let ex = generate(&conn, lesson_id, 999);
         for e in &ex {
             if let Activity::Quiz {
+                id,
                 options,
                 correct_index,
                 ..
             } = &e.activity
             {
+                // Situational questions (gen-sit) are intentionally general
+                // conversation, not lesson-specific vocabulary.
+                if id.starts_with("gen-sit") {
+                    continue;
+                }
                 let correct = &options[*correct_index];
                 assert!(
                     allowed.contains(correct),
@@ -685,6 +769,98 @@ mod tests {
                 );
             }
         }
+    }
+
+    /// HARD GUARD against the critical bugs Rodrigo hit: walks EVERY lesson with
+    /// several seeds and asserts every generated exercise is answerable and fair:
+    ///  - MCQs have >=2 DISTINCT options, a valid correct index, and NO option
+    ///    with a parenthesis (no truncated "(formal" glosses).
+    ///  - "Escribe la lectura" only targets words that CONTAIN kanji (never a
+    ///    kana-only word like こんにちは, which the romaji input mangles).
+    ///  - Every write exercise has accepted answers + a hint; draws are kanji.
+    #[test]
+    fn all_lessons_generate_answerable_fair_exercises() {
+        let conn = fresh_db();
+        let has_kanji = |s: &str| {
+            s.chars().any(|c| {
+                ('\u{4E00}'..='\u{9FFF}').contains(&c)
+                    || ('\u{3400}'..='\u{4DBF}').contains(&c)
+            })
+        };
+        let mut lessons_seen = 0;
+        for id in 1..=200 {
+            for seed in [1u64, 7, 42] {
+                let ex = generate(&conn, id, seed);
+                if ex.is_empty() {
+                    continue;
+                }
+                lessons_seen += 1;
+                for e in &ex {
+                    match &e.activity {
+                        Activity::Quiz {
+                            options,
+                            correct_index,
+                            ..
+                        }
+                        | Activity::Listening {
+                            options,
+                            correct_index,
+                            ..
+                        } => {
+                            assert!(options.len() >= 2, "MCQ needs >=2 options (lesson {id})");
+                            assert!(
+                                *correct_index < options.len(),
+                                "correct idx out of range (lesson {id})"
+                            );
+                            let mut sorted = options.clone();
+                            sorted.sort();
+                            sorted.dedup();
+                            assert_eq!(
+                                sorted.len(),
+                                options.len(),
+                                "options must be DISTINCT (lesson {id}): {options:?}"
+                            );
+                            for o in options {
+                                assert!(
+                                    !o.contains('(') && !o.contains('（'),
+                                    "option has a parenthesis/truncated gloss (lesson {id}): '{o}'"
+                                );
+                            }
+                        }
+                        Activity::WriteSentence {
+                            id: aid,
+                            prompt,
+                            accepted,
+                            hint,
+                            ..
+                        } => {
+                            assert!(!accepted.is_empty(), "write needs accepted answers (lesson {id})");
+                            assert!(
+                                hint.as_ref().map(|h| !h.trim().is_empty()).unwrap_or(false),
+                                "write needs a hint (lesson {id})"
+                            );
+                            if aid.starts_with("gen-write") {
+                                assert!(
+                                    has_kanji(prompt),
+                                    "reading-write must target a KANJI word, not kana-only (lesson {id}): {prompt}"
+                                );
+                            }
+                        }
+                        Activity::WriteKanji { kanji_char, .. } => {
+                            assert!(
+                                has_kanji(kanji_char),
+                                "draw must be a kanji (lesson {id}): {kanji_char}"
+                            );
+                        }
+                        _ => {}
+                    }
+                }
+            }
+        }
+        assert!(
+            lessons_seen > 30,
+            "expected many lessons to generate exercises, got {lessons_seen}"
+        );
     }
 
     #[test]
