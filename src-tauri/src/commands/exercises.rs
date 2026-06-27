@@ -435,61 +435,25 @@ fn is_kanji_char(c: char) -> bool {
     ('\u{4E00}'..='\u{9FFF}').contains(&c) || ('\u{3400}'..='\u{4DBF}').contains(&c)
 }
 
-/// Build a guiding hint for a "write" exercise: meaning + length + first sound,
-/// so it nudges memory of HOW it's written without giving the whole answer.
-fn reading_hint(meaning: &str, reading: &str) -> String {
-    let n = reading.chars().count();
-    let first = reading.chars().next().map(String::from).unwrap_or_default();
-    format!("«{meaning}» · {n} caracteres, empieza con «{first}»")
-}
-
-/// "Escribe la lectura" — type the reading in hiragana (uses the JP keyboard /
-/// romaji input). Accepts each variant when a reading lists several (よん／し).
-fn build_write_reading(idx: usize, item: &Item) -> Option<Activity> {
-    if item.reading.is_empty() {
-        return None;
-    }
-    // Only ask for the reading of words that actually contain KANJI. Asking the
-    // reading of an already-kana word (こんにちは) is pointless and the romaji
-    // input mangles particles like は→wa, blocking the learner.
-    if !item.jp.chars().any(is_kanji_char) || item.reading == item.jp {
-        return None;
-    }
-    let accepted: Vec<String> = item
-        .reading
-        .split(['／', '/', '・', ';', '；', ',', '、'])
-        .map(|s| s.trim().to_string())
-        .filter(|s| !s.is_empty())
-        .collect();
-    if accepted.is_empty() {
-        return None;
-    }
-    let hint = reading_hint(&item.meaning, &accepted[0]);
-    Some(Activity::WriteSentence {
-        id: format!("gen-write-{idx}"),
-        prompt: format!("Escribe en hiragana cómo se lee {}", item.jp),
-        hint: Some(hint),
-        accepted,
-        explanation: rich_explanation(item),
-    })
-}
-
-/// "Escribe la palabra" — write the WORD in Japanese from its meaning. The hint
-/// shows WHICH kanji you need to build it (memorize the components), and we
-/// accept either the kanji form or its kana reading.
+/// "Escribe la palabra" — the learner writes the WORD correctly in Japanese from
+/// its meaning (NOT its pronunciation). This teaches real spelling: e.g. こんにちは
+/// is written with は even though it sounds «wa». Works for kanji words (学生) and
+/// kana words (こんにちは). Accepts the kanji form and the kana reading; the
+/// frontend grader is phonetically tolerant so romaji-input quirks don't block.
 fn build_write_word(idx: usize, item: &Item) -> Option<Activity> {
-    // Only for multi-character words that actually contain kanji.
+    // Need at least 2 characters to be worth typing.
+    if item.jp.chars().count() < 2 {
+        return None;
+    }
     let kanji: Vec<String> = item
         .jp
         .chars()
         .filter(|c| is_kanji_char(*c))
         .map(String::from)
         .collect();
-    if item.jp.chars().count() < 2 || kanji.is_empty() {
-        return None;
-    }
+
     let mut accepted = vec![item.jp.clone()];
-    if !item.reading.is_empty() {
+    if !item.reading.is_empty() && item.reading != item.jp {
         for r in item
             .reading
             .split(['／', '/', '・', ';', '；', ',', '、'])
@@ -499,14 +463,25 @@ fn build_write_word(idx: usize, item: &Item) -> Option<Activity> {
             accepted.push(r.to_string());
         }
     }
-    let hint = format!(
-        "Necesitas estos kanji: {} · se lee «{}»",
-        kanji.join(" + "),
-        item.reading
-    );
+    accepted.sort();
+    accepted.dedup();
+
+    // Hint teaches the spelling. Highlight the は/へ particle-spelling trap.
+    let ends_wa = item.jp.ends_with('は');
+    let ends_e = item.jp.ends_with('へ');
+    let hint = if ends_wa {
+        format!("«{}» · termina en は (se escribe は aunque suene «wa»)", item.meaning)
+    } else if ends_e {
+        format!("«{}» · termina en へ (se escribe へ aunque suene «e»)", item.meaning)
+    } else if kanji.is_empty() {
+        format!("«{}» · {} caracteres en kana", item.meaning, item.jp.chars().count())
+    } else {
+        format!("Necesitas estos kanji: {} · se lee «{}»", kanji.join(" + "), item.reading)
+    };
+
     Some(Activity::WriteSentence {
         id: format!("gen-word-{idx}"),
-        prompt: format!("Escribe «{}» en japonés", item.meaning),
+        prompt: format!("Escribe «{}» en japonés (escribe la palabra, no como suena)", item.meaning),
         hint: Some(hint),
         accepted,
         explanation: rich_explanation(item),
@@ -552,14 +527,14 @@ fn build_for_band(
                 None
             }
         }
-        // medio: writing practice (with hints) — type the word or its reading
+        // medio: writing practice — type the WORD correctly with the keyboard
+        // (works for kana greetings and kanji words alike).
         "medio" => match roll {
-            0 => build_write_word(idx, item).or_else(|| build_write_reading(idx, item)),
-            1 => build_write_reading(idx, item),
+            0 | 1 => build_write_word(idx, item),
             2 => build_listen(rng, idx, item, meaning_pool),
             _ => None,
         },
-        // difícil: draw the kanji, or fill-the-blank in a real sentence
+        // difícil: draw the kanji, fill-the-blank in a real sentence, or write it
         _ => match roll {
             0 => build_draw(idx, item),
             1 => build_blank_exercise(rng, idx, item, kanji_pool),

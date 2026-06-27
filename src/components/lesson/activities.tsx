@@ -69,6 +69,26 @@ function normalizeSentence(s: string): string {
     .replace(/\s+/g, "");
 }
 
+/**
+ * Phonetically-loose comparison key. The romaji IME can't always produce a word
+ * exactly (こんにちは ↔ こんいちわ): ん before a vowel and the は/わ・へ/え
+ * particle spellings collide. We compare on romaji with those quirks collapsed
+ * so the learner isn't blocked, while the screen still shows the correct
+ * spelling to learn from.
+ */
+function looseKey(s: string): string {
+  try {
+    return toRomaji(normalizeSentence(s))
+      .toLowerCase()
+      .replace(/['’\s]/g, "")
+      .replace(/nn/g, "n") // ん double-consonant ambiguity
+      .replace(/wa/g, "ha") // は particle pronounced wa
+      .replace(/\be\b/g, "he");
+  } catch {
+    return normalizeSentence(s);
+  }
+}
+
 function levenshtein(a: string, b: string): number {
   const m = a.length;
   const n = b.length;
@@ -107,6 +127,18 @@ export function evaluateSentence(
   const variants = accepted.map(normalizeSentence).filter(Boolean);
   if (variants.includes(v)) {
     return { correct: true, tone: "success", title: "¡Perfecto! 🎉 Lo escribiste tal cual." };
+  }
+  // Phonetically-equivalent (romaji IME quirks like こんにちは↔こんいちわ): accept
+  // it as correct but nudge them to notice the proper spelling shown below.
+  if (v.length > 0) {
+    const key = looseKey(raw);
+    if (key && accepted.some((a) => looseKey(a) === key)) {
+      return {
+        correct: true,
+        tone: "success",
+        title: "¡Correcto! 🎉 (ojo a la escritura exacta de abajo)",
+      };
+    }
   }
   // Closest accepted variant by edit distance.
   let best = variants[0] ?? "";
