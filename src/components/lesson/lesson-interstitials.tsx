@@ -6,14 +6,114 @@ import { HudPanel } from "@/components/visual/hud-panel";
 import { cn } from "@/lib/utils";
 
 export interface DudaTopic {
+  /** What kind of thing this topic is (drives how we answer). */
+  kind: "kanji" | "vocab" | "grammar";
   /** Spanish label shown in the list. */
   label: string;
-  /** Japanese tag. */
+  /** Japanese tag (kanji char / word / grammar pattern). */
   jp: string;
   /** Searchable keywords (meaning, reading, pattern…). */
   keywords: string;
   /** Step index in the player to jump to. */
   stepIndex: number;
+  // Structured data so we can ANSWER the question inline (all verified, no AI):
+  meaning?: string;
+  reading?: string;
+  onyomi?: string[];
+  kunyomi?: string[];
+  exampleJp?: string;
+  exampleMeaning?: string;
+  explanation?: string;
+  pattern?: string;
+}
+
+const PARTICLE_CHARS = ["は", "が", "を", "に", "へ", "で", "の", "と", "か", "も"];
+
+/** What the learner is actually asking about a topic. */
+type Intent = "reading" | "meaning" | "example" | "usage" | "full";
+
+function detectIntent(q: string): Intent {
+  if (/(lee|leer|lectura|pronunci|se dice|suena|c[oó]mo se dice)/.test(q))
+    return "reading";
+  if (/(significa|significado|quiere decir|traduc|qu[eé] es)/.test(q))
+    return "meaning";
+  if (/(ejemplo|ejemplos|frase|oraci[oó]n)/.test(q)) return "example";
+  if (/(sirve|se usa|usar|c[uú]ando|para qu[eé]|funciona|diferencia|us[oa])/.test(q))
+    return "usage";
+  return "full";
+}
+
+/** Score how well a topic matches the query. */
+function scoreTopic(topic: DudaTopic, q: string, words: string[]): number {
+  let score = 0;
+  if (topic.jp && q.includes(topic.jp)) score += 6;
+  if (topic.reading && q.includes(topic.reading)) score += 5;
+  if (topic.kind === "grammar") {
+    for (const p of PARTICLE_CHARS) {
+      if (topic.pattern?.includes(p) && q.includes(p)) score += 5;
+    }
+  }
+  const hay = `${topic.label} ${topic.jp} ${topic.keywords}`.toLowerCase();
+  if (hay.includes(q)) score += 2;
+  for (const w of words) if (hay.includes(w)) score += 1;
+  return score;
+}
+
+/**
+ * Answer the typed doubt from the lesson's own verified data. Returns the answer
+ * text + which topic it's about (so we can also offer "repasar a fondo").
+ */
+export function answerDuda(
+  rawQuery: string,
+  topics: DudaTopic[]
+): { topic: DudaTopic; answer: string } | null {
+  const q = rawQuery.trim().toLowerCase();
+  if (!q) return null;
+  const words = q.split(/\s+/).filter((w) => w.length > 2);
+
+  let best: { topic: DudaTopic; score: number } | null = null;
+  for (const t of topics) {
+    const s = scoreTopic(t, q, words);
+    if (s > 0 && (!best || s > best.score)) best = { topic: t, score: s };
+  }
+  if (!best) return null;
+
+  const t = best.topic;
+  const intent = detectIntent(q);
+  const example =
+    t.exampleJp && t.exampleJp !== t.jp
+      ? t.exampleMeaning
+        ? `Ejemplo: ${t.exampleJp} — ${t.exampleMeaning}.`
+        : `Ejemplo: ${t.exampleJp}.`
+      : "";
+
+  let answer = "";
+  if (t.kind === "kanji") {
+    const on = t.onyomi?.length ? `on'yomi ${t.onyomi.join("・")}` : "";
+    const kun = t.kunyomi?.length ? `kun'yomi ${t.kunyomi.join("・")}` : "";
+    const readings = [on, kun].filter(Boolean).join(", ");
+    if (intent === "reading")
+      answer = `El kanji ${t.jp} se lee: ${readings || t.reading || "—"}.`;
+    else if (intent === "meaning")
+      answer = `El kanji ${t.jp} significa «${t.meaning}».`;
+    else if (intent === "example") answer = example || `${t.jp} = «${t.meaning}».`;
+    else
+      answer = `${t.jp} significa «${t.meaning}». Se lee ${readings || t.reading || "—"}. ${example}`.trim();
+  } else if (t.kind === "vocab") {
+    if (intent === "reading")
+      answer = `«${t.jp}» se lee «${t.reading}».`;
+    else if (intent === "meaning")
+      answer = `«${t.jp}» significa «${t.meaning}».`;
+    else if (intent === "example") answer = example || `«${t.jp}» = «${t.meaning}».`;
+    else
+      answer = `«${t.jp}» (${t.reading}) significa «${t.meaning}». ${example}`.trim();
+  } else {
+    // grammar
+    const head = t.pattern ? `${t.pattern} — ` : "";
+    answer = `${head}${t.explanation ?? t.label}. ${example}`.trim();
+  }
+
+  return { topic: t, answer };
 }
 
 const BANDS = {
@@ -102,20 +202,7 @@ export function DudasInterstitial({
 }) {
   const [q, setQ] = useState("");
 
-  const match = useMemo(() => {
-    const query = q.trim().toLowerCase();
-    if (!query) return null;
-    const words = query.split(/\s+/).filter((w) => w.length > 2);
-    let best: { topic: DudaTopic; score: number } | null = null;
-    for (const t of topics) {
-      const hay = `${t.label} ${t.jp} ${t.keywords}`.toLowerCase();
-      let score = 0;
-      for (const w of words) if (hay.includes(w)) score += 1;
-      if (hay.includes(query)) score += 2;
-      if (score > 0 && (!best || score > best.score)) best = { topic: t, score };
-    }
-    return best?.topic ?? null;
-  }, [q, topics]);
+  const result = useMemo(() => answerDuda(q, topics), [q, topics]);
 
   return (
     <motion.div
@@ -171,21 +258,27 @@ export function DudasInterstitial({
             />
           </div>
           {q.trim() ? (
-            match ? (
-              <button
-                onClick={() => onJump(match.stepIndex)}
-                className="mt-2 flex w-full items-center gap-2 rounded-xl border border-neon-cyan/40 bg-neon-cyan/10 px-4 py-3 text-left text-sm text-neon-cyan transition-colors hover:bg-neon-cyan/15"
-              >
-                <Sparkles className="size-4 shrink-0" />
-                <span>
-                  Repasa: <span className="font-semibold">{match.label}</span>
-                </span>
-                <ArrowRight className="ml-auto size-4" />
-              </button>
+            result ? (
+              <div className="mt-2 rounded-xl border border-neon-cyan/40 bg-neon-cyan/10 p-4">
+                <div className="flex items-start gap-2">
+                  <Sparkles className="mt-0.5 size-4 shrink-0 text-neon-cyan" />
+                  <p className="text-sm leading-relaxed text-foreground">
+                    {result.answer}
+                  </p>
+                </div>
+                <button
+                  onClick={() => onJump(result.topic.stepIndex)}
+                  className="mt-3 flex items-center gap-1.5 text-xs font-semibold text-neon-cyan transition-colors hover:text-neon-cyan/80"
+                >
+                  Repasar «{result.topic.label}» a fondo
+                  <ArrowRight className="size-3.5" />
+                </button>
+              </div>
             ) : (
               <p className="mt-2 rounded-xl bg-muted/40 px-4 py-3 text-xs text-muted-foreground">
-                No encontré un tema exacto. Revisa la lista de arriba o empieza
-                los ejercicios — la respuesta correcta se muestra cuando fallas.
+                No encontré ese tema en esta lección. Prueba con el nombre del
+                kanji, la palabra o la partícula (ej. «¿cómo se lee 学?» o «¿para
+                qué sirve は?»), o toca un tema de arriba.
               </p>
             )
           ) : null}

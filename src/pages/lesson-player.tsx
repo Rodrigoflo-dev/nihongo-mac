@@ -137,11 +137,42 @@ export default function LessonPlayer() {
         if (s.kind !== "activity") return;
         const a = s.activity;
         if (a.kind === "intro_kanji")
-          topics.push({ label: a.meaning, jp: a.kanjiChar, keywords: `${a.meaning} ${a.onyomi.join(" ")} ${a.kunyomi.join(" ")} kanji lectura`, stepIndex: idx });
+          topics.push({
+            kind: "kanji",
+            label: a.meaning,
+            jp: a.kanjiChar,
+            keywords: `${a.meaning} ${a.onyomi.join(" ")} ${a.kunyomi.join(" ")} kanji lectura`,
+            stepIndex: idx,
+            meaning: a.meaning,
+            onyomi: a.onyomi,
+            kunyomi: a.kunyomi,
+            reading: a.kunyomi[0] ?? a.onyomi[0],
+            exampleJp: a.example?.jp,
+            exampleMeaning: a.example?.meaning,
+          });
         else if (a.kind === "intro_vocab")
-          topics.push({ label: a.meaning, jp: a.word, keywords: `${a.meaning} ${a.reading} ${a.word} palabra vocabulario`, stepIndex: idx });
+          topics.push({
+            kind: "vocab",
+            label: a.meaning,
+            jp: a.word,
+            keywords: `${a.meaning} ${a.reading} ${a.word} palabra vocabulario`,
+            stepIndex: idx,
+            meaning: a.meaning,
+            reading: a.reading,
+            exampleJp: a.example ?? undefined,
+          });
         else if (a.kind === "intro_grammar")
-          topics.push({ label: a.title, jp: a.pattern, keywords: `${a.title} ${a.pattern} gramatica`, stepIndex: idx });
+          topics.push({
+            kind: "grammar",
+            label: a.title,
+            jp: a.pattern,
+            keywords: `${a.title} ${a.pattern} gramatica particula`,
+            stepIndex: idx,
+            pattern: a.pattern,
+            explanation: a.explanation,
+            exampleJp: a.example.jp,
+            exampleMeaning: a.example.meaning,
+          });
       });
       out.push({ kind: "dudas", topics });
       out.push(...exerciseSteps);
