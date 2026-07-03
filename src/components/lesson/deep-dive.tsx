@@ -5,12 +5,59 @@ import { ChevronLeft, ChevronRight, Square, Volume2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   cancelSpeech,
+  speakJapanese,
   speakSequence,
   ttsSupported,
   type NarrationLang,
   type NarrationSegment,
 } from "@/lib/tts";
 import { cn } from "@/lib/utils";
+
+/**
+ * Tiny "play this Japanese" button — a self-contained module so each reading /
+ * word can be heard on its own (Rodrigo: "que sean módulos diferentes").
+ */
+export function JaSpeakButton({
+  text,
+  className,
+  "aria-label": ariaLabel = "Escuchar",
+}: {
+  text: string;
+  className?: string;
+  "aria-label"?: string;
+}) {
+  const [playing, setPlaying] = useState(false);
+  useEffect(() => () => cancelSpeech(), []);
+  if (!ttsSupported()) return null;
+  const toggle = () => {
+    if (playing) {
+      cancelSpeech();
+      setPlaying(false);
+      return;
+    }
+    setPlaying(true);
+    speakJapanese(text)
+      .catch(() => {})
+      .finally(() => setPlaying(false));
+  };
+  return (
+    <button
+      type="button"
+      aria-label={ariaLabel}
+      onClick={toggle}
+      className={cn(
+        "inline-grid size-7 place-items-center rounded-full border border-neon-cyan/40 text-neon-cyan transition-colors hover:bg-neon-cyan/10",
+        className
+      )}
+    >
+      {playing ? (
+        <Square className="size-3 fill-current" />
+      ) : (
+        <Volume2 className="size-3.5" />
+      )}
+    </button>
+  );
+}
 
 /** Builds the ordered narration for a given language (Japanese parts stay JP). */
 export type SegmentBuilder = (lang: NarrationLang) => NarrationSegment[];

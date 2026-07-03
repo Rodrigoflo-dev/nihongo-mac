@@ -122,7 +122,17 @@ export async function getJapaneseVoice(
     );
     if (match) return match;
   }
-  return voices[0];
+  return pickBestVoice(voices);
+}
+
+/** Prefer higher-quality (non-"compact") local voices — they sound less robotic. */
+function pickBestVoice(
+  voices: SpeechSynthesisVoice[]
+): SpeechSynthesisVoice | null {
+  if (voices.length === 0) return null;
+  const nonCompact = voices.filter((v) => !/compact|eloquence/i.test(v.name));
+  const pool = nonCompact.length ? nonCompact : voices;
+  return pool.find((v) => v.localService) ?? pool[0];
 }
 
 export async function hasJapaneseVoice(): Promise<boolean> {
@@ -152,8 +162,8 @@ export async function getVoiceForLang(
     const chosen = matches.find((v) => v.name === pref);
     if (chosen) return chosen;
   }
-  // …otherwise prefer a local/default voice for snappier playback.
-  return matches.find((v) => v.localService) ?? matches[0];
+  // …otherwise prefer a higher-quality local voice.
+  return pickBestVoice(matches);
 }
 
 /**
@@ -253,6 +263,19 @@ const JAPANESE_CHAR =
   /[぀-ヿ㐀-䶿一-鿿ー々ｦ-ﾟ]/;
 
 /**
+ * Drop furigana-style reading glosses — "(わたし)" right after a kanji — from the
+ * SPOKEN text only (the visible text keeps them). Otherwise "私 (わたし)" is read
+ * "watashi … watashi". Parentheticals that aren't pure kana (e.g. "(しりつ,
+ * privado)") are kept.
+ */
+function stripKanaGlosses(text: string): string {
+  return text
+    .replace(/[（(]\s*[぀-ヿー]+\s*[)）]/g, "")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+}
+
+/**
  * Split a mixed explanation (mostly Spanish/English with inline Japanese like
  * "私 (わたし) es la forma…") into segments, so the Japanese runs are read with a
  * Japanese voice and the rest in the explanation language. Runs that are only
@@ -272,7 +295,7 @@ export function toMixedSegments(
     }
     buf = "";
   };
-  for (const ch of text) {
+  for (const ch of stripKanaGlosses(text)) {
     const jp = JAPANESE_CHAR.test(ch);
     if (buf && jp !== bufJp) flush();
     if (!buf) bufJp = jp;
@@ -295,8 +318,12 @@ export async function speakSequence(
   stopSynth();
   const myToken = ++sequenceToken;
   const rate = opts.rate ?? 1;
-  for (const seg of segments) {
+  // A short silence between chunks so items don't run together ("shi … watashi"
+  // instead of "shiwatashi"). Longer when reading slowly.
+  const gapMs = Math.round(280 / rate);
+  for (let i = 0; i < segments.length; i++) {
     if (myToken !== sequenceToken) return; // superseded or stopped
+    const seg = segments[i];
     if (!seg.text.trim()) continue;
     try {
       if (seg.lang === "ja") {
@@ -306,6 +333,9 @@ export async function speakSequence(
       }
     } catch {
       // A missing voice / engine hiccup on one segment shouldn't abort the rest.
+    }
+    if (i < segments.length - 1 && myToken === sequenceToken) {
+      await new Promise((r) => setTimeout(r, gapMs));
     }
   }
 }

@@ -24,6 +24,7 @@ import { RomajiLine } from "@/components/lesson/romaji-line";
 import {
   AudioBar,
   DeepDive,
+  JaSpeakButton,
   type DeepDivePage,
 } from "@/components/lesson/deep-dive";
 import { StrokeTrainer, type StrokeProgress } from "@/components/kanji/stroke-trainer";
@@ -350,7 +351,10 @@ function WordChips({
           key={i}
           className="rounded-xl border border-l-2 border-border/40 border-l-neon-cyan/60 bg-card/40 p-3"
         >
-          <p className="font-jp text-base">{w.jp}</p>
+          <div className="flex items-start justify-between gap-2">
+            <p className="font-jp text-base">{w.jp}</p>
+            <JaSpeakButton text={w.jp} aria-label={`Escuchar ${w.jp}`} />
+          </div>
           <p className="font-jp text-[11px] text-muted-foreground">{w.reading}</p>
           <p className="mt-0.5 text-xs text-muted-foreground">{w.meaning}</p>
         </div>
@@ -485,13 +489,6 @@ function IntroKanji({
   activity: Extract<Activity, { kind: "intro_kanji" }>;
 }) {
   const note = kanjiNoteFor(activity.kanjiChar);
-  // Top button reads ONLY Japanese: the kanji and its readings (pronunciation).
-  // The Spanish/English explanation is listened to below in the "A fondo" panel.
-  const kanjiJaSegments = () => [
-    { text: activity.kanjiChar, lang: "ja" as const },
-    ...activity.onyomi.map((r) => ({ text: r, lang: "ja" as const })),
-    ...activity.kunyomi.map((r) => ({ text: r, lang: "ja" as const })),
-  ];
   return (
     <ActivityShell eyebrow="Nuevo kanji" jp="新しい漢字">
       <div className="hud-frame relative overflow-hidden rounded-3xl glass-strong p-10">
@@ -520,13 +517,9 @@ function IntroKanji({
           <p className="mt-4 font-display text-2xl font-bold tracking-tight">
             {activity.meaning}
           </p>
-          <div className="mt-4 flex justify-center">
-            <AudioBar
-              getSegments={kanjiJaSegments}
-              hideLang
-              label="Escuchar en japonés"
-            />
-          </div>
+          <p className="mt-2 text-xs text-muted-foreground">
+            Toca 🔊 en cada lectura para oírla por separado.
+          </p>
         </div>
 
         <div className="mt-8 grid grid-cols-2 gap-4">
@@ -536,7 +529,13 @@ function IntroKanji({
 
         {activity.example ? (
           <div className="mt-6 rounded-xl bg-accent/30 p-4">
-            <p className="font-jp text-xl">{activity.example.jp}</p>
+            <div className="flex items-start justify-between gap-2">
+              <p className="font-jp text-xl">{activity.example.jp}</p>
+              <JaSpeakButton
+                text={activity.example.jp}
+                aria-label="Escuchar el ejemplo"
+              />
+            </div>
             <p className="font-jp text-xs text-muted-foreground">
               {activity.example.reading}
             </p>
@@ -574,9 +573,17 @@ function ReadingBlock({
 }) {
   return (
     <div className="relative rounded-xl border border-l-2 border-border/50 border-l-neon-cyan/60 bg-card/50 p-4">
-      <p className="font-mono text-[10px] uppercase tracking-widest text-neon-cyan/90">
-        {label}
-      </p>
+      <div className="flex items-start justify-between gap-2">
+        <p className="font-mono text-[10px] uppercase tracking-widest text-neon-cyan/90">
+          {label}
+        </p>
+        {readings.length > 0 ? (
+          <JaSpeakButton
+            text={readings.join("、")}
+            aria-label={`Escuchar ${label}`}
+          />
+        ) : null}
+      </div>
       <p className="mt-1 font-jp text-base">
         {readings.length > 0 ? readings.join(" · ") : "—"}
       </p>
