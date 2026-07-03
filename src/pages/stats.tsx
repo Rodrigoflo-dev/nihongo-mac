@@ -166,10 +166,29 @@ function Tile({
   );
 }
 
-function Heatmap({ data }: { data: { date: string; minutes: number }[] }) {
+const HEATMAP_MONTHS = [
+  "ene", "feb", "mar", "abr", "may", "jun",
+  "jul", "ago", "sep", "oct", "nov", "dic",
+];
+// Monday-start weekday labels (rows of the grid).
+const HEATMAP_WEEKDAYS = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
+
+const heatTone = (m: number) => {
+  if (m <= 0) return "bg-secondary/40";
+  if (m < 5) return "bg-primary/25";
+  if (m < 15) return "bg-primary/45";
+  if (m < 30) return "bg-primary/70";
+  return "bg-primary shadow-[0_0_8px_color-mix(in_oklch,var(--color-primary)_70%,transparent)]";
+};
+
+type HeatCell = { date: string; minutes: number };
+
+function Heatmap({ data }: { data: HeatCell[] }) {
   const days = 112;
   const today = new Date();
-  const cells: { date: string; minutes: number }[] = [];
+
+  // Build the last `days` days (oldest → newest).
+  const cells: HeatCell[] = [];
   for (let i = days - 1; i >= 0; i--) {
     const d = new Date(today);
     d.setDate(today.getDate() - i);
@@ -177,33 +196,114 @@ function Heatmap({ data }: { data: { date: string; minutes: number }[] }) {
     const found = data.find((x) => x.date === iso);
     cells.push({ date: iso, minutes: found?.minutes ?? 0 });
   }
-  const tone = (m: number) => {
-    if (m === 0) return "bg-secondary/40";
-    if (m < 5) return "bg-primary/25";
-    if (m < 15) return "bg-primary/45";
-    if (m < 30) return "bg-primary/70";
-    return "bg-primary shadow-[0_0_8px_color-mix(in_oklch,var(--color-primary)_70%,transparent)]";
-  };
+
+  // Pad the front so each COLUMN is a Monday→Sunday week (like a calendar).
+  const first = new Date(cells[0].date);
+  const mondayIndex = (first.getDay() + 6) % 7; // 0 = Monday
+  const padded: (HeatCell | null)[] = [
+    ...Array.from({ length: mondayIndex }, () => null),
+    ...cells,
+  ];
+  while (padded.length % 7 !== 0) padded.push(null);
+
+  // Chunk into week columns.
+  const weeks: (HeatCell | null)[][] = [];
+  for (let i = 0; i < padded.length; i += 7) weeks.push(padded.slice(i, i + 7));
+
+  // Month label per column: show the month name the first time a column belongs
+  // to a new month.
+  let lastMonth = -1;
+  const monthLabels = weeks.map((w) => {
+    const firstReal = w.find((c) => c !== null);
+    if (!firstReal) return "";
+    const m = new Date(firstReal.date).getMonth();
+    if (m !== lastMonth) {
+      lastMonth = m;
+      return HEATMAP_MONTHS[m];
+    }
+    return "";
+  });
+
+  const activeDays = cells.filter((c) => c.minutes > 0).length;
+  const totalMinutes = cells.reduce((s, c) => s + c.minutes, 0);
+  const fmtDate = (iso: string) =>
+    new Date(iso + "T00:00:00").toLocaleDateString("es", {
+      day: "numeric",
+      month: "long",
+    });
+
   return (
     <HudPanel glow className="p-4">
-      <div className="grid grid-flow-col grid-rows-7 gap-1">
-        {cells.map((c) => (
-          <div
-            key={c.date}
-            title={`${c.date}: ${c.minutes} min`}
-            className={cn(
-              "size-3 rounded-sm transition-all hover:scale-150 hover:ring-1 hover:ring-neon-cyan",
-              tone(c.minutes)
-            )}
-          />
-        ))}
+      <p className="mb-3 text-xs text-muted-foreground">
+        Cada casilla es un día de las últimas 16 semanas. Cuanto más brillante,
+        más minutos estudiaste ese día.
+      </p>
+
+      <div className="overflow-x-auto">
+        <div className="inline-flex gap-2">
+          {/* Weekday labels down the left */}
+          <div className="mt-[18px] grid grid-rows-7 gap-1 pr-0.5">
+            {HEATMAP_WEEKDAYS.map((d, i) => (
+              <span
+                key={d}
+                className="flex h-3.5 items-center font-mono text-[9px] leading-none text-muted-foreground"
+              >
+                {i % 2 === 0 ? d : ""}
+              </span>
+            ))}
+          </div>
+
+          {/* Week columns with month headers */}
+          <div>
+            <div className="flex gap-1">
+              {weeks.map((_, wi) => (
+                <span
+                  key={wi}
+                  className="w-3.5 font-mono text-[9px] leading-none text-muted-foreground"
+                >
+                  {monthLabels[wi]}
+                </span>
+              ))}
+            </div>
+            <div className="mt-1 flex gap-1">
+              {weeks.map((week, wi) => (
+                <div key={wi} className="grid grid-rows-7 gap-1">
+                  {week.map((c, di) =>
+                    c ? (
+                      <div
+                        key={c.date}
+                        title={`${fmtDate(c.date)}: ${c.minutes} min`}
+                        className={cn(
+                          "size-3.5 rounded-[3px] transition-all hover:scale-150 hover:ring-1 hover:ring-neon-cyan",
+                          heatTone(c.minutes)
+                        )}
+                      />
+                    ) : (
+                      <div key={`pad-${wi}-${di}`} className="size-3.5" />
+                    )
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
-      <div className="mt-3 flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.15em] text-muted-foreground">
-        <span>Menos</span>
-        {[0, 5, 15, 30, 45].map((m) => (
-          <div key={m} className={cn("size-3 rounded-sm", tone(m))} />
-        ))}
-        <span>Más</span>
+
+      {/* Legend + summary */}
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.15em] text-muted-foreground">
+          <span>Menos</span>
+          {[0, 5, 15, 30, 45].map((m) => (
+            <div key={m} className={cn("size-3.5 rounded-[3px]", heatTone(m))} />
+          ))}
+          <span>Más</span>
+        </div>
+        <p className="text-[11px] text-muted-foreground">
+          <span className="font-semibold text-foreground">{activeDays}</span>{" "}
+          días activos ·{" "}
+          <span className="font-semibold text-foreground">{totalMinutes}</span>{" "}
+          min en total
+        </p>
       </div>
     </HudPanel>
   );
