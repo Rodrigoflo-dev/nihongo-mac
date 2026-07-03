@@ -40,6 +40,20 @@ const SITUATIONS: &[(&str, &str, [&str; 3])] = &[
     ("Quieres preguntar cuánto cuesta algo. ¿Qué dices?", "いくらですか。", ["どこですか。", "なんじですか。", "だれですか。"]),
     ("Necesitas disculparte para llamar la atención. ¿Qué dices?", "すみません。", ["おはよう。", "ありがとう。", "いただきます。"]),
     ("Te despides de alguien al irte. ¿Qué dices?", "さようなら。", ["おはよう。", "ただいま。", "いただきます。"]),
+    // Real-life situations (restaurant / station / shop / meeting people).
+    ("En un restaurante quieres el menú. ¿Qué dices?", "メニューをおねがいします。", ["おかえりなさい。", "いってきます。", "おやすみなさい。"]),
+    ("Terminaste de comer y quieres pagar. ¿Qué pides?", "おかいけいをおねがいします。", ["いただきます。", "はじめまして。", "さようなら。"]),
+    ("Quieres saber dónde está el baño. ¿Qué preguntas?", "トイレはどこですか。", ["いくらですか。", "なんじですか。", "だれですか。"]),
+    ("Quieres saber qué hora es. ¿Qué preguntas?", "いまなんじですか。", ["いくらですか。", "どこですか。", "だれですか。"]),
+    ("En una tienda quieres esto. Lo señalas y dices…", "これをください。", ["ありがとう。", "さようなら。", "はじめまして。"]),
+    ("Quieres pedir agua, por favor. ¿Qué dices?", "おみずをおねがいします。", ["ただいま。", "おやすみ。", "こんばんは。"]),
+    ("No entendiste; quieres que lo repitan. ¿Qué dices?", "もういちどおねがいします。", ["いただきます。", "さようなら。", "おめでとう。"]),
+    ("Te presentas y cierras cortésmente. ¿Qué dices?", "どうぞよろしくおねがいします。", ["ごちそうさまでした。", "おかえりなさい。", "いってきます。"]),
+    ("Quieres decir que no comes carne. ¿Qué dices?", "にくはたべません。", ["みずをのみます。", "がくせいです。", "にほんへいきます。"]),
+    ("Te preguntan de dónde eres y respondes «vengo de México». ¿Qué dices?", "メキシコからきました。", ["にほんごをはなします。", "がくせいです。", "にくをたべます。"]),
+    ("Quieres pedir algo de beber. ¿Qué dices?", "のみものをおねがいします。", ["おかえりなさい。", "こんにちは。", "おやすみ。"]),
+    ("Entras a la casa de alguien en Japón. Al pasar dices…", "おじゃまします。", ["いってきます。", "ごちそうさま。", "はじめまして。"]),
+    ("Quieres preguntar dónde está la estación. ¿Qué dices?", "えきはどこですか。", ["いくらですか。", "なんじですか。", "だれですか。"]),
 ];
 
 /// Strip trailing/leading Japanese punctuation and spaces so we can match a
