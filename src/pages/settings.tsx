@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Volume2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +10,15 @@ import { HoloKanji } from "@/components/visual/holo-kanji";
 import { useTheme } from "@/providers/theme-provider";
 import { UI_SCALE_OPTIONS, useUiScale } from "@/providers/ui-scale";
 import { useUpdateUserProfile, useUserProfile } from "@/hooks/use-user-profile";
+import {
+  getPreferredVoiceName,
+  listVoicesByLang,
+  setPreferredVoiceName,
+  speakJapanese,
+  speakText,
+  ttsSupported,
+  type VoiceKind,
+} from "@/lib/tts";
 
 export default function SettingsPage() {
   const { theme, setTheme } = useTheme();
@@ -194,6 +204,122 @@ export default function SettingsPage() {
           </div>
         </div>
       </HudPanel>
+
+      <HudPanel className="p-6">
+        <div className="space-y-6">
+          <div>
+            <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-neon-cyan">
+              音声 — Voz
+            </p>
+            <h2 className="mt-1 font-display text-xl font-extrabold tracking-tight">
+              Voz del botón «Escuchar»
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Elige la voz para cada idioma — de hombre o mujer, más suave o más
+              natural. Se usa al escuchar japonés, español e inglés. Se guarda en
+              tu equipo.
+            </p>
+          </div>
+          <VoiceSettings />
+        </div>
+      </HudPanel>
+    </div>
+  );
+}
+
+const VOICE_ROWS: { kind: VoiceKind; label: string; jp: string; sample: string }[] =
+  [
+    { kind: "ja", label: "Japonés", jp: "日本語", sample: "こんにちは。日本語を勉強しましょう。" },
+    { kind: "es", label: "Español", jp: "スペイン語", sample: "Hola, así se escucha la voz en español." },
+    { kind: "en", label: "Inglés", jp: "英語", sample: "Hello, this is how the English voice sounds." },
+  ];
+
+/** Per-language voice picker + "Probar" preview. */
+function VoiceSettings() {
+  const [voices, setVoices] = useState<Record<
+    VoiceKind,
+    SpeechSynthesisVoice[]
+  > | null>(null);
+  const [selected, setSelected] = useState<Record<VoiceKind, string>>({
+    ja: getPreferredVoiceName("ja") ?? "",
+    es: getPreferredVoiceName("es") ?? "",
+    en: getPreferredVoiceName("en") ?? "",
+  });
+
+  useEffect(() => {
+    let ok = true;
+    listVoicesByLang().then((v) => {
+      if (ok) setVoices(v);
+    });
+    return () => {
+      ok = false;
+    };
+  }, []);
+
+  if (!ttsSupported()) {
+    return (
+      <p className="text-sm text-muted-foreground">
+        Tu sistema no soporta síntesis de voz.
+      </p>
+    );
+  }
+
+  const change = (kind: VoiceKind, name: string) => {
+    setSelected((s) => ({ ...s, [kind]: name }));
+    setPreferredVoiceName(kind, name || null);
+  };
+  const test = (kind: VoiceKind, sample: string) => {
+    if (kind === "ja") speakJapanese(sample).catch(() => {});
+    else speakText(sample, kind).catch(() => {});
+  };
+
+  return (
+    <div className="space-y-4">
+      {VOICE_ROWS.map((row) => {
+        const list = voices?.[row.kind] ?? [];
+        return (
+          <div
+            key={row.kind}
+            className="flex flex-wrap items-center gap-3 border-t border-border/40 pt-4 first:border-t-0 first:pt-0"
+          >
+            <div className="w-24 shrink-0">
+              <p className="font-display text-sm font-bold">{row.label}</p>
+              <p className="font-jp text-[11px] text-muted-foreground">
+                {row.jp}
+              </p>
+            </div>
+            {list.length > 0 ? (
+              <>
+                <select
+                  aria-label={`Voz de ${row.label}`}
+                  value={selected[row.kind]}
+                  onChange={(e) => change(row.kind, e.target.value)}
+                  className="min-w-0 flex-1 rounded-lg border border-input bg-card/60 px-3 py-2 text-sm outline-none focus:border-primary"
+                >
+                  <option value="">Automática (recomendada)</option>
+                  {list.map((v) => (
+                    <option key={v.name} value={v.name}>
+                      {v.name} · {v.lang}
+                    </option>
+                  ))}
+                </select>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => test(row.kind, row.sample)}
+                >
+                  <Volume2 className="size-3.5" /> Probar
+                </Button>
+              </>
+            ) : (
+              <p className="flex-1 text-xs text-muted-foreground">
+                No hay voces de {row.label.toLowerCase()} instaladas. Añádelas en
+                Ajustes del sistema → Accesibilidad → Contenido hablado → Voces.
+              </p>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }

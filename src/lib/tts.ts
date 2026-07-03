@@ -56,18 +56,69 @@ function isJapanese(v: SpeechSynthesisVoice): boolean {
   return /^ja(\b|[-_])/i.test(v.lang) || /japanese|日本/i.test(v.name);
 }
 
+// ---------------------------------------------------------------------------
+// Voice preferences — the learner can pick which installed voice to use for
+// each language (Settings → Voz). Saved on the device (localStorage), since the
+// available voices differ per computer.
+// ---------------------------------------------------------------------------
+
+export type VoiceKind = "ja" | "es" | "en";
+const VOICE_PREF_KEY = "nihongo.voices";
+let preferredVoiceNames: Partial<Record<VoiceKind, string>> = loadVoicePrefs();
+
+function loadVoicePrefs(): Partial<Record<VoiceKind, string>> {
+  if (typeof window === "undefined" || !window.localStorage) return {};
+  try {
+    const raw = window.localStorage.getItem(VOICE_PREF_KEY);
+    return raw ? (JSON.parse(raw) as Partial<Record<VoiceKind, string>>) : {};
+  } catch {
+    return {};
+  }
+}
+
+export function getPreferredVoiceName(kind: VoiceKind): string | null {
+  return preferredVoiceNames[kind] ?? null;
+}
+
+export function setPreferredVoiceName(kind: VoiceKind, name: string | null) {
+  if (name) preferredVoiceNames[kind] = name;
+  else delete preferredVoiceNames[kind];
+  try {
+    window.localStorage.setItem(
+      VOICE_PREF_KEY,
+      JSON.stringify(preferredVoiceNames)
+    );
+  } catch {
+    /* ignore quota / disabled storage */
+  }
+}
+
+/** All installed voices grouped by the languages we narrate in. */
+export async function listVoicesByLang(): Promise<
+  Record<VoiceKind, SpeechSynthesisVoice[]>
+> {
+  const voices = await loadVoices();
+  return {
+    ja: voices.filter(isJapanese),
+    es: voices.filter((v) => /^es(\b|[-_])/i.test(v.lang)),
+    en: voices.filter((v) => /^en(\b|[-_])/i.test(v.lang)),
+  };
+}
+
 /**
- * Find a Japanese voice. Prefer one whose name matches `preferred` (e.g.
- * "Kyoko"/"Otoya" on macOS); otherwise fall back to the first Japanese voice.
+ * Find a Japanese voice. Priority: an explicit `preferred` name (e.g. the
+ * dialogue's "Otoya"), then the learner's saved preference, then the first
+ * available Japanese voice.
  */
 export async function getJapaneseVoice(
   preferred?: string
 ): Promise<SpeechSynthesisVoice | null> {
   const voices = (await loadVoices()).filter(isJapanese);
   if (voices.length === 0) return null;
-  if (preferred) {
+  const want = preferred ?? getPreferredVoiceName("ja") ?? undefined;
+  if (want) {
     const match = voices.find((v) =>
-      v.name.toLowerCase().includes(preferred.toLowerCase())
+      v.name.toLowerCase().includes(want.toLowerCase())
     );
     if (match) return match;
   }
@@ -95,7 +146,13 @@ export async function getVoiceForLang(
     new RegExp(`^${lang}(\\b|[-_])`, "i").test(v.lang)
   );
   if (matches.length === 0) return null;
-  // Prefer a local/default voice for snappier playback.
+  // The learner's saved choice wins…
+  const pref = getPreferredVoiceName(lang);
+  if (pref) {
+    const chosen = matches.find((v) => v.name === pref);
+    if (chosen) return chosen;
+  }
+  // …otherwise prefer a local/default voice for snappier playback.
   return matches.find((v) => v.localService) ?? matches[0];
 }
 
