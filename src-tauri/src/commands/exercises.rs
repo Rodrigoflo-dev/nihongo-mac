@@ -11,6 +11,8 @@
 //! retry-on-wrong). The only addition is a `difficulty` tag per item so the UI
 //! can announce when the learner moves up a band.
 
+use std::collections::{HashMap, HashSet};
+
 use rand::rngs::StdRng;
 use rand::seq::SliceRandom;
 use rand::Rng;
@@ -40,15 +42,28 @@ const SITUATIONS: &[(&str, &str, [&str; 3])] = &[
     ("Te despides de alguien al irte. ¿Qué dices?", "さようなら。", ["おはよう。", "ただいま。", "いただきます。"]),
 ];
 
-fn build_situation(rng: &mut StdRng, idx: usize) -> Activity {
-    let (prompt, correct, distractors) = SITUATIONS[rng.gen_range(0..SITUATIONS.len())];
+/// Strip trailing/leading Japanese punctuation and spaces so we can match a
+/// situation's answer («おやすみなさい。») against a taught surface («おやすみなさい»).
+fn normalize_phrase(s: &str) -> String {
+    s.trim()
+        .trim_matches(|c: char| {
+            matches!(
+                c,
+                '。' | '、' | '！' | '？' | '!' | '?' | '.' | ',' | ' ' | '　'
+            )
+        })
+        .to_string()
+}
+
+/// Build a specific situational question (deterministic index). We only ever
+/// call this with situations whose CORRECT answer the learner has already been
+/// taught (see `gated_situations`), so practice never demands untaught phrases.
+fn build_situation_at(rng: &mut StdRng, idx: usize, sit_index: usize) -> Activity {
+    let (prompt, correct, distractors) = SITUATIONS[sit_index];
     let mut options: Vec<String> = vec![correct.to_string()];
     options.extend(distractors.iter().map(|s| s.to_string()));
     options.shuffle(rng);
-    let correct_index = options
-        .iter()
-        .position(|o| o == correct)
-        .unwrap_or(0);
+    let correct_index = options.iter().position(|o| o == correct).unwrap_or(0);
     Activity::Quiz {
         id: format!("gen-sit-{idx}"),
         prompt: prompt.to_string(),
@@ -57,6 +72,21 @@ fn build_situation(rng: &mut StdRng, idx: usize) -> Activity {
         correct_index,
         explanation: Some(format!("En esa situación se dice «{correct}».")),
     }
+}
+
+/// Indices of SITUATIONS whose correct answer is within `taught` (the phrases the
+/// learner has already seen, cumulatively up to this lesson), shuffled. If the
+/// learner hasn't been taught any of the greetings yet (e.g. lesson 1), this is
+/// empty and no situational questions are injected.
+fn gated_situations(rng: &mut StdRng, taught: &HashSet<String>) -> Vec<usize> {
+    let mut ok: Vec<usize> = SITUATIONS
+        .iter()
+        .enumerate()
+        .filter(|(_, (_, correct, _))| taught.contains(&normalize_phrase(correct)))
+        .map(|(i, _)| i)
+        .collect();
+    ok.shuffle(rng);
+    ok
 }
 
 /// Clean, common Spanish meanings used as plausible wrong options for the
@@ -137,6 +167,137 @@ fn lesson_level(conn: &Connection, lesson_id: i64) -> String {
         |r| r.get::<_, String>(0),
     )
     .unwrap_or_else(|_| "N5".to_string())
+}
+
+/// Every Japanese surface form the learner has been taught CUMULATIVELY up to
+/// and including this lesson (all earlier lessons in the same course, by unit /
+/// lesson ordering). Used to gate situational questions so we never demand a
+/// phrase the learner hasn't seen yet (e.g. greetings before they're taught).
+fn cumulative_taught_surfaces(conn: &Connection, lesson_id: i64) -> HashSet<String> {
+    let mut set = HashSet::new();
+    // Position of the current lesson within its course.
+    let pos: Option<(i64, i64, i64)> = conn
+        .query_row(
+            "SELECT u.course_id, u.ordering, l.ordering
+               FROM lessons l JOIN units u ON u.id = l.unit_id
+              WHERE l.id = ?1",
+            [lesson_id],
+            |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)),
+        )
+        .ok();
+    let Some((course_id, unit_ord, lesson_ord)) = pos else {
+        return set;
+    };
+    let mut stmt = match conn.prepare(
+        "SELECT l.activities_json
+           FROM lessons l
+           JOIN units u ON u.id = l.unit_id
+          WHERE u.course_id = ?1
+            AND (u.ordering < ?2 OR (u.ordering = ?2 AND l.ordering <= ?3))",
+    ) {
+        Ok(s) => s,
+        Err(_) => return set,
+    };
+    let rows = stmt
+        .query_map(rusqlite::params![course_id, unit_ord, lesson_ord], |r| {
+            r.get::<_, String>(0)
+        })
+        .map(|it| it.filter_map(Result::ok).collect::<Vec<_>>())
+        .unwrap_or_default();
+    for json in rows {
+        let parsed: LessonActivities = serde_json::from_str(&json).unwrap_or(LessonActivities {
+            activities: vec![],
+        });
+        for a in parsed.activities {
+            match a {
+                Activity::IntroKanji { kanji_char, .. } => {
+                    set.insert(normalize_phrase(&kanji_char));
+                }
+                Activity::IntroVocab { word, reading, .. } => {
+                    set.insert(normalize_phrase(&word));
+                    if !reading.is_empty() {
+                        set.insert(normalize_phrase(&reading));
+                    }
+                }
+                _ => {}
+            }
+        }
+    }
+    set
+}
+
+/// A grammar point the lesson teaches (from intro_grammar) that we can turn into
+/// a "fill the particle" exercise, grounded in its authored example sentence.
+#[derive(Clone)]
+struct GrammarPoint {
+    particle: char,
+    example_jp: String,
+    example_meaning: String,
+}
+
+/// Particles we quiz on (and use as distractors for each other).
+const PARTICLES: &[char] = &['は', 'が', 'を', 'に', 'へ', 'で', 'の', 'と', 'か', 'も'];
+
+/// Extract quizzable grammar points from THIS lesson's intro_grammar activities.
+/// Only patterns that pivot on a single particle (は/を/に/で…) become exercises.
+fn taught_grammar(conn: &Connection, lesson_id: i64) -> Vec<GrammarPoint> {
+    let json: String = match conn.query_row(
+        "SELECT activities_json FROM lessons WHERE id = ?1",
+        [lesson_id],
+        |r| r.get(0),
+    ) {
+        Ok(j) => j,
+        Err(_) => return vec![],
+    };
+    let parsed: LessonActivities = serde_json::from_str(&json).unwrap_or(LessonActivities {
+        activities: vec![],
+    });
+    let mut out = Vec::new();
+    for a in parsed.activities {
+        if let Activity::IntroGrammar {
+            pattern, example, ..
+        } = a
+        {
+            // The particle is the standalone particle char that appears in the
+            // pattern AND inside the example sentence (so we can blank it).
+            let particle = pattern
+                .chars()
+                .find(|c| PARTICLES.contains(c) && example.jp.contains(*c));
+            if let Some(particle) = particle {
+                out.push(GrammarPoint {
+                    particle,
+                    example_jp: example.jp.clone(),
+                    example_meaning: example.meaning.clone(),
+                });
+            }
+        }
+    }
+    out
+}
+
+/// "Completa con la partícula correcta" — blank the taught particle in its real
+/// example sentence and let the learner pick it. Reinforces grammar with a
+/// verified sentence (never invented).
+fn build_grammar_blank(rng: &mut StdRng, idx: usize, gp: &GrammarPoint) -> Option<Activity> {
+    let blanked = gp
+        .example_jp
+        .replacen(gp.particle, "＿", 1);
+    let mut distractors: Vec<char> = PARTICLES
+        .iter()
+        .copied()
+        .filter(|c| *c != gp.particle)
+        .collect();
+    distractors.shuffle(rng);
+    distractors.truncate(3);
+    make_quiz(
+        rng,
+        format!("gen-gram-{idx}"),
+        "Completa con la partícula correcta".to_string(),
+        Some(blanked),
+        gp.particle.to_string(),
+        distractors.iter().map(|c| c.to_string()).collect(),
+        format!("{} — {}", gp.example_jp, gp.example_meaning),
+    )
 }
 
 /// Items explicitly taught by the lesson (from its intro_* activities).
@@ -374,9 +535,10 @@ fn build_exercise(
                 rich_explanation(item),
             )
         }
-        // Hard: reading recall (if kanji) else meaning→word with 4 options.
+        // Hard: reading recall (any word that CONTAINS kanji and has a reading,
+        // e.g. 学生→がくせい) else meaning→word with 4 options.
         _ => {
-            if item.is_kanji && !item.reading.is_empty() {
+            if !item.reading.is_empty() && item.jp.chars().any(is_kanji_char) {
                 let distractors = pick_distractors(rng, reading_pool, &item.reading, 3);
                 make_quiz(
                     rng,
@@ -481,7 +643,7 @@ fn build_write_word(idx: usize, item: &Item) -> Option<Activity> {
 
     Some(Activity::WriteSentence {
         id: format!("gen-word-{idx}"),
-        prompt: format!("Escribe «{}» en japonés (escribe la palabra, no como suena)", item.meaning),
+        prompt: format!("Escribe «{}» en japonés", item.meaning),
         hint: Some(hint),
         accepted,
         explanation: rich_explanation(item),
@@ -545,6 +707,39 @@ fn build_for_band(
     alt.or_else(|| build_exercise(rng, idx, band, item, meaning_pool, kanji_pool, reading_pool))
 }
 
+/// A stable fingerprint of a question (its "what am I asking" identity), used to
+/// avoid handing the learner the SAME question twice in one set. Two questions
+/// with the same prompt + shown item + correct answer collapse to one signature.
+fn signature(a: &Activity) -> String {
+    match a {
+        Activity::Quiz {
+            prompt,
+            prompt_jp,
+            options,
+            correct_index,
+            ..
+        } => format!(
+            "Q|{prompt}|{}|{}",
+            prompt_jp.clone().unwrap_or_default(),
+            options.get(*correct_index).cloned().unwrap_or_default()
+        ),
+        Activity::Listening {
+            text_jp,
+            options,
+            correct_index,
+            ..
+        } => format!(
+            "L|{text_jp}|{}",
+            options.get(*correct_index).cloned().unwrap_or_default()
+        ),
+        Activity::WriteSentence {
+            prompt, accepted, ..
+        } => format!("W|{prompt}|{}", accepted.join("/")),
+        Activity::WriteKanji { kanji_char, .. } => format!("D|{kanji_char}"),
+        _ => "?".to_string(),
+    }
+}
+
 /// Core generator (pure, testable): produce up to TOTAL exercises for a lesson.
 pub fn generate(conn: &Connection, lesson_id: i64, seed: u64) -> Vec<GeneratedExercise> {
     let mut rng = StdRng::seed_from_u64(seed ^ (lesson_id as u64).wrapping_mul(0x9E3779B97F4A7C15));
@@ -593,6 +788,13 @@ pub fn generate(conn: &Connection, lesson_id: i64, seed: u64) -> Vec<GeneratedEx
         ("dificil", TOTAL - N_FACIL - N_MEDIO),
     ];
 
+    // De-dup: never hand the learner the exact same question three times (the old
+    // generator repeated "¿Qué significa 学生?" as Q1/Q4/Q7). We prefer DISTINCT
+    // questions, allow a SECOND copy only once a lesson runs low on fresh ones,
+    // and NEVER a third copy. Small lessons (2 items) legitimately reuse some
+    // questions, but capped at 2 each.
+    let mut counts: HashMap<String, usize> = HashMap::new();
+
     let mut out = Vec::with_capacity(TOTAL);
     let mut global_idx = 0usize;
     for (band, count) in bands {
@@ -601,7 +803,8 @@ pub fn generate(conn: &Connection, lesson_id: i64, seed: u64) -> Vec<GeneratedEx
         let mut oi = 0usize;
         let mut made = 0usize;
         let mut guard = 0usize;
-        while made < count && guard < count * 6 {
+        let cap = count * 24;
+        while made < count && guard < cap {
             guard += 1;
             let item = &items[order[oi % order.len()]].clone();
             oi += 1;
@@ -615,6 +818,19 @@ pub fn generate(conn: &Connection, lesson_id: i64, seed: u64) -> Vec<GeneratedEx
                 &reading_pool,
             );
             if let Some(activity) = activity {
+                let sig = signature(&activity);
+                let c = *counts.get(&sig).unwrap_or(&0);
+                // Never a third copy of the same question.
+                if c >= 2 {
+                    continue;
+                }
+                // Prefer fresh questions: reject a would-be 2nd copy until we've
+                // searched a while (past 3/4 of the attempt budget), so tiny
+                // lessons still reach the target size without over-repeating.
+                if c >= 1 && guard < cap * 3 / 4 {
+                    continue;
+                }
+                *counts.entry(sig).or_insert(0) += 1;
                 out.push(GeneratedExercise {
                     activity,
                     difficulty: band.to_string(),
@@ -625,17 +841,44 @@ pub fn generate(conn: &Connection, lesson_id: i64, seed: u64) -> Vec<GeneratedEx
         }
     }
 
-    // Mix in 2 real-life situational questions (one in fácil, one in medio) so
-    // practice always includes "en esta situación, ¿qué dices?".
-    if out.len() >= 12 {
-        out[2] = GeneratedExercise {
-            activity: build_situation(&mut rng, global_idx),
-            difficulty: "facil".to_string(),
+    // Reinforce the lesson's grammar with a "fill the particle" question grounded
+    // in a real example sentence (e.g. 私＿学生です → は). Replace a middle-band
+    // slot so it doesn't crowd out item practice.
+    let grammar = taught_grammar(conn, lesson_id);
+    let grammar_slots = [8usize, 12];
+    for (gp, &slot) in grammar.iter().take(2).zip(grammar_slots.iter()) {
+        if slot >= out.len() {
+            break;
+        }
+        if let Some(activity) = build_grammar_blank(&mut rng, global_idx, gp) {
+            let sig = signature(&activity);
+            if *counts.get(&sig).unwrap_or(&0) == 0 {
+                *counts.entry(sig).or_insert(0) += 1;
+                out[slot] = GeneratedExercise {
+                    activity,
+                    difficulty: out[slot].difficulty.clone(),
+                };
+                global_idx += 1;
+            }
+        }
+    }
+
+    // Mix in real-life situational questions ("en esta situación, ¿qué dices?"),
+    // but ONLY greetings the learner has already been taught (cumulatively). In
+    // lesson 1 no greetings are taught yet → no situational question appears,
+    // instead of unfairly asking おやすみなさい / いくらですか.
+    let taught_surfaces = cumulative_taught_surfaces(conn, lesson_id);
+    let sit_indices = gated_situations(&mut rng, &taught_surfaces);
+    let sit_slots = [2usize, 10];
+    for (sit_index, &slot) in sit_indices.iter().take(2).zip(sit_slots.iter()) {
+        if slot >= out.len() {
+            break;
+        }
+        out[slot] = GeneratedExercise {
+            activity: build_situation_at(&mut rng, global_idx, *sit_index),
+            difficulty: out[slot].difficulty.clone(),
         };
-        out[10] = GeneratedExercise {
-            activity: build_situation(&mut rng, global_idx + 1),
-            difficulty: "medio".to_string(),
-        };
+        global_idx += 1;
     }
     out
 }
@@ -733,8 +976,9 @@ mod tests {
             } = &e.activity
             {
                 // Situational questions (gen-sit) are intentionally general
-                // conversation, not lesson-specific vocabulary.
-                if id.starts_with("gen-sit") {
+                // conversation, and grammar questions (gen-gram) target a
+                // particle, not a taught vocabulary item.
+                if id.starts_with("gen-sit") || id.starts_with("gen-gram") {
                     continue;
                 }
                 let correct = &options[*correct_index];
@@ -914,6 +1158,120 @@ mod tests {
             found,
             "expected at least one lesson to yield a real-usage fill-in-the-blank question"
         );
+    }
+
+    /// GUARD for Rodrigo's "las preguntas se repiten" complaint (Q1=Q4=Q7,
+    /// Q2=Q5): a set of 20 must be overwhelmingly distinct questions.
+    #[test]
+    fn a_set_has_almost_no_repeated_questions() {
+        let conn = fresh_db();
+        for id in 1..=5 {
+            for seed in [1u64, 7, 42, 100] {
+                let ex = generate(&conn, id, seed);
+                if ex.is_empty() {
+                    continue;
+                }
+                use std::collections::HashMap;
+                let total = ex.len();
+                let mut counts: HashMap<String, usize> = HashMap::new();
+                for e in &ex {
+                    *counts.entry(signature(&e.activity)).or_insert(0) += 1;
+                }
+                let distinct = counts.len();
+                let max_multiplicity = counts.values().copied().max().unwrap_or(0);
+                // The exact bug Rodrigo hit: the SAME question three+ times
+                // (Q1=Q4=Q7). That must never happen.
+                assert!(
+                    max_multiplicity <= 2,
+                    "lesson {id} seed {seed}: a question repeats {max_multiplicity} times (must be ≤2)"
+                );
+                // And overall the set should offer real variety — at least 10
+                // different questions even for a tiny 2-item lesson.
+                assert!(
+                    distinct >= 10,
+                    "lesson {id} seed {seed}: only {distinct}/{total} distinct questions — too little variety"
+                );
+            }
+        }
+    }
+
+    /// GUARD for the "me pregunta cosas que no ha enseñado" complaint (おやすみなさい,
+    /// いくらですか in lesson 1): every situational question must use a phrase the
+    /// learner has already been taught, and lesson 1 must have none at all.
+    #[test]
+    fn situations_only_use_already_taught_phrases() {
+        let conn = fresh_db();
+
+        // Lesson 1 teaches no greetings yet → zero situational questions.
+        let l1 = generate(&conn, 1, 7);
+        let l1_sits = l1
+            .iter()
+            .filter(|e| matches!(&e.activity, Activity::Quiz { id, .. } if id.starts_with("gen-sit")))
+            .count();
+        assert_eq!(
+            l1_sits, 0,
+            "lesson 1 must not ask situational greetings it never taught"
+        );
+
+        // Across lessons: any situational question's answer must be taught.
+        for id in 1..=5 {
+            let taught = cumulative_taught_surfaces(&conn, id);
+            for seed in [1u64, 3, 9] {
+                for e in generate(&conn, id, seed) {
+                    if let Activity::Quiz {
+                        id: qid,
+                        options,
+                        correct_index,
+                        ..
+                    } = &e.activity
+                    {
+                        if qid.starts_with("gen-sit") {
+                            let correct = normalize_phrase(&options[*correct_index]);
+                            assert!(
+                                taught.contains(&correct),
+                                "lesson {id}: situational answer '{correct}' was never taught"
+                            );
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /// Lesson 1 teaches the は particle → practice should include a grammar
+    /// "fill the particle" question at least sometimes.
+    #[test]
+    fn teaches_grammar_particle_questions() {
+        let conn = fresh_db();
+        let mut found = false;
+        for seed in [1u64, 7, 42, 100, 200] {
+            if generate(&conn, 1, seed).iter().any(|e| {
+                matches!(&e.activity, Activity::Quiz { id, .. } if id.starts_with("gen-gram"))
+            }) {
+                found = true;
+                break;
+            }
+        }
+        assert!(found, "lesson 1 should produce a grammar particle question");
+    }
+
+    /// The write prompt must NOT carry the old "(escribe la palabra, no como
+    /// suena)" parenthetical Rodrigo asked to remove.
+    #[test]
+    fn write_prompt_has_no_parenthetical() {
+        let conn = fresh_db();
+        for id in 1..=5 {
+            for seed in [1u64, 2, 3] {
+                for e in generate(&conn, id, seed) {
+                    if let Activity::WriteSentence { prompt, .. } = &e.activity {
+                        assert!(
+                            !prompt.contains('('),
+                            "write prompt should have no parenthetical: {prompt}"
+                        );
+                    }
+                }
+            }
+        }
     }
 
     #[test]
