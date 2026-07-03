@@ -248,6 +248,40 @@ export interface NarrationSegment {
   lang: "ja" | NarrationLang;
 }
 
+// Hiragana, katakana, CJK ideographs, prolonged mark ー and iteration mark 々.
+const JAPANESE_CHAR =
+  /[぀-ヿ㐀-䶿一-鿿ー々ｦ-ﾟ]/;
+
+/**
+ * Split a mixed explanation (mostly Spanish/English with inline Japanese like
+ * "私 (わたし) es la forma…") into segments, so the Japanese runs are read with a
+ * Japanese voice and the rest in the explanation language. Runs that are only
+ * punctuation/spaces are dropped.
+ */
+export function toMixedSegments(
+  text: string,
+  lang: NarrationLang
+): NarrationSegment[] {
+  const segments: NarrationSegment[] = [];
+  let buf = "";
+  let bufJp = false;
+  const flush = () => {
+    const t = buf.trim();
+    if (t && /[\p{L}\p{N}]/u.test(t)) {
+      segments.push({ text: t, lang: bufJp ? "ja" : lang });
+    }
+    buf = "";
+  };
+  for (const ch of text) {
+    const jp = JAPANESE_CHAR.test(ch);
+    if (buf && jp !== bufJp) flush();
+    if (!buf) bufJp = jp;
+    buf += ch;
+  }
+  flush();
+  return segments;
+}
+
 /**
  * Narrate a sequence of segments in order, switching voices per segment: the
  * Japanese parts are read with a Japanese voice (correct pronunciation) and the

@@ -61,9 +61,14 @@ function Segmented<T>({
 export function AudioBar({
   getSegments,
   className,
+  hideLang = false,
+  label = "Escuchar",
 }: {
   getSegments: SegmentBuilder;
   className?: string;
+  /** Hide the Español/English toggle (e.g. a Japanese-only button). */
+  hideLang?: boolean;
+  label?: string;
 }) {
   const [lang, setLang] = useState<NarrationLang>("es");
   const [rate, setRate] = useState(1);
@@ -110,18 +115,20 @@ export function AudioBar({
           </>
         ) : (
           <>
-            <Volume2 className="size-3.5" /> Escuchar
+            <Volume2 className="size-3.5" /> {label}
           </>
         )}
       </Button>
-      <Segmented<NarrationLang>
-        value={lang}
-        onChange={(v) => changeLang(v)}
-        options={[
-          { label: "Español", value: "es" },
-          { label: "English", value: "en" },
-        ]}
-      />
+      {!hideLang ? (
+        <Segmented<NarrationLang>
+          value={lang}
+          onChange={(v) => changeLang(v)}
+          options={[
+            { label: "Español", value: "es" },
+            { label: "English", value: "en" },
+          ]}
+        />
+      ) : null}
       <Segmented
         value={rate}
         onChange={(v) => changeRate(v)}

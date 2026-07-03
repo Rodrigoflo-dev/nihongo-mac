@@ -29,6 +29,7 @@ import {
 import { StrokeTrainer, type StrokeProgress } from "@/components/kanji/stroke-trainer";
 import { usePlayTts } from "@/hooks/use-listening";
 import { useVoiceRecorder } from "@/hooks/use-voice-recorder";
+import { toMixedSegments } from "@/lib/tts";
 import { api } from "@/lib/api";
 import type { Activity } from "@/lib/api";
 import { grammarNoteFor, type GrammarNote } from "@/lib/grammar-notes";
@@ -371,9 +372,8 @@ function kanjiPages(note: KanjiNote): DeepDivePage[] {
   const pages: DeepDivePage[] = [
     {
       label: "¿Cómo se usa?",
-      speech: (lang) => [
-        { text: lang === "en" ? note.usageEn : note.usage, lang },
-      ],
+      speech: (lang) =>
+        toMixedSegments(lang === "en" ? note.usageEn : note.usage, lang),
       body: (
         <p className="text-sm leading-relaxed text-foreground/90">{note.usage}</p>
       ),
@@ -381,10 +381,9 @@ function kanjiPages(note: KanjiNote): DeepDivePage[] {
     {
       label: "Cómo combinarlo",
       speech: (lang) =>
-        (lang === "en" ? note.combosEn : note.combos).map((c) => ({
-          text: c,
-          lang,
-        })),
+        (lang === "en" ? note.combosEn : note.combos).flatMap((c) =>
+          toMixedSegments(c, lang)
+        ),
       body: (
         <ul className="space-y-1.5">
           {note.combos.map((c, i) => (
@@ -422,9 +421,8 @@ function grammarPages(note: GrammarNote): DeepDivePage[] {
   return [
     {
       label: "¿Por qué se usa?",
-      speech: (lang) => [
-        { text: lang === "en" ? note.whyEn ?? note.why : note.why, lang },
-      ],
+      speech: (lang) =>
+        toMixedSegments(lang === "en" ? note.whyEn ?? note.why : note.why, lang),
       body: (
         <p className="text-sm leading-relaxed text-foreground/90">{note.why}</p>
       ),
@@ -432,9 +430,10 @@ function grammarPages(note: GrammarNote): DeepDivePage[] {
     {
       label: "¿Cuándo usarla?",
       speech: (lang) =>
-        (lang === "en" ? note.whenToUseEn ?? note.whenToUse : note.whenToUse).map(
-          (c) => ({ text: c, lang })
-        ),
+        (lang === "en"
+          ? note.whenToUseEn ?? note.whenToUse
+          : note.whenToUse
+        ).flatMap((c) => toMixedSegments(c, lang)),
       body: (
         <ul className="space-y-1.5">
           {note.whenToUse.map((c, i) => (
@@ -453,7 +452,7 @@ function grammarPages(note: GrammarNote): DeepDivePage[] {
         ...(lang === "en"
           ? note.mistakesEn ?? note.mistakes
           : note.mistakes
-        ).map((m) => ({ text: m, lang })),
+        ).flatMap((m) => toMixedSegments(m, lang)),
       ],
       body: (
         <ul className="space-y-1.5">
@@ -486,16 +485,12 @@ function IntroKanji({
   activity: Extract<Activity, { kind: "intro_kanji" }>;
 }) {
   const note = kanjiNoteFor(activity.kanjiChar);
-  // Bilingual narration: hear the kanji (Japanese voice), then the explanation.
-  const kanjiSegments = (lang: "es" | "en") => [
+  // Top button reads ONLY Japanese: the kanji and its readings (pronunciation).
+  // The Spanish/English explanation is listened to below in the "A fondo" panel.
+  const kanjiJaSegments = () => [
     { text: activity.kanjiChar, lang: "ja" as const },
-    {
-      text:
-        lang === "en"
-          ? note?.usageEn ?? `This kanji means ${activity.meaning}.`
-          : note?.usage ?? `Este kanji significa ${activity.meaning}.`,
-      lang,
-    },
+    ...activity.onyomi.map((r) => ({ text: r, lang: "ja" as const })),
+    ...activity.kunyomi.map((r) => ({ text: r, lang: "ja" as const })),
   ];
   return (
     <ActivityShell eyebrow="Nuevo kanji" jp="新しい漢字">
@@ -526,7 +521,11 @@ function IntroKanji({
             {activity.meaning}
           </p>
           <div className="mt-4 flex justify-center">
-            <AudioBar getSegments={kanjiSegments} />
+            <AudioBar
+              getSegments={kanjiJaSegments}
+              hideLang
+              label="Escuchar en japonés"
+            />
           </div>
         </div>
 
@@ -631,13 +630,12 @@ function IntroVocab({
           <AudioBar
             getSegments={(lang) => [
               { text: activity.word, lang: "ja" as const },
-              {
-                text:
-                  lang === "en"
-                    ? `means ${activity.meaning}`
-                    : `significa ${activity.meaning}`,
-                lang,
-              },
+              ...toMixedSegments(
+                lang === "en"
+                  ? `means ${activity.meaning}`
+                  : `significa ${activity.meaning}`,
+                lang
+              ),
               ...(activity.example
                 ? [{ text: activity.example, lang: "ja" as const }]
                 : []),
@@ -690,9 +688,12 @@ function IntroGrammar({
         <div className="mt-4">
           <AudioBar
             getSegments={(lang) => [
-              { text: `${activity.title}. ${activity.explanation}`, lang },
+              ...toMixedSegments(
+                `${activity.title}. ${activity.explanation}`,
+                lang
+              ),
               { text: activity.example.jp, lang: "ja" as const },
-              { text: activity.example.meaning, lang },
+              ...toMixedSegments(activity.example.meaning, lang),
             ]}
           />
         </div>
