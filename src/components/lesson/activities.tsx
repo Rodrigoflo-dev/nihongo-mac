@@ -1081,11 +1081,6 @@ function WriteKanjiActivity({
     passed: false,
     mistakes: 0,
   });
-  // Real validation: if the kanji has stroke data, the learner must complete
-  // the writing quiz. If there's no data (trace fallback), we can't validate
-  // strokes, so we allow continuing.
-  const canContinue = progress.passed || !progress.hasData;
-
   return (
     <ActivityShell eyebrow="Escribe el kanji" jp="書いてみよう">
       <HudPanel glow className="p-8">
@@ -1110,7 +1105,13 @@ function WriteKanjiActivity({
           <StrokeTrainer
             char={activity.kanjiChar}
             size={240}
-            onProgress={setProgress}
+            onProgress={(p) => {
+              setProgress(p);
+              // Record the practice (harmless for this non-graded step); the
+              // learner advances with the floating "Continuar" button — no
+              // second in-card button (Rodrigo #5).
+              if (p.passed) onComplete();
+            }}
           />
         </div>
 
@@ -1121,22 +1122,17 @@ function WriteKanjiActivity({
           </p>
         ) : null}
 
-        {progress.hasData && !progress.passed ? (
+        {progress.passed ? (
+          <p className="mt-6 flex items-center justify-center gap-1.5 text-center text-sm font-medium text-success">
+            <Check className="size-4" /> ¡Kanji practicado! Pulsa «Continuar».
+          </p>
+        ) : progress.hasData ? (
           <p className="mt-6 text-center text-xs text-muted-foreground">
-            Pulsa <span className="font-medium text-foreground">Practicar</span> y
-            escribe el kanji trazo por trazo para continuar.
+            Pulsa <span className="font-medium text-foreground">Practicar</span> para
+            escribir el kanji trazo por trazo. Cuando termines, pulsa
+            «Continuar».
           </p>
         ) : null}
-
-        <Button
-          size="lg"
-          className="mt-3 w-full"
-          disabled={!canContinue}
-          onClick={onComplete}
-        >
-          <Check className="size-4" />
-          {canContinue ? "Continuar" : "Practica el trazo para continuar"}
-        </Button>
       </HudPanel>
     </ActivityShell>
   );
