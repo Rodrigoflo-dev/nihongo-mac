@@ -1,9 +1,11 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { Sparkles, Star, Target } from "lucide-react";
+import { GraduationCap, Sparkles, Star, Target } from "lucide-react";
 
 import { ChoiceGrid } from "@/components/onboarding/choice-grid";
+import { PlacementExam } from "@/components/onboarding/placement-exam";
 import { StepShell } from "@/components/onboarding/step-shell";
 import { ToggleCard } from "@/components/onboarding/toggle-card";
 import { Input } from "@/components/ui/input";
@@ -14,11 +16,10 @@ import {
   useCompleteOnboarding,
   useUserProfile,
 } from "@/hooks/use-user-profile";
-import type { JlptLevel } from "@/lib/api";
+import { api, type JlptLevel } from "@/lib/api";
 
 type Step =
   | "welcome"
-  | "name"
   | "kana"
   | "current-level"
   | "target-level"
@@ -26,9 +27,10 @@ type Step =
   | "reminder"
   | "ready";
 
+// Note: there is no "name" step — the learner already chose a username (+ PIN)
+// at the lock screen, so we greet them with that instead of asking twice.
 const STEP_ORDER: Step[] = [
   "welcome",
-  "name",
   "kana",
   "current-level",
   "target-level",
@@ -58,18 +60,32 @@ const MINUTE_OPTIONS: { value: string; label: string; description: string }[] =
 export default function OnboardingPage() {
   const navigate = useNavigate();
   const { data: profile, isLoading } = useUserProfile();
+  const { data: auth, isLoading: authLoading } = useQuery({
+    queryKey: ["auth-status"],
+    queryFn: () => api.authStatus(),
+    staleTime: Infinity,
+  });
   const completeOnboarding = useCompleteOnboarding();
 
   const [stepIndex, setStepIndex] = useState(0);
-  const [name, setName] = useState("");
   const [knowsHiragana, setKnowsHiragana] = useState(false);
   const [knowsKatakana, setKnowsKatakana] = useState(false);
   const [currentLevel, setCurrentLevel] = useState<JlptLevel>("N5");
   const [targetLevel, setTargetLevel] = useState<JlptLevel>("N3");
   const [minutes, setMinutes] = useState<string>("20");
   const [reminder, setReminder] = useState<string>("");
+  const [takingExam, setTakingExam] = useState(false);
 
-  if (isLoading) return null;
+  // The learner already picked a username at the lock screen — reuse it as the
+  // display name instead of asking again.
+  const name = useMemo(
+    () => auth?.username?.trim() || "Estudiante",
+    [auth?.username]
+  );
+  // "Ninguno" is simply neither silabario selected.
+  const knowsNone = !knowsHiragana && !knowsKatakana;
+
+  if (isLoading || authLoading) return null;
   if (profile?.onboardedAt) return <Navigate to="/" replace />;
 
   const step = STEP_ORDER[stepIndex];
@@ -78,9 +94,23 @@ export default function OnboardingPage() {
   const next = () => setStepIndex((i) => Math.min(total - 1, i + 1));
   const back = () => setStepIndex((i) => Math.max(0, i - 1));
 
+  // The placement test takes over the whole screen when requested.
+  if (takingExam) {
+    return (
+      <PlacementExam
+        onResult={(level) => {
+          setCurrentLevel(level);
+          setTakingExam(false);
+          next();
+        }}
+        onCancel={() => setTakingExam(false)}
+      />
+    );
+  }
+
   const handleComplete = async () => {
     await completeOnboarding.mutateAsync({
-      name: name.trim() || "Estudiante",
+      name,
       knowsHiragana,
       knowsKatakana,
       currentLevel,
@@ -103,7 +133,8 @@ export default function OnboardingPage() {
           eyebrow="ようこそ"
           title={
             <>
-              Bienvenido a <span className="text-primary">Nihongo</span>
+              Hola {name}, bienvenido a{" "}
+              <span className="text-primary">Nihongo</span>
             </>
           }
           description="Tu compañero personal para aprender japonés con constancia. Vamos a configurar tu plan en menos de un minuto."
@@ -142,37 +173,6 @@ export default function OnboardingPage() {
         </StepShell>
       );
 
-    case "name":
-      return (
-        <StepShell
-          step={stepIndex}
-          total={total}
-          eyebrow="お名前"
-          title="¿Cómo te llamas?"
-          description="Lo usaré para saludarte cada día."
-          canGoBack
-          onBack={back}
-          primaryLabel="Continuar"
-          primaryDisabled={!name.trim()}
-          onPrimary={next}
-        >
-          <div className="grid gap-2">
-            <Label htmlFor="name">Nombre</Label>
-            <Input
-              id="name"
-              autoFocus
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && name.trim()) next();
-              }}
-              placeholder="Rodrigo"
-              className="h-12 text-base"
-            />
-          </div>
-        </StepShell>
-      );
-
     case "kana":
       return (
         <StepShell
@@ -203,6 +203,19 @@ export default function OnboardingPage() {
               description="Para préstamos del extranjero"
               sample="ア"
             />
+            <ToggleCard
+              value={knowsNone}
+              onChange={(v) => {
+                if (v) {
+                  setKnowsHiragana(false);
+                  setKnowsKatakana(false);
+                }
+              }}
+              title="Ninguno"
+              jp="まだ"
+              description="Empiezo desde cero — enséñame los silabarios primero"
+              sample="◎"
+            />
           </div>
         </StepShell>
       );
@@ -231,6 +244,24 @@ export default function OnboardingPage() {
             }))}
             columns={5}
           />
+
+          <button
+            type="button"
+            onClick={() => setTakingExam(true)}
+            className="group mt-4 flex w-full items-center gap-3 rounded-xl border border-primary/30 bg-primary/5 px-4 py-3 text-left transition-all hover:border-primary/60 hover:bg-primary/10"
+          >
+            <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-primary/15 text-primary transition-transform group-hover:scale-110">
+              <GraduationCap className="size-5" />
+            </span>
+            <span className="min-w-0">
+              <span className="block text-sm font-semibold">
+                ¿No sabes tu nivel? Haz una evaluación
+              </span>
+              <span className="block text-xs text-muted-foreground">
+                Preguntas de N5 a N1 para ubicarte. Cambia cada día.
+              </span>
+            </span>
+          </button>
         </StepShell>
       );
 
