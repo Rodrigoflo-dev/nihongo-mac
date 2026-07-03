@@ -21,12 +21,18 @@ import { Button } from "@/components/ui/button";
 import { HudPanel } from "@/components/visual/hud-panel";
 import { JapaneseKeyboard } from "@/components/lesson/japanese-keyboard";
 import { RomajiLine } from "@/components/lesson/romaji-line";
+import {
+  DeepDive,
+  ListenButton,
+  type DeepDivePage,
+} from "@/components/lesson/deep-dive";
 import { StrokeTrainer, type StrokeProgress } from "@/components/kanji/stroke-trainer";
 import { usePlayTts } from "@/hooks/use-listening";
 import { useVoiceRecorder } from "@/hooks/use-voice-recorder";
 import { api } from "@/lib/api";
 import type { Activity } from "@/lib/api";
 import { grammarNoteFor, type GrammarNote } from "@/lib/grammar-notes";
+import { kanjiNoteFor, type KanjiNote, type KanjiWord } from "@/lib/kanji-notes";
 import { cn } from "@/lib/utils";
 
 /**
@@ -330,11 +336,123 @@ export function isActivityQuiz(activity: Activity): boolean {
 // 1. Intro kanji
 // ---------------------------------------------------------------------------
 
+/** Build the word/example chips shared by kanji & grammar deep dives. */
+function WordChips({ items }: { items: KanjiWord[] }) {
+  return (
+    <div className="grid gap-2 sm:grid-cols-2">
+      {items.map((w, i) => (
+        <div
+          key={i}
+          className="rounded-xl border border-l-2 border-border/40 border-l-neon-cyan/60 bg-card/40 p-3"
+        >
+          <p className="font-jp text-base">{w.jp}</p>
+          <p className="font-jp text-[11px] text-muted-foreground">{w.reading}</p>
+          <p className="mt-0.5 text-xs text-muted-foreground">{w.meaning}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** Turn an extended kanji note into paginated "A fondo" pages. */
+function kanjiPages(note: KanjiNote): DeepDivePage[] {
+  const pages: DeepDivePage[] = [
+    {
+      label: "¿Cómo se usa?",
+      narrate: note.usage,
+      body: (
+        <p className="text-sm leading-relaxed text-foreground/90">{note.usage}</p>
+      ),
+    },
+    {
+      label: "Cómo combinarlo",
+      narrate: note.combos.join(". "),
+      body: (
+        <ul className="space-y-1.5">
+          {note.combos.map((c, i) => (
+            <li key={i} className="flex gap-2 text-sm text-foreground/90">
+              <span className="mt-1 size-1.5 shrink-0 rounded-full bg-neon-cyan" />
+              <span>{c}</span>
+            </li>
+          ))}
+        </ul>
+      ),
+    },
+    {
+      label: "Palabras comunes",
+      narrate:
+        "Palabras comunes: " +
+        note.words.map((w) => `${w.jp}, ${w.meaning}`).join(". "),
+      body: <WordChips items={note.words} />,
+    },
+    {
+      label: "Ejemplos de la vida real",
+      narrate: "Ejemplos: " + note.examples.map((e) => e.meaning).join(". "),
+      body: <WordChips items={note.examples} />,
+    },
+  ];
+  return pages;
+}
+
+/** Turn a grammar note into paginated "A fondo" pages. */
+function grammarPages(note: GrammarNote): DeepDivePage[] {
+  return [
+    {
+      label: "¿Por qué se usa?",
+      narrate: note.why,
+      body: (
+        <p className="text-sm leading-relaxed text-foreground/90">{note.why}</p>
+      ),
+    },
+    {
+      label: "¿Cuándo usarla?",
+      narrate: note.whenToUse.join(". "),
+      body: (
+        <ul className="space-y-1.5">
+          {note.whenToUse.map((c, i) => (
+            <li key={i} className="flex gap-2 text-sm text-foreground/90">
+              <span className="mt-1 size-1.5 shrink-0 rounded-full bg-neon-cyan" />
+              <span>{c}</span>
+            </li>
+          ))}
+        </ul>
+      ),
+    },
+    {
+      label: "⚠ Errores comunes",
+      narrate: "Errores comunes: " + note.mistakes.join(". "),
+      body: (
+        <ul className="space-y-1.5">
+          {note.mistakes.map((m, i) => (
+            <li key={i} className="flex gap-2 text-sm text-foreground/80">
+              <span className="mt-1 size-1.5 shrink-0 rounded-full bg-warning" />
+              <span>{m}</span>
+            </li>
+          ))}
+        </ul>
+      ),
+    },
+    {
+      label: "Ejemplos",
+      narrate: "Ejemplos: " + note.examples.map((e) => e.meaning).join(". "),
+      body: <WordChips items={note.examples} />,
+    },
+  ];
+}
+
 function IntroKanji({
   activity,
 }: {
   activity: Extract<Activity, { kind: "intro_kanji" }>;
 }) {
+  const note = kanjiNoteFor(activity.kanjiChar);
+  const narration = [
+    `El kanji ${activity.kanjiChar} significa ${activity.meaning}.`,
+    activity.note ?? "",
+    note?.usage ?? "",
+  ]
+    .filter(Boolean)
+    .join(" ");
   return (
     <ActivityShell eyebrow="Nuevo kanji" jp="新しい漢字">
       <div className="hud-frame relative overflow-hidden rounded-3xl glass-strong p-10">
@@ -363,6 +481,9 @@ function IntroKanji({
           <p className="mt-4 font-display text-2xl font-bold tracking-tight">
             {activity.meaning}
           </p>
+          <div className="mt-4 flex justify-center">
+            <ListenButton text={narration} label="Escuchar la lección" />
+          </div>
         </div>
 
         <div className="mt-8 grid grid-cols-2 gap-4">
@@ -387,6 +508,14 @@ function IntroKanji({
           <p className="mt-5 text-sm leading-relaxed text-muted-foreground">
             {activity.note}
           </p>
+        ) : null}
+
+        {note ? (
+          <DeepDive
+            title={`El kanji ${activity.kanjiChar}`}
+            jp={activity.kanjiChar}
+            pages={kanjiPages(note)}
+          />
         ) : null}
       </div>
     </ActivityShell>
@@ -455,18 +584,24 @@ function IntroVocab({
             {activity.meaning}
           </p>
         </div>
-        <Button
-          variant="outline"
-          className="group relative mt-6 overflow-hidden border-neon-cyan/40 text-neon-cyan hover:border-neon-cyan hover:text-neon-cyan"
-          disabled={play.isPending}
-          onClick={() =>
-            play.mutate({ text: activity.word, voice: "Kyoko", rate: 160 })
-          }
-        >
-          <span className="absolute inset-0 shimmer opacity-0 transition-opacity group-hover:opacity-30" />
-          <Volume2 className={cn("size-4", play.isPending && "animate-pulse")} />
-          {play.isPending ? "Sonando…" : "Escuchar"}
-        </Button>
+        <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
+          <Button
+            variant="outline"
+            className="group relative overflow-hidden border-neon-cyan/40 text-neon-cyan hover:border-neon-cyan hover:text-neon-cyan"
+            disabled={play.isPending}
+            onClick={() =>
+              play.mutate({ text: activity.word, voice: "Kyoko", rate: 160 })
+            }
+          >
+            <span className="absolute inset-0 shimmer opacity-0 transition-opacity group-hover:opacity-30" />
+            <Volume2 className={cn("size-4", play.isPending && "animate-pulse")} />
+            {play.isPending ? "Sonando…" : "Escuchar en japonés"}
+          </Button>
+          <ListenButton
+            text={`${activity.word}, se lee ${activity.reading}, significa ${activity.meaning}.`}
+            label="Escuchar la lección"
+          />
+        </div>
         <TtsErrorNote message={play.ttsError} />
         {activity.example ? (
           <div className="relative mt-7 rounded-xl border border-l-2 border-border/40 border-l-neon-cyan/60 bg-card/40 p-4 text-left">
@@ -511,6 +646,12 @@ function IntroGrammar({
         <p className="mt-5 text-sm leading-relaxed text-muted-foreground">
           {activity.explanation}
         </p>
+        <div className="mt-4">
+          <ListenButton
+            text={`${activity.title}. ${activity.explanation}`}
+            label="Escuchar la lección"
+          />
+        </div>
         <div className="mt-6 rounded-xl border border-l-2 border-success/30 border-l-success/70 bg-success/5 p-4">
           <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-success">
             例 · Ejemplo
@@ -525,93 +666,11 @@ function IntroGrammar({
           </p>
         </div>
 
-        {note ? <GrammarDeepDive note={note} /> : null}
+        {note ? (
+          <DeepDive title={note.title} jp={note.jp} pages={grammarPages(note)} />
+        ) : null}
       </HudPanel>
     </ActivityShell>
-  );
-}
-
-/** Thorough "why / when / mistakes / examples" panel for a grammar point. */
-function GrammarDeepDive({ note }: { note: GrammarNote }) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.35, delay: 0.1 }}
-      className="mt-7 space-y-5 rounded-2xl border border-neon-cyan/25 bg-background/40 p-5"
-    >
-      <div className="flex items-center gap-3">
-        <span
-          className="font-jp text-3xl font-bold text-neon-cyan"
-          style={{
-            textShadow:
-              "0 0 18px color-mix(in oklch, var(--color-neon-cyan) 55%, transparent)",
-          }}
-        >
-          {note.jp}
-        </span>
-        <div>
-          <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-neon-cyan">
-            詳しく · A fondo
-          </p>
-          <p className="font-display text-base font-bold leading-tight">
-            {note.title}
-          </p>
-        </div>
-      </div>
-
-      <div>
-        <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-primary">
-          ¿Por qué se usa?
-        </p>
-        <p className="mt-1 text-sm leading-relaxed text-foreground/90">
-          {note.why}
-        </p>
-      </div>
-
-      <div>
-        <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-primary">
-          ¿Cuándo usarla?
-        </p>
-        <ul className="mt-1.5 space-y-1.5">
-          {note.whenToUse.map((c, i) => (
-            <li key={i} className="flex gap-2 text-sm text-foreground/90">
-              <span className="mt-1 size-1.5 shrink-0 rounded-full bg-neon-cyan" />
-              <span>{c}</span>
-            </li>
-          ))}
-        </ul>
-      </div>
-
-      <div>
-        <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-warning">
-          ⚠ Errores comunes
-        </p>
-        <ul className="mt-1.5 space-y-1.5">
-          {note.mistakes.map((m, i) => (
-            <li key={i} className="flex gap-2 text-sm text-foreground/80">
-              <span className="mt-1 size-1.5 shrink-0 rounded-full bg-warning" />
-              <span>{m}</span>
-            </li>
-          ))}
-        </ul>
-      </div>
-
-      <div className="grid gap-2 sm:grid-cols-2">
-        {note.examples.map((ex, i) => (
-          <div
-            key={i}
-            className="rounded-xl border border-l-2 border-border/40 border-l-success/60 bg-card/40 p-3"
-          >
-            <p className="font-jp text-base">{ex.jp}</p>
-            <p className="font-jp text-[11px] text-muted-foreground">
-              {ex.reading}
-            </p>
-            <p className="mt-0.5 text-xs text-muted-foreground">{ex.meaning}</p>
-          </div>
-        ))}
-      </div>
-    </motion.div>
   );
 }
 

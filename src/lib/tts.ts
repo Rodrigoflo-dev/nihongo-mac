@@ -78,6 +78,80 @@ export async function hasJapaneseVoice(): Promise<boolean> {
   return (await getJapaneseVoice()) !== null;
 }
 
+/** Language of the spoken narration (explanations, not Japanese). */
+export type NarrationLang = "es" | "en";
+
+const LANG_CODE: Record<NarrationLang, string> = {
+  es: "es-ES",
+  en: "en-US",
+};
+
+/** Find a voice for a narration language (Spanish/English). */
+export async function getVoiceForLang(
+  lang: NarrationLang
+): Promise<SpeechSynthesisVoice | null> {
+  const voices = await loadVoices();
+  const matches = voices.filter((v) =>
+    new RegExp(`^${lang}(\\b|[-_])`, "i").test(v.lang)
+  );
+  if (matches.length === 0) return null;
+  // Prefer a local/default voice for snappier playback.
+  return matches.find((v) => v.localService) ?? matches[0];
+}
+
+/**
+ * Narrate plain text (a Spanish or English explanation) aloud. Unlike
+ * `speakJapanese`, this reads the lesson's EXPLANATION so learners who don't
+ * like reading can listen instead. Falls back to the WebView default voice if no
+ * exact language voice is installed (es/en ship on virtually every system).
+ */
+export async function speakText(
+  text: string,
+  lang: NarrationLang = "es",
+  rate = 1
+): Promise<void> {
+  if (!ttsSupported()) {
+    throw new TtsError("unsupported", "Tu sistema no soporta síntesis de voz.");
+  }
+  const voice = await getVoiceForLang(lang);
+  cancelSpeech();
+
+  return new Promise<void>((resolve, reject) => {
+    const utter = new SpeechSynthesisUtterance(text);
+    if (voice) utter.voice = voice;
+    utter.lang = voice?.lang || LANG_CODE[lang];
+    utter.rate = Math.min(1.4, Math.max(0.6, rate));
+    utter.pitch = 1;
+
+    const cleanup = () => {
+      if (watchdog) {
+        clearTimeout(watchdog);
+        watchdog = null;
+      }
+    };
+    utter.onend = () => {
+      cleanup();
+      resolve();
+    };
+    utter.onerror = (e) => {
+      cleanup();
+      if (e.error === "canceled" || e.error === "interrupted") {
+        resolve();
+      } else {
+        reject(new TtsError("speak-failed", `Falló la reproducción: ${e.error}`));
+      }
+    };
+
+    const capMs = Math.min(60_000, 4_000 + text.length * 90);
+    watchdog = setTimeout(() => {
+      cleanup();
+      resolve();
+    }, capMs);
+
+    window.speechSynthesis.speak(utter);
+  });
+}
+
 /** Map words-per-minute (legacy API) to a Web Speech rate multiplier (1 = normal). */
 function wpmToRate(wpm?: number): number {
   if (!wpm) return 0.95;
