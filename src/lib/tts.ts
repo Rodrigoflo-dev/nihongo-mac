@@ -114,7 +114,7 @@ export async function speakText(
     throw new TtsError("unsupported", "Tu sistema no soporta síntesis de voz.");
   }
   const voice = await getVoiceForLang(lang);
-  cancelSpeech();
+  stopSynth();
 
   return new Promise<void>((resolve, reject) => {
     const utter = new SpeechSynthesisUtterance(text);
@@ -167,14 +167,56 @@ export interface SpeakOptions {
 }
 
 let watchdog: ReturnType<typeof setTimeout> | null = null;
+/** Bumped whenever speech is cancelled so a running sequence knows to stop. */
+let sequenceToken = 0;
 
-/** Stop any in-progress speech immediately. */
-export function cancelSpeech() {
+/** Stop the synth engine without touching the sequence token (internal use). */
+function stopSynth() {
   if (watchdog) {
     clearTimeout(watchdog);
     watchdog = null;
   }
   if (ttsSupported()) window.speechSynthesis.cancel();
+}
+
+/** Stop any in-progress speech immediately (also aborts a running sequence). */
+export function cancelSpeech() {
+  sequenceToken++;
+  stopSynth();
+}
+
+/** One chunk of a narration: Japanese (real pronunciation) or an explanation. */
+export interface NarrationSegment {
+  text: string;
+  lang: "ja" | NarrationLang;
+}
+
+/**
+ * Narrate a sequence of segments in order, switching voices per segment: the
+ * Japanese parts are read with a Japanese voice (correct pronunciation) and the
+ * explanation parts with the chosen es/en voice. `rate` is a multiplier
+ * (0.75 = lento, 1 = normal, 1.3 = rápido). A new call cancels the previous.
+ */
+export async function speakSequence(
+  segments: NarrationSegment[],
+  opts: { rate?: number } = {}
+): Promise<void> {
+  stopSynth();
+  const myToken = ++sequenceToken;
+  const rate = opts.rate ?? 1;
+  for (const seg of segments) {
+    if (myToken !== sequenceToken) return; // superseded or stopped
+    if (!seg.text.trim()) continue;
+    try {
+      if (seg.lang === "ja") {
+        await speakJapanese(seg.text, { rate: rate * 170 });
+      } else {
+        await speakText(seg.text, seg.lang, rate);
+      }
+    } catch {
+      // A missing voice / engine hiccup on one segment shouldn't abort the rest.
+    }
+  }
 }
 
 /**
@@ -198,7 +240,7 @@ export async function speakJapanese(
     );
   }
 
-  cancelSpeech();
+  stopSynth();
 
   return new Promise<void>((resolve, reject) => {
     const utter = new SpeechSynthesisUtterance(text);

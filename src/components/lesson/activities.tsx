@@ -22,8 +22,8 @@ import { HudPanel } from "@/components/visual/hud-panel";
 import { JapaneseKeyboard } from "@/components/lesson/japanese-keyboard";
 import { RomajiLine } from "@/components/lesson/romaji-line";
 import {
+  AudioBar,
   DeepDive,
-  ListenButton,
   type DeepDivePage,
 } from "@/components/lesson/deep-dive";
 import { StrokeTrainer, type StrokeProgress } from "@/components/kanji/stroke-trainer";
@@ -337,7 +337,11 @@ export function isActivityQuiz(activity: Activity): boolean {
 // ---------------------------------------------------------------------------
 
 /** Build the word/example chips shared by kanji & grammar deep dives. */
-function WordChips({ items }: { items: KanjiWord[] }) {
+function WordChips({
+  items,
+}: {
+  items: { jp: string; reading: string; meaning: string }[];
+}) {
   return (
     <div className="grid gap-2 sm:grid-cols-2">
       {items.map((w, i) => (
@@ -354,19 +358,33 @@ function WordChips({ items }: { items: KanjiWord[] }) {
   );
 }
 
-/** Turn an extended kanji note into paginated "A fondo" pages. */
+/** Read words aloud: Japanese pronunciation, then meaning in `lang`. */
+function wordSegments(items: KanjiWord[], lang: "es" | "en") {
+  return items.flatMap((w) => [
+    { text: w.jp, lang: "ja" as const },
+    { text: lang === "en" ? w.meaningEn : w.meaning, lang },
+  ]);
+}
+
+/** Turn an extended kanji note into paginated "A fondo" pages (bilingual audio). */
 function kanjiPages(note: KanjiNote): DeepDivePage[] {
   const pages: DeepDivePage[] = [
     {
       label: "¿Cómo se usa?",
-      narrate: note.usage,
+      speech: (lang) => [
+        { text: lang === "en" ? note.usageEn : note.usage, lang },
+      ],
       body: (
         <p className="text-sm leading-relaxed text-foreground/90">{note.usage}</p>
       ),
     },
     {
       label: "Cómo combinarlo",
-      narrate: note.combos.join(". "),
+      speech: (lang) =>
+        (lang === "en" ? note.combosEn : note.combos).map((c) => ({
+          text: c,
+          lang,
+        })),
       body: (
         <ul className="space-y-1.5">
           {note.combos.map((c, i) => (
@@ -380,33 +398,43 @@ function kanjiPages(note: KanjiNote): DeepDivePage[] {
     },
     {
       label: "Palabras comunes",
-      narrate:
-        "Palabras comunes: " +
-        note.words.map((w) => `${w.jp}, ${w.meaning}`).join(". "),
+      speech: (lang) => [
+        { text: lang === "en" ? "Common words:" : "Palabras comunes:", lang },
+        ...wordSegments(note.words, lang),
+      ],
       body: <WordChips items={note.words} />,
     },
     {
       label: "Ejemplos de la vida real",
-      narrate: "Ejemplos: " + note.examples.map((e) => e.meaning).join(". "),
+      speech: (lang) => [
+        { text: lang === "en" ? "Examples:" : "Ejemplos:", lang },
+        ...wordSegments(note.examples, lang),
+      ],
       body: <WordChips items={note.examples} />,
     },
   ];
   return pages;
 }
 
-/** Turn a grammar note into paginated "A fondo" pages. */
+/** Turn a grammar note into paginated "A fondo" pages (bilingual audio, English
+ * falls back to Spanish where a translation isn't authored yet). */
 function grammarPages(note: GrammarNote): DeepDivePage[] {
   return [
     {
       label: "¿Por qué se usa?",
-      narrate: note.why,
+      speech: (lang) => [
+        { text: lang === "en" ? note.whyEn ?? note.why : note.why, lang },
+      ],
       body: (
         <p className="text-sm leading-relaxed text-foreground/90">{note.why}</p>
       ),
     },
     {
       label: "¿Cuándo usarla?",
-      narrate: note.whenToUse.join(". "),
+      speech: (lang) =>
+        (lang === "en" ? note.whenToUseEn ?? note.whenToUse : note.whenToUse).map(
+          (c) => ({ text: c, lang })
+        ),
       body: (
         <ul className="space-y-1.5">
           {note.whenToUse.map((c, i) => (
@@ -420,7 +448,13 @@ function grammarPages(note: GrammarNote): DeepDivePage[] {
     },
     {
       label: "⚠ Errores comunes",
-      narrate: "Errores comunes: " + note.mistakes.join(". "),
+      speech: (lang) => [
+        { text: lang === "en" ? "Common mistakes:" : "Errores comunes:", lang },
+        ...(lang === "en"
+          ? note.mistakesEn ?? note.mistakes
+          : note.mistakes
+        ).map((m) => ({ text: m, lang })),
+      ],
       body: (
         <ul className="space-y-1.5">
           {note.mistakes.map((m, i) => (
@@ -434,7 +468,13 @@ function grammarPages(note: GrammarNote): DeepDivePage[] {
     },
     {
       label: "Ejemplos",
-      narrate: "Ejemplos: " + note.examples.map((e) => e.meaning).join(". "),
+      speech: (lang) => [
+        { text: lang === "en" ? "Examples:" : "Ejemplos:", lang },
+        ...note.examples.flatMap((e) => [
+          { text: e.jp, lang: "ja" as const },
+          { text: lang === "en" ? e.meaningEn ?? e.meaning : e.meaning, lang },
+        ]),
+      ],
       body: <WordChips items={note.examples} />,
     },
   ];
@@ -446,13 +486,17 @@ function IntroKanji({
   activity: Extract<Activity, { kind: "intro_kanji" }>;
 }) {
   const note = kanjiNoteFor(activity.kanjiChar);
-  const narration = [
-    `El kanji ${activity.kanjiChar} significa ${activity.meaning}.`,
-    activity.note ?? "",
-    note?.usage ?? "",
-  ]
-    .filter(Boolean)
-    .join(" ");
+  // Bilingual narration: hear the kanji (Japanese voice), then the explanation.
+  const kanjiSegments = (lang: "es" | "en") => [
+    { text: activity.kanjiChar, lang: "ja" as const },
+    {
+      text:
+        lang === "en"
+          ? note?.usageEn ?? `This kanji means ${activity.meaning}.`
+          : note?.usage ?? `Este kanji significa ${activity.meaning}.`,
+      lang,
+    },
+  ];
   return (
     <ActivityShell eyebrow="Nuevo kanji" jp="新しい漢字">
       <div className="hud-frame relative overflow-hidden rounded-3xl glass-strong p-10">
@@ -482,7 +526,7 @@ function IntroKanji({
             {activity.meaning}
           </p>
           <div className="mt-4 flex justify-center">
-            <ListenButton text={narration} label="Escuchar la lección" />
+            <AudioBar getSegments={kanjiSegments} />
           </div>
         </div>
 
@@ -553,7 +597,6 @@ function IntroVocab({
 }: {
   activity: Extract<Activity, { kind: "intro_vocab" }>;
 }) {
-  const play = usePlayTts();
   return (
     <ActivityShell eyebrow="Nueva palabra" jp="新しい単語">
       <HudPanel glow className="p-10 text-center">
@@ -584,25 +627,23 @@ function IntroVocab({
             {activity.meaning}
           </p>
         </div>
-        <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
-          <Button
-            variant="outline"
-            className="group relative overflow-hidden border-neon-cyan/40 text-neon-cyan hover:border-neon-cyan hover:text-neon-cyan"
-            disabled={play.isPending}
-            onClick={() =>
-              play.mutate({ text: activity.word, voice: "Kyoko", rate: 160 })
-            }
-          >
-            <span className="absolute inset-0 shimmer opacity-0 transition-opacity group-hover:opacity-30" />
-            <Volume2 className={cn("size-4", play.isPending && "animate-pulse")} />
-            {play.isPending ? "Sonando…" : "Escuchar en japonés"}
-          </Button>
-          <ListenButton
-            text={`${activity.word}, se lee ${activity.reading}, significa ${activity.meaning}.`}
-            label="Escuchar la lección"
+        <div className="mt-6 flex justify-center">
+          <AudioBar
+            getSegments={(lang) => [
+              { text: activity.word, lang: "ja" as const },
+              {
+                text:
+                  lang === "en"
+                    ? `means ${activity.meaning}`
+                    : `significa ${activity.meaning}`,
+                lang,
+              },
+              ...(activity.example
+                ? [{ text: activity.example, lang: "ja" as const }]
+                : []),
+            ]}
           />
         </div>
-        <TtsErrorNote message={play.ttsError} />
         {activity.example ? (
           <div className="relative mt-7 rounded-xl border border-l-2 border-border/40 border-l-neon-cyan/60 bg-card/40 p-4 text-left">
             <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-neon-cyan/90">
@@ -647,9 +688,12 @@ function IntroGrammar({
           {activity.explanation}
         </p>
         <div className="mt-4">
-          <ListenButton
-            text={`${activity.title}. ${activity.explanation}`}
-            label="Escuchar la lección"
+          <AudioBar
+            getSegments={(lang) => [
+              { text: `${activity.title}. ${activity.explanation}`, lang },
+              { text: activity.example.jp, lang: "ja" as const },
+              { text: activity.example.meaning, lang },
+            ]}
           />
         </div>
         <div className="mt-6 rounded-xl border border-l-2 border-success/30 border-l-success/70 bg-success/5 p-4">

@@ -5,85 +5,145 @@ import { ChevronLeft, ChevronRight, Square, Volume2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   cancelSpeech,
-  speakText,
+  speakSequence,
   ttsSupported,
   type NarrationLang,
+  type NarrationSegment,
 } from "@/lib/tts";
 import { cn } from "@/lib/utils";
 
+/** Builds the ordered narration for a given language (Japanese parts stay JP). */
+export type SegmentBuilder = (lang: NarrationLang) => NarrationSegment[];
+
+const SPEEDS: { label: string; rate: number }[] = [
+  { label: "Lento", rate: 0.75 },
+  { label: "Normal", rate: 1 },
+  { label: "Rápido", rate: 1.3 },
+];
+
+/** Small segmented pill control. */
+function Segmented<T>({
+  options,
+  value,
+  onChange,
+}: {
+  options: { label: string; value: T }[];
+  value: T;
+  onChange: (v: T) => void;
+}) {
+  return (
+    <div className="inline-flex overflow-hidden rounded-full border border-border/60 bg-card/40 p-0.5">
+      {options.map((o) => (
+        <button
+          key={o.label}
+          type="button"
+          onClick={() => onChange(o.value)}
+          className={cn(
+            "px-2.5 py-1 text-[11px] font-medium transition-colors",
+            value === o.value
+              ? "rounded-full bg-neon-cyan/20 text-neon-cyan"
+              : "text-muted-foreground hover:text-foreground"
+          )}
+        >
+          {o.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 /**
- * "Escuchar" button: narrates a Spanish (or English) explanation aloud so the
- * learner can listen instead of reading. Toggles between play and stop.
+ * "Escuchar" control: reads a narration aloud, mixing a Japanese voice for the
+ * Japanese parts (real pronunciation) with a Spanish/English voice for the
+ * explanation. Lets the learner pick language (Español/English) and speed
+ * (Lento/Normal/Rápido) — Rodrigo's audio requests.
  */
-export function ListenButton({
-  text,
-  label = "Escuchar",
-  lang = "es",
+export function AudioBar({
+  getSegments,
   className,
 }: {
-  text: string;
-  label?: string;
-  lang?: NarrationLang;
+  getSegments: SegmentBuilder;
   className?: string;
 }) {
-  const [speaking, setSpeaking] = useState(false);
+  const [lang, setLang] = useState<NarrationLang>("es");
+  const [rate, setRate] = useState(1);
+  const [playing, setPlaying] = useState(false);
 
-  // Stop any narration when the component unmounts (e.g. moving to the next
-  // activity) so audio doesn't bleed across screens.
-  useEffect(() => {
-    return () => cancelSpeech();
-  }, []);
+  // Stop narration on unmount so audio doesn't bleed to the next screen.
+  useEffect(() => () => cancelSpeech(), []);
 
   if (!ttsSupported()) return null;
 
-  const toggle = () => {
-    if (speaking) {
-      cancelSpeech();
-      setSpeaking(false);
-      return;
-    }
-    setSpeaking(true);
-    speakText(text, lang)
+  const stop = () => {
+    cancelSpeech();
+    setPlaying(false);
+  };
+  const play = () => {
+    if (playing) return stop();
+    setPlaying(true);
+    speakSequence(getSegments(lang), { rate })
       .catch(() => {})
-      .finally(() => setSpeaking(false));
+      .finally(() => setPlaying(false));
+  };
+  // Changing language/speed mid-playback stops it; the learner presses play again.
+  const changeLang = (l: NarrationLang) => {
+    if (playing) stop();
+    setLang(l);
+  };
+  const changeRate = (r: number) => {
+    if (playing) stop();
+    setRate(r);
   };
 
   return (
-    <Button
-      type="button"
-      variant="outline"
-      size="sm"
-      onClick={toggle}
-      className={cn(
-        "border-neon-cyan/40 text-neon-cyan hover:border-neon-cyan hover:text-neon-cyan",
-        className
-      )}
-    >
-      {speaking ? (
-        <>
-          <Square className="size-3.5 fill-current" /> Detener
-        </>
-      ) : (
-        <>
-          <Volume2 className="size-3.5" /> {label}
-        </>
-      )}
-    </Button>
+    <div className={cn("flex flex-wrap items-center gap-2", className)}>
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        onClick={play}
+        className="border-neon-cyan/40 text-neon-cyan hover:border-neon-cyan hover:text-neon-cyan"
+      >
+        {playing ? (
+          <>
+            <Square className="size-3.5 fill-current" /> Detener
+          </>
+        ) : (
+          <>
+            <Volume2 className="size-3.5" /> Escuchar
+          </>
+        )}
+      </Button>
+      <Segmented<NarrationLang>
+        value={lang}
+        onChange={(v) => changeLang(v)}
+        options={[
+          { label: "Español", value: "es" },
+          { label: "English", value: "en" },
+        ]}
+      />
+      <Segmented
+        value={rate}
+        onChange={(v) => changeRate(v)}
+        options={SPEEDS.map((s) => ({ label: s.label, value: s.rate }))}
+      />
+    </div>
   );
 }
 
 export interface DeepDivePage {
   /** Small section label (e.g. "¿Cómo se usa?"). */
   label: string;
-  /** Plain Spanish text read aloud when the learner presses "Escuchar". */
-  narrate: string;
+  /** Builds the narration for this page in the chosen language. */
+  speech: SegmentBuilder;
   /** The visual content of the page. */
   body: React.ReactNode;
 }
 
 /**
  * A paginated "A fondo" panel: extended explanation split into pages so long
- * content never overflows the card (Rodrigo #4). Each page can be listened to.
+ * content never overflows the card. Each page can be listened to (bilingual,
+ * with speed control).
  */
 export function DeepDive({
   title,
@@ -106,7 +166,7 @@ export function DeepDive({
       transition={{ duration: 0.35, delay: 0.1 }}
       className="mt-7 rounded-2xl border border-neon-cyan/25 bg-background/40 p-5"
     >
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <span
             className="font-jp text-3xl font-bold text-neon-cyan"
@@ -126,7 +186,7 @@ export function DeepDive({
             </p>
           </div>
         </div>
-        <ListenButton text={current.narrate} />
+        <AudioBar key={page} getSegments={current.speech} />
       </div>
 
       <div className="mt-4 min-h-[9rem]">

@@ -13,6 +13,8 @@ export interface GrammarExample {
   jp: string;
   reading: string;
   meaning: string;
+  /** English translation (optional — narration falls back to Spanish). */
+  meaningEn?: string;
 }
 
 export interface GrammarNote {
@@ -27,6 +29,10 @@ export interface GrammarNote {
   /** Errores frecuentes a evitar. */
   mistakes: string[];
   examples: GrammarExample[];
+  // Optional English versions for the "escuchar en inglés" narration option.
+  whyEn?: string;
+  whenToUseEn?: string[];
+  mistakesEn?: string[];
 }
 
 export const GRAMMAR_NOTES: Record<string, GrammarNote> = {
@@ -34,18 +40,28 @@ export const GRAMMAR_NOTES: Record<string, GrammarNote> = {
     jp: "は",
     title: "La partícula は — el tema",
     why: "Marca el TEMA de la oración: aquello de lo que vas a hablar ('en cuanto a…'). No es exactamente el sujeto, sino el marco de la frase. Se escribe は pero, como partícula, se pronuncia «wa».",
+    whyEn: "It marks the TOPIC of the sentence: what you are going to talk about ('as for…'). It is not exactly the subject, but the frame of the sentence. It is written は but, as a particle, is pronounced “wa”.",
     whenToUse: [
       "Presentar de qué trata la frase: 私は学生です (En cuanto a mí, soy estudiante).",
       "Contrastar dos cosas: コーヒーは好きですが、お茶は好きじゃないです (El café sí me gusta, el té no).",
       "Hablar de información ya conocida por ambos.",
     ],
+    whenToUseEn: [
+      "Introduce what the sentence is about: 私は学生です (As for me, I'm a student).",
+      "Contrast two things: コーヒーは好きですが、お茶は好きじゃないです (I like coffee, but not tea).",
+      "Talk about information already known to both speakers.",
+    ],
     mistakes: [
       "は vs が: は presenta el tema (información conocida); が marca un sujeto nuevo o lo enfatiza. «¿Quién vino?» → 私が来ました (が, respuesta nueva).",
       "Como partícula se pronuncia «wa», no «ha».",
     ],
+    mistakesEn: [
+      "は vs が: は introduces the topic (known info); が marks a new or emphasized subject. “Who came?” → 私が来ました (が, new answer).",
+      "As a particle it is pronounced “wa”, not “ha”.",
+    ],
     examples: [
-      { jp: "私は田中です。", reading: "わたしはたなかです", meaning: "Yo soy Tanaka." },
-      { jp: "これは本です。", reading: "これはほんです", meaning: "Esto es un libro." },
+      { jp: "私は田中です。", reading: "わたしはたなかです", meaning: "Yo soy Tanaka.", meaningEn: "I am Tanaka." },
+      { jp: "これは本です。", reading: "これはほんです", meaning: "Esto es un libro.", meaningEn: "This is a book." },
     ],
   },
   が: {
