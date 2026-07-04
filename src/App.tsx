@@ -9,6 +9,7 @@ import GrammarLessonPage from "@/pages/grammar-lesson";
 import KanjiPage from "@/pages/kanji";
 import KanjiReviewPage from "@/pages/kanji-review";
 import ExamPage from "@/pages/exam";
+import LevelExamPage from "@/pages/level-exam";
 import HiraganaSpeedGame from "@/pages/minigame-hiragana-speed";
 import KanjiMatchGame from "@/pages/minigame-kanji-match";
 import KanjiQuizGame from "@/pages/minigame-kanji-quiz";
@@ -34,6 +35,7 @@ function App() {
         <Routes>
           <Route path="/welcome" element={<OnboardingPage />} />
           <Route path="/learn/:id" element={<LessonPlayer />} />
+          <Route path="/exam/level/:level" element={<LevelExamPage />} />
           <Route path="/exam/:unitId" element={<ExamPage />} />
           <Route element={<AppLayout />}>
             <Route path="/" element={<DashboardPage />} />

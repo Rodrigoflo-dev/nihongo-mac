@@ -5,6 +5,7 @@ import {
   Check,
   Circle,
   Clock,
+  GraduationCap,
   Lock,
   Play,
   Sparkles,
@@ -15,11 +16,26 @@ import { PageHeader } from "@/components/layout/page-header";
 import { HudPanel } from "@/components/visual/hud-panel";
 import { HoloKanji } from "@/components/visual/holo-kanji";
 import { useCourses } from "@/hooks/use-lessons";
-import type { LessonSummary, Unit } from "@/lib/api";
+import { useUnlockedLevel } from "@/hooks/use-exams";
+import type { Course, LessonSummary, Unit } from "@/lib/api";
 import { cn } from "@/lib/utils";
+
+const LEVEL_ORDER = ["N5", "N4", "N3", "N2", "N1"];
+const levelRank = (l: string) => {
+  const i = LEVEL_ORDER.indexOf(l);
+  return i < 0 ? 0 : i;
+};
 
 export default function LearnPage() {
   const { data: courses, isLoading } = useCourses();
+  const { data: unlockedLevel } = useUnlockedLevel();
+  const current = unlockedLevel ?? "N5";
+
+  // Only show levels the learner has unlocked (pass a level's final exam to
+  // unlock the next). N4 stays hidden until N5's final exam is passed.
+  const visible = (courses ?? []).filter(
+    (c) => levelRank(c.jlptLevel) <= levelRank(current)
+  );
 
   return (
     <div className="mx-auto max-w-5xl space-y-10">
@@ -48,28 +64,76 @@ export default function LearnPage() {
       {isLoading ? (
         <p className="text-sm text-muted-foreground">Cargando…</p>
       ) : (
-        courses?.map((course) => (
-          <section key={course.id} className="space-y-6">
-            <div className="flex flex-wrap items-center gap-3">
-              <Badge variant="secondary" className="font-mono">
-                {course.jlptLevel}
-              </Badge>
-              <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-neon-cyan">
-                <span className="font-jp">{course.jpTitle}</span>
-              </p>
-              <h2 className="font-display text-lg font-extrabold tracking-tight">
-                {course.title}
-              </h2>
-            </div>
-            <div className="space-y-8">
-              {course.units.map((unit) => (
-                <UnitBlock key={unit.id} unit={unit} />
-              ))}
-            </div>
-          </section>
-        ))
+        <>
+          {visible.map((course) => (
+            <section key={course.id} className="space-y-6">
+              <div className="flex flex-wrap items-center gap-3">
+                <Badge variant="secondary" className="font-mono">
+                  {course.jlptLevel}
+                </Badge>
+                <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-neon-cyan">
+                  <span className="font-jp">{course.jpTitle}</span>
+                </p>
+                <h2 className="font-display text-lg font-extrabold tracking-tight">
+                  {course.title}
+                </h2>
+              </div>
+              <div className="space-y-8">
+                {course.units.map((unit) => (
+                  <UnitBlock key={unit.id} unit={unit} />
+                ))}
+              </div>
+            </section>
+          ))}
+
+          <LevelFinalExamCard level={current} courses={visible} />
+        </>
       )}
     </div>
+  );
+}
+
+/**
+ * Final exam for the current level. Passing it (≥60%) unlocks the next level,
+ * which then appears above. Available only once every lesson of the level is
+ * completed.
+ */
+function LevelFinalExamCard({
+  level,
+  courses,
+}: {
+  level: string;
+  courses: Course[];
+}) {
+  const lessons = courses
+    .filter((c) => c.jlptLevel === level)
+    .flatMap((c) => c.units.flatMap((u) => u.lessons));
+  const total = lessons.length;
+  const done = lessons.filter((l) => l.status === "completed").length;
+  const ready = total > 0 && done >= total;
+  const nextLevel = LEVEL_ORDER[levelRank(level) + 1];
+
+  return (
+    <section className="pt-2">
+      <Link to={`/exam/level/${level}`}>
+        <div className="group relative flex items-center gap-4 overflow-hidden rounded-2xl border border-neon-cyan/50 bg-neon-cyan/5 px-5 py-5 transition-all hover:bg-neon-cyan/10 hover:ring-1 hover:ring-neon-cyan/60">
+          <span className="hud-corner left-2 top-2 border-l-2 border-t-2 border-neon-cyan/50" />
+          <span className="hud-corner bottom-2 right-2 border-b-2 border-r-2 border-neon-cyan/50" />
+          <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary via-neon-violet to-neon-cyan text-background">
+            <GraduationCap className="size-5" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-bold">Examen final — {level}</p>
+            <p className="text-xs text-muted-foreground">
+              {ready
+                ? `Apruébalo con 60% o más para desbloquear ${nextLevel ?? "el siguiente nivel"}.`
+                : `Apruébalo con 60% para desbloquear ${nextLevel ?? "el siguiente nivel"}. Te conviene terminar las lecciones primero (${done}/${total}).`}
+            </p>
+          </div>
+          <ArrowRight className="size-4 shrink-0 text-neon-cyan transition-transform group-hover:translate-x-0.5" />
+        </div>
+      </Link>
+    </section>
   );
 }
 

@@ -358,6 +358,29 @@ export interface UnitExamResult {
   award: XpAward;
 }
 
+// Level final exams (unlock the next JLPT level)
+export interface LevelExam {
+  level: string;
+  activities: Activity[];
+  allLessonsComplete: boolean;
+  lessonsTotal: number;
+  lessonsCompleted: number;
+  bestScore: number | null;
+  lastScore: number | null;
+  completions: number;
+  passThreshold: number;
+  nextLevel: string | null;
+}
+
+export interface LevelExamResult {
+  score: number;
+  passed: boolean;
+  unlockedLevel: string;
+  unlockedNext: boolean;
+  nextLevel: string | null;
+  award: XpAward;
+}
+
 // Mini-games
 export interface MinigameResult {
   score: number;
@@ -702,6 +725,11 @@ export const api = {
   getUnitExam: (unitId: number) => invoke<UnitExam>("get_unit_exam", { unitId }),
   completeUnitExam: (unitId: number, result: LessonResult) =>
     invoke<UnitExamResult>("complete_unit_exam", { unitId, result }),
+  getUnlockedLevel: () => invoke<string>("get_unlocked_level"),
+  getLevelExam: (level: string) =>
+    invoke<LevelExam>("get_level_exam", { level }),
+  completeLevelExam: (level: string, result: LessonResult) =>
+    invoke<LevelExamResult>("complete_level_exam", { level, result }),
 
   // Mini-games
   recordMinigameScore: (

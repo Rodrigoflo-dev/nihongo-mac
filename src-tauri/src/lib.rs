@@ -92,6 +92,10 @@ pub fn run() {
             // unit exams
             commands::exams::get_unit_exam,
             commands::exams::complete_unit_exam,
+            // level progression + final exams
+            commands::exams::get_unlocked_level,
+            commands::exams::get_level_exam,
+            commands::exams::complete_level_exam,
             // mini-games
             commands::minigames::record_minigame_score,
             commands::minigames::get_minigame_best,

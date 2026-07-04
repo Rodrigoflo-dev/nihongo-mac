@@ -639,8 +639,11 @@ fn build_write_word(idx: usize, item: &Item) -> Option<Activity> {
             accepted.push(r.to_string());
         }
     }
-    accepted.sort();
-    accepted.dedup();
+    // De-dup but KEEP item.jp first: the UI shows accepted[0] as the "versión
+    // natural", so the real word (e.g. katakana メニュー) must outrank its
+    // hiragana reading (めにゅー) — sorting used to put hiragana first.
+    let mut seen = HashSet::new();
+    accepted.retain(|a| seen.insert(a.clone()));
 
     // Hint teaches the spelling. Highlight the は/へ particle-spelling trap.
     let ends_wa = item.jp.ends_with('は');

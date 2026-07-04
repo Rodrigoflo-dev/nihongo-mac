@@ -30,3 +30,34 @@ export function useCompleteUnitExam() {
     },
   });
 }
+
+export function useUnlockedLevel() {
+  return useQuery({
+    queryKey: ["unlocked-level"],
+    queryFn: () => api.getUnlockedLevel(),
+    staleTime: 30_000,
+  });
+}
+
+export function useLevelExam(level: string | undefined) {
+  return useQuery({
+    queryKey: ["level-exam", level],
+    queryFn: () => api.getLevelExam(level!),
+    enabled: level !== undefined,
+    staleTime: 0,
+  });
+}
+
+export function useCompleteLevelExam() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ level, result }: { level: string; result: LessonResult }) =>
+      api.completeLevelExam(level, result),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["unlocked-level"] });
+      qc.invalidateQueries({ queryKey: ["level-exam"] });
+      qc.invalidateQueries({ queryKey: ["courses"] });
+      qc.invalidateQueries({ queryKey: ["player-state"] });
+    },
+  });
+}
