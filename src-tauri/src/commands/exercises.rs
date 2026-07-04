@@ -1295,39 +1295,56 @@ mod tests {
         );
     }
 
-    /// GUARD for Rodrigo's "las preguntas se repiten" complaint (Q1=Q4=Q7,
-    /// Q2=Q5): a set of 20 must be overwhelmingly distinct questions.
+    /// GUARD (APP-WIDE) for Rodrigo's "las preguntas se repiten" complaint
+    /// (Q1=Q4=Q7, Q12=Q14): across EVERY lesson in the whole app and several
+    /// seeds, no question may appear 3+ times, and WRITING exercises may never
+    /// repeat at all. Every non-trivial set must also stay varied.
     #[test]
-    fn a_set_has_almost_no_repeated_questions() {
+    fn no_repeated_questions_across_the_whole_app() {
+        use std::collections::HashMap;
         let conn = fresh_db();
-        for id in 1..=5 {
+        let mut lessons_seen = 0;
+        for id in 1..=600 {
             for seed in [1u64, 7, 42, 100] {
                 let ex = generate(&conn, id, seed);
                 if ex.is_empty() {
                     continue;
                 }
-                use std::collections::HashMap;
+                lessons_seen += 1;
                 let total = ex.len();
                 let mut counts: HashMap<String, usize> = HashMap::new();
+                let mut write_counts: HashMap<String, usize> = HashMap::new();
                 for e in &ex {
-                    *counts.entry(signature(&e.activity)).or_insert(0) += 1;
+                    let sig = signature(&e.activity);
+                    *counts.entry(sig.clone()).or_insert(0) += 1;
+                    if matches!(e.activity, Activity::WriteSentence { .. }) {
+                        *write_counts.entry(sig).or_insert(0) += 1;
+                    }
                 }
-                let distinct = counts.len();
-                let max_multiplicity = counts.values().copied().max().unwrap_or(0);
-                // The exact bug Rodrigo hit: the SAME question three+ times
-                // (Q1=Q4=Q7). That must never happen.
+                let max_mult = counts.values().copied().max().unwrap_or(0);
                 assert!(
-                    max_multiplicity <= 2,
-                    "lesson {id} seed {seed}: a question repeats {max_multiplicity} times (must be ≤2)"
+                    max_mult <= 2,
+                    "lesson {id} seed {seed}: a question repeats {max_mult} times (must be ≤2)"
                 );
-                // And overall the set should offer real variety — at least 10
-                // different questions even for a tiny 2-item lesson.
+                let max_write = write_counts.values().copied().max().unwrap_or(0);
                 assert!(
-                    distinct >= 10,
-                    "lesson {id} seed {seed}: only {distinct}/{total} distinct questions — too little variety"
+                    max_write <= 1,
+                    "lesson {id} seed {seed}: a WRITE exercise repeats {max_write} times (must be ≤1)"
                 );
+                // Non-trivial sets must stay varied.
+                if total >= 15 {
+                    assert!(
+                        counts.len() >= 10,
+                        "lesson {id} seed {seed}: only {}/{total} distinct — too little variety",
+                        counts.len()
+                    );
+                }
             }
         }
+        assert!(
+            lessons_seen > 100,
+            "expected to validate many lessons app-wide, saw {lessons_seen}"
+        );
     }
 
     /// GUARD for the "me pregunta cosas que no ha enseñado" complaint (おやすみなさい,
