@@ -506,6 +506,218 @@ export const GRAMMAR_NOTES: Record<string, GrammarNote> = {
       { jp: "これもください。", reading: "これもください", meaning: "Deme esto también.", meaningEn: "This one too, please." },
     ],
   },
+
+  // ===== N4 =====
+  jisho: {
+    jp: "辞書形",
+    title: "La forma diccionario (辞書形)",
+    why: "Es la forma base e informal del verbo (la que aparece en el diccionario). De ella se construyen casi todas las demás formas. 食べます→食べる, 行きます→行く, します→する.",
+    whyEn: "It's the verb's base, informal form (the one in the dictionary). Almost every other form is built from it. 食べます→食べる, 行きます→行く, します→する.",
+    whenToUse: [
+      "Hablar de forma casual con amigos: 何を食べる？ (¿Qué vas a comer?).",
+      "Como base de otras estructuras: 〜つもり, 〜と思う, 〜ことができる.",
+      "En diccionarios y listas de verbos.",
+    ],
+    whenToUseEn: [
+      "Casual speech with friends: 何を食べる？ (What are you going to eat?).",
+      "As the base for other structures: 〜つもり, 〜と思う, 〜ことができる.",
+      "In dictionaries and verb lists.",
+    ],
+    mistakes: [
+      "Los verbos se dividen en grupos (る-verbs, う-verbs, irregulares する/来る); la conjugación depende del grupo.",
+      "La forma cortés ます es más segura con desconocidos; la diccionario suena informal.",
+    ],
+    mistakesEn: [
+      "Verbs fall into groups (る-verbs, う-verbs, irregular する/来る); conjugation depends on the group.",
+      "The polite ます form is safer with strangers; the dictionary form sounds informal.",
+    ],
+    examples: [
+      { jp: "毎朝コーヒーを飲む。", reading: "まいあさコーヒーをのむ", meaning: "Bebo café cada mañana.", meaningEn: "I drink coffee every morning." },
+      { jp: "日本語を話す。", reading: "にほんごをはなす", meaning: "Hablo japonés.", meaningEn: "I speak Japanese." },
+    ],
+  },
+  "ta-form": {
+    jp: "た形",
+    title: "El pasado informal (た形)",
+    why: "La forma た es el pasado informal; equivale al pasado cortés 〜ました. 食べた (comí), 行った (fui), した (hice), 来た (vine).",
+    whyEn: "The た-form is the informal past; it matches the polite past 〜ました. 食べた (ate), 行った (went), した (did), 来た (came).",
+    whenToUse: [
+      "Pasado casual: 昨日、映画を見た (Ayer vi una película).",
+      "Base de estructuras: 〜たことがある (haber hecho), 〜たら (si/cuando).",
+    ],
+    whenToUseEn: [
+      "Casual past: 昨日、映画を見た (Yesterday I watched a movie).",
+      "Base for structures: 〜たことがある (to have done), 〜たら (if/when).",
+    ],
+    mistakes: [
+      "Sigue las mismas reglas de grupo que la forma て (行く→行った, 飲む→飲んだ).",
+      "Irregulares: する→した, 来る→来た.",
+    ],
+    mistakesEn: [
+      "It follows the same group rules as the て-form (行く→行った, 飲む→飲んだ).",
+      "Irregulars: する→した, 来る→来た.",
+    ],
+    examples: [
+      { jp: "週末、友達に会った。", reading: "しゅうまつ、ともだちにあった", meaning: "El fin de semana vi a un amigo.", meaningEn: "I met a friend on the weekend." },
+      { jp: "もう昼ご飯を食べた。", reading: "もうひるごはんをたべた", meaning: "Ya comí (el almuerzo).", meaningEn: "I already ate lunch." },
+    ],
+  },
+  tai: {
+    jp: "〜たい",
+    title: "〜たい — querer hacer algo",
+    why: "Para decir que QUIERES hacer algo, quita ます del verbo y añade たい. 食べます→食べたい (quiero comer). Se conjuga como un adjetivo い (食べたくない = no quiero comer).",
+    whyEn: "To say you WANT to do something, drop ます and add たい. 食べます→食べたい (I want to eat). It conjugates like an い-adjective (食べたくない = I don't want to eat).",
+    whenToUse: [
+      "Expresar tu deseo: 日本へ行きたいです (Quiero ir a Japón).",
+      "El objeto puede llevar が o を: 水が飲みたい / 水を飲みたい.",
+    ],
+    whenToUseEn: [
+      "Express your wish: 日本へ行きたいです (I want to go to Japan).",
+      "The object may take が or を: 水が飲みたい / 水を飲みたい.",
+    ],
+    mistakes: [
+      "〜たい es para TU deseo (o preguntar el del oyente); para el de otros se usa 〜たがっている.",
+      "Negativo: 〜たくない, no 〜たいじゃない.",
+    ],
+    mistakesEn: [
+      "〜たい is for YOUR wish (or asking the listener's); for others use 〜たがっている.",
+      "Negative: 〜たくない, not 〜たいじゃない.",
+    ],
+    examples: [
+      { jp: "温泉に入りたいです。", reading: "おんせんにはいりたいです", meaning: "Quiero entrar a un onsen.", meaningEn: "I want to get into a hot spring." },
+      { jp: "今日は何もしたくない。", reading: "きょうはなにもしたくない", meaning: "Hoy no quiero hacer nada.", meaningEn: "I don't want to do anything today." },
+    ],
+  },
+  tsumori: {
+    jp: "つもり",
+    title: "〜つもりです — intención / plan",
+    why: "La forma diccionario + つもりです expresa un plan o intención firme. 日本に行くつもりです (Pienso ir a Japón). Negativo: 〜ないつもりです.",
+    whyEn: "Dictionary form + つもりです expresses a firm plan or intention. 日本に行くつもりです (I plan to go to Japan). Negative: 〜ないつもりです.",
+    whenToUse: [
+      "Planes personales: 週末に勉強するつもりです (Pienso estudiar el fin de semana).",
+      "Negar una intención: たばこを吸わないつもりです (No pienso fumar).",
+    ],
+    whenToUseEn: [
+      "Personal plans: 週末に勉強するつもりです (I plan to study on the weekend).",
+      "Deny an intention: たばこを吸わないつもりです (I don't intend to smoke).",
+    ],
+    mistakes: [
+      "つもり va con la forma diccionario (行くつもり), no con ます (行きますつもり ✗).",
+    ],
+    mistakesEn: [
+      "つもり takes the dictionary form (行くつもり), not ます (行きますつもり ✗).",
+    ],
+    examples: [
+      { jp: "来月、車を買うつもりです。", reading: "らいげつ、くるまをかうつもりです", meaning: "El mes que viene pienso comprar un coche.", meaningEn: "I plan to buy a car next month." },
+      { jp: "今日は早く寝るつもりです。", reading: "きょうははやくねるつもりです", meaning: "Hoy pienso dormir temprano.", meaningEn: "I plan to sleep early today." },
+    ],
+  },
+  temoii: {
+    jp: "〜てもいい",
+    title: "〜てもいい — permiso (y prohibición)",
+    why: "La forma て + もいいです pide o da permiso («¿puedo…? / puedes…»). Para PROHIBIR se usa 〜てはいけません («no se debe»).",
+    whyEn: "The て-form + もいいです asks or gives permission (“may I…? / you may…”). To FORBID, use 〜てはいけません (“must not”).",
+    whenToUse: [
+      "Pedir permiso: 入ってもいいですか (¿Puedo entrar?).",
+      "Dar permiso: 座ってもいいですよ (Puedes sentarte).",
+      "Prohibir: ここで写真を撮ってはいけません (Aquí no se pueden tomar fotos).",
+    ],
+    whenToUseEn: [
+      "Ask permission: 入ってもいいですか (May I come in?).",
+      "Give permission: 座ってもいいですよ (You may sit down).",
+      "Forbid: ここで写真を撮ってはいけません (You can't take photos here).",
+    ],
+    mistakes: [
+      "El permiso usa la forma て (食べてもいい), no la diccionario.",
+      "はいけません es prohibición fuerte; para «mejor no» se usa 〜ないほうがいい.",
+    ],
+    mistakesEn: [
+      "Permission uses the て-form (食べてもいい), not the dictionary form.",
+      "はいけません is a strong prohibition; for “better not” use 〜ないほうがいい.",
+    ],
+    examples: [
+      { jp: "トイレを使ってもいいですか。", reading: "トイレをつかってもいいですか", meaning: "¿Puedo usar el baño?", meaningEn: "May I use the restroom?" },
+      { jp: "ここに入ってはいけません。", reading: "ここにはいってはいけません", meaning: "No se puede entrar aquí.", meaningEn: "You must not enter here." },
+    ],
+  },
+  nakereba: {
+    jp: "〜なければ",
+    title: "〜なければなりません — obligación",
+    why: "Expresa OBLIGACIÓN («tener que»). Se forma con la raíz negativa del verbo + なければなりません. 行く→行かなければなりません (tengo que ir). Coloquial: 〜なきゃ.",
+    whyEn: "Expresses OBLIGATION (“have to”). Formed from the verb's negative stem + なければなりません. 行く→行かなければなりません (I have to go). Casual: 〜なきゃ.",
+    whenToUse: [
+      "Obligaciones: 薬を飲まなければなりません (Tengo que tomar la medicina).",
+      "Coloquial: もう行かなきゃ (Ya me tengo que ir).",
+    ],
+    whenToUseEn: [
+      "Obligations: 薬を飲まなければなりません (I have to take the medicine).",
+      "Casual: もう行かなきゃ (I've got to go now).",
+    ],
+    mistakes: [
+      "Se parte de la forma ない: 行かない→行かなければ.",
+      "Irregulares: する→しなければ, 来る→こなければ.",
+    ],
+    mistakesEn: [
+      "It starts from the ない form: 行かない→行かなければ.",
+      "Irregulars: する→しなければ, 来る→こなければ.",
+    ],
+    examples: [
+      { jp: "明日、早く起きなければなりません。", reading: "あした、はやくおきなければなりません", meaning: "Mañana tengo que levantarme temprano.", meaningEn: "I have to get up early tomorrow." },
+      { jp: "レポートを書かなければなりません。", reading: "レポートをかかなければなりません", meaning: "Tengo que escribir el reporte.", meaningEn: "I have to write the report." },
+    ],
+  },
+  yori: {
+    jp: "〜より",
+    title: "〜より〜のほうが — comparar",
+    why: "Para COMPARAR dos cosas: «B のほうが A より 〜» = «B es más 〜 que A». より marca el punto de comparación («que»).",
+    whyEn: "To COMPARE two things: “B のほうが A より 〜” = “B is more 〜 than A”. より marks what you compare against (“than”).",
+    whenToUse: [
+      "Comparar: 電車のほうがバスより速いです (El tren es más rápido que el bus).",
+      "Preguntar: りんごとバナナ、どちらのほうが好きですか (¿Cuál te gusta más?).",
+    ],
+    whenToUseEn: [
+      "Compare: 電車のほうがバスより速いです (The train is faster than the bus).",
+      "Ask: りんごとバナナ、どちらのほうが好きですか (Which do you like more?).",
+    ],
+    mistakes: [
+      "より va después de la cosa con la que comparas: A より B のほうが.",
+      "のほうが marca lo que «gana» en la comparación.",
+    ],
+    mistakesEn: [
+      "より comes after the thing you compare against: A より B のほうが.",
+      "のほうが marks the one that “wins” the comparison.",
+    ],
+    examples: [
+      { jp: "夏より冬のほうが好きです。", reading: "なつよりふゆのほうがすきです", meaning: "Me gusta más el invierno que el verano.", meaningEn: "I like winter more than summer." },
+      { jp: "今日は昨日より暑いです。", reading: "きょうはきのうよりあついです", meaning: "Hoy hace más calor que ayer.", meaningEn: "Today is hotter than yesterday." },
+    ],
+  },
+  toomou: {
+    jp: "〜と思う",
+    title: "〜と思います — creo que…",
+    why: "Expresa una OPINIÓN o suposición: [frase en forma casual] + と思います («creo que…»). El と marca la cita del pensamiento.",
+    whyEn: "Expresses an OPINION or guess: [casual-form clause] + と思います (“I think that…”). と marks the quoted thought.",
+    whenToUse: [
+      "Dar tu opinión: 日本語は面白いと思います (Creo que el japonés es interesante).",
+      "Suponer: 明日は雨が降ると思います (Creo que mañana lloverá).",
+    ],
+    whenToUseEn: [
+      "Give your opinion: 日本語は面白いと思います (I think Japanese is interesting).",
+      "Guess: 明日は雨が降ると思います (I think it'll rain tomorrow).",
+    ],
+    mistakes: [
+      "Antes de と思います se usa forma CASUAL: 雨だと思います (no 雨ですと思います).",
+      "Para tu opinión se usa 思います; para lo que dijo otro, 〜と言いました.",
+    ],
+    mistakesEn: [
+      "Before と思います use the CASUAL form: 雨だと思います (not 雨ですと思います).",
+      "For your opinion use 思います; for what someone said, 〜と言いました.",
+    ],
+    examples: [
+      { jp: "この映画は面白いと思います。", reading: "このえいがはおもしろいとおもいます", meaning: "Creo que esta película es interesante.", meaningEn: "I think this movie is interesting." },
+      { jp: "彼は来ないと思います。", reading: "かれはこないとおもいます", meaning: "Creo que él no vendrá.", meaningEn: "I don't think he'll come." },
+    ],
+  },
 };
 
 // Particle priority: pick the most teachable point when a pattern has several.
@@ -526,6 +738,18 @@ export function grammarNoteFor(
   for (const p of PARTICLE_PRIORITY) {
     if (tokens.includes(p)) return GRAMMAR_NOTES[p];
   }
+  // 1a. N4 patterns — checked BEFORE the generic ます/て fallbacks because many
+  // end in ます/ません (なりません, と思います…) or contain て (てもいい).
+  if (/〜?てもいい|てはいけ|permiso|prohib/i.test(hay)) return GRAMMAR_NOTES["temoii"];
+  if (/なければ|なきゃ|obligación|tener que/i.test(hay)) return GRAMMAR_NOTES["nakereba"];
+  if (/と思|creo que|opinión|opinion/i.test(hay)) return GRAMMAR_NOTES["toomou"];
+  if (/つもり/.test(hay)) return GRAMMAR_NOTES["tsumori"];
+  if (/より|ほうが|comparar|comparación/i.test(hay)) return GRAMMAR_NOTES["yori"];
+  if (/〜?たい|querer hacer/i.test(hay)) return GRAMMAR_NOTES["tai"];
+  if (/た形|pasado informal|pasado casual|past casual/i.test(hay))
+    return GRAMMAR_NOTES["ta-form"];
+  if (/辞書形|forma diccionario|dictionary form/i.test(hay))
+    return GRAMMAR_NOTES["jisho"];
   // 1b. Forma て (〜てください, 〜ています) — antes de ます porque «ています» acaba en ます.
   if (/てください|ています|て[-\s]?form|て形|forma て/i.test(hay)) {
     return GRAMMAR_NOTES["て"];
