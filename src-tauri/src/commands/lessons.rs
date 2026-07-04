@@ -323,17 +323,64 @@ pub fn complete_lesson(
     })
 }
 
+/// JLPT level → rank (N5=0 … N1=4). Used to gate to the unlocked level.
+fn level_rank_sql() -> &'static str {
+    "(CASE co.jlpt_level WHEN 'N5' THEN 0 WHEN 'N4' THEN 1 WHEN 'N3' THEN 2 \
+      WHEN 'N2' THEN 3 WHEN 'N1' THEN 4 ELSE 0 END)"
+}
+
+fn level_rank(level: &str) -> i64 {
+    match level {
+        "N4" => 1,
+        "N3" => 2,
+        "N2" => 3,
+        "N1" => 4,
+        _ => 0,
+    }
+}
+
+fn unlocked_rank(c: &Connection) -> i64 {
+    let lvl: String = c
+        .query_row("SELECT unlocked_level FROM player_state WHERE id = 1", [], |r| {
+            r.get(0)
+        })
+        .unwrap_or_else(|_| "N5".to_string());
+    level_rank(&lvl)
+}
+
+/// The lesson right after `lesson_id` in the proper order: same course first
+/// (by course → unit → lesson ordering), gated to the unlocked level so we never
+/// jump ahead to a locked level.
 fn next_lesson_after(c: &Connection, lesson_id: i64) -> AppResult<Option<i64>> {
-    let next: Option<i64> = c
+    // Position of the current lesson.
+    let cur: Option<(i64, i64, i64, i64)> = c
         .query_row(
-            "SELECT l2.id FROM lessons l1
-              JOIN lessons l2 ON l2.id > l1.id
-              WHERE l1.id = ?1
-              ORDER BY l2.unit_id, l2.ordering, l2.id
-              LIMIT 1",
+            "SELECT co.ordering, u.ordering, l.ordering, l.id
+               FROM lessons l
+               JOIN units u ON u.id = l.unit_id
+               JOIN courses co ON co.id = u.course_id
+              WHERE l.id = ?1",
             [lesson_id],
-            |r| r.get(0),
+            |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?)),
         )
+        .ok();
+    let Some((cco, cu, cl, cid)) = cur else {
+        return Ok(None);
+    };
+    let rank = unlocked_rank(c);
+    let sql = format!(
+        "SELECT l.id
+           FROM lessons l
+           JOIN units u ON u.id = l.unit_id
+           JOIN courses co ON co.id = u.course_id
+          WHERE (co.ordering, u.ordering, l.ordering, l.id) > (?1, ?2, ?3, ?4)
+            AND {rank} <= ?5
+          ORDER BY co.ordering, u.ordering, l.ordering, l.id
+          LIMIT 1",
+        rank = level_rank_sql()
+    );
+    let next: Option<i64> = c
+        .query_row(&sql, rusqlite::params![cco, cu, cl, cid, rank], |r| r.get(0))
         .ok();
     Ok(next)
 }
@@ -342,18 +389,28 @@ fn next_lesson_after(c: &Connection, lesson_id: i64) -> AppResult<Option<i64>> {
 #[tauri::command]
 pub fn get_next_lesson(db: State<'_, DbState>) -> AppResult<Option<NextLessonInfo>> {
     db.with(|c| {
-        let row = c.query_row(
+        let rank = unlocked_rank(c);
+        // The first not-completed lesson IN ORDER (course → unit → lesson),
+        // gated to the unlocked level so we never suggest a locked N4 lesson
+        // while the learner is still on N5.
+        let sql = format!(
             "SELECT l.id, l.title, l.jp_title, l.summary, l.duration_minutes,
                     u.title, u.jp_title,
                     COALESCE(p.status, 'available'),
                     COALESCE(p.completions, 0)
                FROM lessons l
                JOIN units u ON u.id = l.unit_id
+               JOIN courses co ON co.id = u.course_id
                LEFT JOIN lesson_progress p ON p.lesson_id = l.id
               WHERE COALESCE(p.status, 'available') != 'completed'
-              ORDER BY u.ordering, l.ordering, l.id
+                AND {rank} <= ?1
+              ORDER BY co.ordering, u.ordering, l.ordering, l.id
               LIMIT 1",
-            [],
+            rank = level_rank_sql()
+        );
+        let row = c.query_row(
+            &sql,
+            [rank],
             |r| {
                 let completions: i64 = r.get(8)?;
                 let status: String = r.get(7)?;
@@ -390,6 +447,53 @@ mod tests {
         crate::db::migrations::run(&conn).expect("migrations run clean");
         crate::seed::run_if_empty(&conn).expect("seed runs clean");
         conn
+    }
+
+    /// GUARD for Rodrigo's ordering bug: the "next lesson" must follow the proper
+    /// order and NEVER jump into a locked level (N4) while unlocked is N5.
+    #[test]
+    fn next_lesson_respects_order_and_level() {
+        let conn = fresh_db();
+        // After lesson 2 comes lesson 3 (N5), not some other course's lesson.
+        assert_eq!(
+            super::next_lesson_after(&conn, 2).unwrap(),
+            Some(3),
+            "after lesson 2 the next in order is lesson 3"
+        );
+        // From any N5 lesson, next must never be an N4 lesson (locked by default).
+        let mut n5_ids = Vec::new();
+        {
+            let mut s = conn
+                .prepare(
+                    "SELECT l.id FROM lessons l
+                       JOIN units u ON u.id = l.unit_id
+                       JOIN courses co ON co.id = u.course_id
+                      WHERE co.jlpt_level = 'N5'",
+                )
+                .unwrap();
+            let rows = s.query_map([], |r| r.get::<_, i64>(0)).unwrap();
+            for r in rows {
+                n5_ids.push(r.unwrap());
+            }
+        }
+        for id in n5_ids {
+            if let Some(next) = super::next_lesson_after(&conn, id).unwrap() {
+                let lvl: String = conn
+                    .query_row(
+                        "SELECT co.jlpt_level FROM lessons l
+                           JOIN units u ON u.id = l.unit_id
+                           JOIN courses co ON co.id = u.course_id
+                          WHERE l.id = ?1",
+                        [next],
+                        |r| r.get(0),
+                    )
+                    .unwrap();
+                assert_ne!(
+                    lvl, "N4",
+                    "next after N5 lesson {id} jumped into locked N4 lesson {next}"
+                );
+            }
+        }
     }
 
     /// Reading + listening must have enough content (10 each) with valid

@@ -667,6 +667,96 @@ fn build_write_word(idx: usize, item: &Item) -> Option<Activity> {
     })
 }
 
+/// "Escribe la frase" — write a whole SHORT taught sentence from its Spanish
+/// meaning (e.g. «Hoy es domingo» → 今日は日曜日です). Grounded in a real authored
+/// sentence, this practices building phrases, not just single words — so writing
+/// practice teaches instead of repeating (Rodrigo's request).
+fn build_write_phrase(idx: usize, jp: &str, meaning: &str) -> Option<Activity> {
+    let len = jp.chars().count();
+    // Drop any parenthetical note so the prompt stays clean («Buenos días»,
+    // not «Buenos días (formal)»).
+    let meaning = meaning
+        .split(['(', '（'])
+        .next()
+        .unwrap_or(meaning)
+        .trim();
+    if len < 4 || len > 16 || meaning.is_empty() {
+        return None;
+    }
+    let mut kanji: Vec<String> = jp
+        .chars()
+        .filter(|c| is_kanji_char(*c))
+        .map(String::from)
+        .collect();
+    kanji.dedup();
+    let hint = if kanji.is_empty() {
+        format!("Frase completa · {len} caracteres en kana")
+    } else {
+        format!("Frase completa · usa estos kanji: {}", kanji.join(" + "))
+    };
+    Some(Activity::WriteSentence {
+        id: format!("gen-phrase-{idx}"),
+        prompt: format!("Escribe esta frase en japonés: «{meaning}»"),
+        hint: Some(hint),
+        accepted: vec![jp.to_string()],
+        explanation: format!("{jp} — {meaning}"),
+    })
+}
+
+/// Short taught SENTENCES (jp + Spanish meaning) usable for "write the phrase":
+/// pulled from grammar examples, speaking lines and kanji examples that are real
+/// sentences (contain a particle/です), not just single words.
+fn taught_sentences(conn: &Connection, lesson_id: i64) -> Vec<(String, String)> {
+    let json: String = match conn.query_row(
+        "SELECT activities_json FROM lessons WHERE id = ?1",
+        [lesson_id],
+        |r| r.get(0),
+    ) {
+        Ok(j) => j,
+        Err(_) => return vec![],
+    };
+    let parsed: LessonActivities = serde_json::from_str(&json).unwrap_or(LessonActivities {
+        activities: vec![],
+    });
+    let looks_like_sentence = |s: &str| {
+        s.chars().count() >= 4
+            && ['は', 'を', 'に', 'で', 'が', 'へ', 'も']
+                .iter()
+                .any(|p| s.contains(*p))
+            || s.contains("です")
+            || s.contains("ます")
+    };
+    let mut out: Vec<(String, String)> = Vec::new();
+    for a in parsed.activities {
+        match a {
+            Activity::IntroGrammar { example, .. } => {
+                if looks_like_sentence(&example.jp) && !example.meaning.trim().is_empty() {
+                    out.push((example.jp, example.meaning));
+                }
+            }
+            Activity::Speaking {
+                text_jp, meaning, ..
+            } => {
+                if looks_like_sentence(&text_jp) && !meaning.trim().is_empty() {
+                    out.push((text_jp, meaning));
+                }
+            }
+            Activity::IntroKanji {
+                example: Some(ex), ..
+            } => {
+                if looks_like_sentence(&ex.jp) && !ex.meaning.trim().is_empty() {
+                    out.push((ex.jp, ex.meaning));
+                }
+            }
+            _ => {}
+        }
+    }
+    // De-dup by jp.
+    let mut seen = HashSet::new();
+    out.retain(|(jp, _)| seen.insert(jp.clone()));
+    out
+}
+
 /// "Dibuja el kanji" — trace it stroke by stroke (StrokeTrainer). Only for
 /// single kanji.
 fn build_draw(idx: usize, item: &Item) -> Option<Activity> {
@@ -837,8 +927,14 @@ pub fn generate(conn: &Connection, lesson_id: i64, seed: u64) -> Vec<GeneratedEx
             if let Some(activity) = activity {
                 let sig = signature(&activity);
                 let c = *counts.get(&sig).unwrap_or(&0);
-                // Never a third copy of the same question.
-                if c >= 2 {
+                // Writing exercises must NEVER repeat (Q12 = Q14 = "escribe hoy"
+                // felt like padding). Other questions may appear at most twice.
+                let max_copies = if matches!(activity, Activity::WriteSentence { .. }) {
+                    1
+                } else {
+                    2
+                };
+                if c >= max_copies {
                     continue;
                 }
                 // Prefer fresh questions: reject a would-be 2nd copy until we've
@@ -868,6 +964,28 @@ pub fn generate(conn: &Connection, lesson_id: i64, seed: u64) -> Vec<GeneratedEx
             break;
         }
         if let Some(activity) = build_grammar_blank(&mut rng, global_idx, gp) {
+            let sig = signature(&activity);
+            if *counts.get(&sig).unwrap_or(&0) == 0 {
+                *counts.entry(sig).or_insert(0) += 1;
+                out[slot] = GeneratedExercise {
+                    activity,
+                    difficulty: out[slot].difficulty.clone(),
+                };
+                global_idx += 1;
+            }
+        }
+    }
+
+    // "Escribe la frase" — write a whole short taught sentence (variety beyond
+    // writing single words). Placed in the difícil band.
+    let mut sentences = taught_sentences(conn, lesson_id);
+    sentences.shuffle(&mut rng);
+    let phrase_slots = [15usize, 18];
+    for ((jp, meaning), &slot) in sentences.iter().take(2).zip(phrase_slots.iter()) {
+        if slot >= out.len() {
+            break;
+        }
+        if let Some(activity) = build_write_phrase(global_idx, jp, meaning) {
             let sig = signature(&activity);
             if *counts.get(&sig).unwrap_or(&0) == 0 {
                 *counts.entry(sig).or_insert(0) += 1;
