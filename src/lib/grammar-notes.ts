@@ -718,6 +718,114 @@ export const GRAMMAR_NOTES: Record<string, GrammarNote> = {
       { jp: "彼は来ないと思います。", reading: "かれはこないとおもいます", meaning: "Creo que él no vendrá.", meaningEn: "I don't think he'll come." },
     ],
   },
+  dekiru: {
+    jp: "できる",
+    title: "Poder hacer — できる / forma potencial",
+    why: "Dos formas de decir «poder»: la forma diccionario + ことができる (話すことができる), o la forma potencial del verbo (話す→話せる, 食べる→食べられる, する→できる, 来る→来られる).",
+    whyEn: "Two ways to say “can”: dictionary form + ことができる (話すことができる), or the verb's potential form (話す→話せる, 食べる→食べられる, する→できる, 来る→来られる).",
+    whenToUse: [
+      "Habilidad: 泳ぐことができます (Puedo nadar).",
+      "Forma potencial (más usada al hablar): 日本語が話せます (Puedo hablar japonés).",
+      "Con la potencial, el objeto suele ir con が: 漢字が読めます.",
+    ],
+    whenToUseEn: [
+      "Ability: 泳ぐことができます (I can swim).",
+      "Potential form (more common in speech): 日本語が話せます (I can speak Japanese).",
+      "With the potential, the object usually takes が: 漢字が読めます.",
+    ],
+    mistakes: [
+      "La potencial de する es できる; la de 来る es 来られる.",
+      "Con la potencial el objeto va con が, no を: 日本語が話せる.",
+    ],
+    mistakesEn: [
+      "The potential of する is できる; of 来る it's 来られる.",
+      "With the potential the object takes が, not を: 日本語が話せる.",
+    ],
+    examples: [
+      { jp: "車の運転ができます。", reading: "くるまのうんてんができます", meaning: "Sé conducir.", meaningEn: "I can drive." },
+      { jp: "刺身が食べられますか。", reading: "さしみがたべられますか", meaning: "¿Puedes comer sashimi?", meaningEn: "Can you eat sashimi?" },
+    ],
+  },
+  tara: {
+    jp: "〜たら",
+    title: "〜たら — si / cuando (condicional)",
+    why: "La forma た + ら expresa «si / cuando pase algo, entonces…». Es el condicional más versátil. Se forma de la た形: 食べた→食べたら, 行った→行ったら.",
+    whyEn: "The た-form + ら expresses “if / when something happens, then…”. It's the most versatile conditional. Formed from the た-form: 食べた→食べたら, 行った→行ったら.",
+    whenToUse: [
+      "Condición: 時間があったら、電話します (Si tengo tiempo, te llamo).",
+      "«Cuando» algo se cumpla: 駅に着いたら、連絡します (Cuando llegue a la estación, aviso).",
+    ],
+    whenToUseEn: [
+      "Condition: 時間があったら、電話します (If I have time, I'll call).",
+      "“When” something happens: 駅に着いたら、連絡します (When I get to the station, I'll let you know).",
+    ],
+    mistakes: [
+      "Se forma de la た形, no de la diccionario: 行く→行ったら.",
+      "La segunda parte puede ser petición u opinión, no solo un hecho.",
+    ],
+    mistakesEn: [
+      "Formed from the た-form, not the dictionary form: 行く→行ったら.",
+      "The second part can be a request or opinion, not only a fact.",
+    ],
+    examples: [
+      { jp: "お金があったら、旅行したいです。", reading: "おかねがあったら、りょこうしたいです", meaning: "Si tuviera dinero, querría viajar.", meaningEn: "If I had money, I'd want to travel." },
+      { jp: "駅に着いたら、電話してください。", reading: "えきについたら、でんわしてください", meaning: "Cuando llegues a la estación, llama.", meaningEn: "When you arrive at the station, please call." },
+    ],
+  },
+  ba: {
+    jp: "〜ば",
+    title: "〜ば — condicional «si»",
+    why: "El condicional 〜ば expresa una condición general o hipotética. う-verbs: 行く→行けば; る-verbs: 食べる→食べれば; adjetivos い: 安い→安ければ.",
+    whyEn: "The 〜ば conditional expresses a general or hypothetical condition. う-verbs: 行く→行けば; る-verbs: 食べる→食べれば; い-adjectives: 安い→安ければ.",
+    whenToUse: [
+      "Condición general: 練習すれば、上手になります (Si practicas, mejoras).",
+      "Con adjetivos: 天気がよければ、行きます (Si hace buen tiempo, voy).",
+    ],
+    whenToUseEn: [
+      "General condition: 練習すれば、上手になります (If you practice, you improve).",
+      "With adjectives: 天気がよければ、行きます (If the weather is nice, I'll go).",
+    ],
+    mistakes: [
+      "La formación depende del grupo: う-verbs う→えば; る-verbs quitan る + れば.",
+      "Irregulares: する→すれば, 来る→来れば.",
+    ],
+    mistakesEn: [
+      "The form depends on the group: う-verbs う→えば; る-verbs drop る + れば.",
+      "Irregulars: する→すれば, 来る→来れば.",
+    ],
+    examples: [
+      { jp: "押せば、開きます。", reading: "おせば、あきます", meaning: "Si lo empujas, se abre.", meaningEn: "If you push it, it opens." },
+      { jp: "安ければ、買います。", reading: "やすければ、かいます", meaning: "Si es barato, lo compro.", meaningEn: "If it's cheap, I'll buy it." },
+    ],
+  },
+  yarimorai: {
+    jp: "あげる・くれる・もらう",
+    title: "Dar y recibir — あげる・くれる・もらう",
+    why: "Tres verbos de intercambio según la dirección: あげる (YO u otro DOY a otro), くれる (alguien ME da a mí), もらう (YO RECIBO de alguien).",
+    whyEn: "Three exchange verbs by direction: あげる (I/someone GIVE to another), くれる (someone gives TO ME), もらう (I RECEIVE from someone).",
+    whenToUse: [
+      "あげる: 友達にプレゼントをあげます (Le doy un regalo a un amigo).",
+      "くれる: 友達がプレゼントをくれます (Un amigo me da un regalo a mí).",
+      "もらう: 友達にプレゼントをもらいます (Recibo un regalo de un amigo).",
+    ],
+    whenToUseEn: [
+      "あげる: 友達にプレゼントをあげます (I give a present to a friend).",
+      "くれる: 友達がプレゼントをくれます (A friend gives me a present).",
+      "もらう: 友達にプレゼントをもらいます (I receive a present from a friend).",
+    ],
+    mistakes: [
+      "くれる solo cuando el receptor soy yo (o mi grupo).",
+      "Con もらう, la persona de quien recibes lleva に (o から).",
+    ],
+    mistakesEn: [
+      "くれる only when the receiver is me (or my group).",
+      "With もらう, the person you receive from takes に (or から).",
+    ],
+    examples: [
+      { jp: "先生が本をくれました。", reading: "せんせいがほんをくれました", meaning: "El profesor me dio un libro.", meaningEn: "The teacher gave me a book." },
+      { jp: "母にセーターをもらいました。", reading: "ははにセーターをもらいました", meaning: "Recibí un suéter de mi madre.", meaningEn: "I got a sweater from my mother." },
+    ],
+  },
 };
 
 // Particle priority: pick the most teachable point when a pattern has several.
@@ -739,7 +847,13 @@ export function grammarNoteFor(
     if (tokens.includes(p)) return GRAMMAR_NOTES[p];
   }
   // 1a. N4 patterns — checked BEFORE the generic ます/て fallbacks because many
-  // end in ます/ません (なりません, と思います…) or contain て (てもいい).
+  // end in ます/ません (なりません, と思います, もらう…) or contain て (てもいい).
+  if (/あげる|くれる|もらう|dar y recibir|やりもらい/i.test(hay))
+    return GRAMMAR_NOTES["yarimorai"];
+  if (/ことができる|potencial|poder hacer|potential|forma potencial/i.test(hay))
+    return GRAMMAR_NOTES["dekiru"];
+  if (/〜?たら|条件.*たら/i.test(hay)) return GRAMMAR_NOTES["tara"];
+  if (/〜ば\b|条件形|condicional «si»|ば — /i.test(hay)) return GRAMMAR_NOTES["ba"];
   if (/〜?てもいい|てはいけ|permiso|prohib/i.test(hay)) return GRAMMAR_NOTES["temoii"];
   if (/なければ|なきゃ|obligación|tener que/i.test(hay)) return GRAMMAR_NOTES["nakereba"];
   if (/と思|creo que|opinión|opinion/i.test(hay)) return GRAMMAR_NOTES["toomou"];

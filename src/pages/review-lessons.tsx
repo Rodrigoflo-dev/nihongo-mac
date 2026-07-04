@@ -8,10 +8,15 @@ import { PageHeader } from "@/components/layout/page-header";
 import { HudPanel } from "@/components/visual/hud-panel";
 import { HoloKanji } from "@/components/visual/holo-kanji";
 import { useCourses } from "@/hooks/use-lessons";
+import { useUnlockedLevel } from "@/hooks/use-exams";
 import type { LessonSummary, Unit } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
 const LEVEL_ORDER = ["N5", "N4", "N3", "N2", "N1"];
+const levelRank = (l: string) => {
+  const i = LEVEL_ORDER.indexOf(l);
+  return i < 0 ? 0 : i;
+};
 
 interface LevelGroup {
   level: string;
@@ -27,11 +32,15 @@ interface LevelGroup {
  */
 export default function ReviewLessonsPage() {
   const { data: courses, isLoading } = useCourses();
+  const { data: unlockedLevel } = useUnlockedLevel();
 
   const groups = useMemo<LevelGroup[]>(() => {
     if (!courses) return [];
+    // Only levels the learner has unlocked — don't show N4 while still on N5.
+    const maxRank = levelRank(unlockedLevel ?? "N5");
     const byLevel = new Map<string, Unit[]>();
     for (const course of courses) {
+      if (levelRank(course.jlptLevel) > maxRank) continue;
       const arr = byLevel.get(course.jlptLevel) ?? [];
       arr.push(...course.units);
       byLevel.set(course.jlptLevel, arr);
@@ -46,7 +55,7 @@ export default function ReviewLessonsPage() {
         completed: lessons.filter((l) => l.status === "completed").length,
       };
     });
-  }, [courses]);
+  }, [courses, unlockedLevel]);
 
   // First level open by default.
   const [open, setOpen] = useState<string | null>(null);
