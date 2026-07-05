@@ -35,6 +35,7 @@ import { api } from "@/lib/api";
 import type { Activity } from "@/lib/api";
 import { grammarNoteFor, type GrammarNote } from "@/lib/grammar-notes";
 import { kanjiNoteFor, type KanjiNote, type KanjiWord } from "@/lib/kanji-notes";
+import { vocabNoteFor, type VocabNote } from "@/lib/vocab-notes";
 import { cn } from "@/lib/utils";
 
 /**
@@ -483,6 +484,48 @@ function grammarPages(note: GrammarNote): DeepDivePage[] {
   ];
 }
 
+/** Turn a vocabulary note into paginated "A fondo" pages (bilingual audio). */
+function vocabPages(note: VocabNote): DeepDivePage[] {
+  return [
+    {
+      label: "¿Cómo se usa?",
+      speech: (lang) =>
+        toMixedSegments(lang === "en" ? note.usageEn : note.usage, lang),
+      body: (
+        <p className="text-sm leading-relaxed text-foreground/90">{note.usage}</p>
+      ),
+    },
+    {
+      label: "Notas útiles",
+      speech: (lang) =>
+        (lang === "en" ? note.notesEn : note.notes).flatMap((n) =>
+          toMixedSegments(n, lang)
+        ),
+      body: (
+        <ul className="space-y-1.5">
+          {note.notes.map((n, i) => (
+            <li key={i} className="flex gap-2 text-sm text-foreground/90">
+              <span className="mt-1 size-1.5 shrink-0 rounded-full bg-neon-cyan" />
+              <span>{n}</span>
+            </li>
+          ))}
+        </ul>
+      ),
+    },
+    {
+      label: "Ejemplos de la vida real",
+      speech: (lang) => [
+        { text: lang === "en" ? "Examples:" : "Ejemplos:", lang },
+        ...note.examples.flatMap((e) => [
+          { text: e.jp, lang: "ja" as const },
+          { text: lang === "en" ? e.meaningEn : e.meaning, lang },
+        ]),
+      ],
+      body: <WordChips items={note.examples} />,
+    },
+  ];
+}
+
 function IntroKanji({
   activity,
 }: {
@@ -603,6 +646,7 @@ function IntroVocab({
 }: {
   activity: Extract<Activity, { kind: "intro_vocab" }>;
 }) {
+  const note = vocabNoteFor(activity.word);
   return (
     <ActivityShell eyebrow="Nueva palabra" jp="新しい単語">
       <HudPanel glow className="p-10 text-center">
@@ -662,6 +706,16 @@ function IntroVocab({
                 {toRomaji(activity.example)}
               </p>
             ) : null}
+          </div>
+        ) : null}
+
+        {note ? (
+          <div className="text-left">
+            <DeepDive
+              title={`«${activity.meaning}»`}
+              jp={activity.word}
+              pages={vocabPages(note)}
+            />
           </div>
         ) : null}
       </HudPanel>
