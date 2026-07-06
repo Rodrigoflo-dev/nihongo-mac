@@ -1,6 +1,6 @@
 [package]
 name = "nihongo"
-version = "1.11.5"
+version = "1.11.6"
 description = "Personal Japanese learning desktop app"
 authors = ["Rodrigo Flores"]
 license = "MIT"

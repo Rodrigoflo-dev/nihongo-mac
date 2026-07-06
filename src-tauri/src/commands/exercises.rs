@@ -15,7 +15,6 @@ use std::collections::{HashMap, HashSet};
 
 use rand::rngs::StdRng;
 use rand::seq::SliceRandom;
-use rand::Rng;
 use rand::SeedableRng;
 use rusqlite::Connection;
 use serde::Serialize;
@@ -772,46 +771,243 @@ fn build_draw(idx: usize, item: &Item) -> Option<Activity> {
     })
 }
 
-/// Pick an exercise for a band with VARIETY: each band has a chance to use a
-/// richer modality (audio / writing / drawing) when applicable, otherwise it
-/// falls back to the band's default multiple-choice question. This keeps the 20
-/// exercises from feeling repetitive.
-#[allow(clippy::too_many_arguments)]
-fn build_for_band(
+/// "¿Cómo se lee «X»?" — see the Spanish meaning, pick the reading (kana). A
+/// different angle from the plain meaning question. Only for words that CONTAIN
+/// kanji and have a distinct reading.
+fn build_meaning_to_reading(
     rng: &mut StdRng,
     idx: usize,
-    band: &str,
     item: &Item,
-    meaning_pool: &[String],
-    kanji_pool: &[String],
     reading_pool: &[String],
 ) -> Option<Activity> {
-    let roll = rng.gen_range(0..4);
-    let alt = match band {
-        // fácil: sometimes "¿cómo suena?" (audio → meaning)
-        "facil" => {
-            if roll <= 1 {
-                build_listen(rng, idx, item, meaning_pool)
+    if item.reading.is_empty()
+        || item.reading == item.jp
+        || !item.jp.chars().any(is_kanji_char)
+    {
+        return None;
+    }
+    let distractors = pick_distractors(rng, reading_pool, &item.reading, 3);
+    make_quiz(
+        rng,
+        format!("gen-mr-{idx}"),
+        format!("¿Cómo se lee «{}»?", item.meaning),
+        None,
+        item.reading.clone(),
+        distractors,
+        rich_explanation(item),
+    )
+}
+
+/// "¿Qué significa esta lectura?" — show only the kana reading and pick the
+/// meaning (recognizing a word by its sound). For words that contain kanji.
+fn build_reading_to_meaning(
+    rng: &mut StdRng,
+    idx: usize,
+    item: &Item,
+    meaning_pool: &[String],
+) -> Option<Activity> {
+    if item.reading.is_empty()
+        || item.reading == item.jp
+        || !item.jp.chars().any(is_kanji_char)
+    {
+        return None;
+    }
+    let distractors = pick_distractors(rng, meaning_pool, &item.meaning, 2);
+    make_quiz(
+        rng,
+        format!("gen-rm-{idx}"),
+        "¿Qué significa esta lectura?".to_string(),
+        Some(item.reading.clone()),
+        item.meaning.clone(),
+        distractors,
+        rich_explanation(item),
+    )
+}
+
+/// Plausible full-phrase distractors for the "understand the sentence" question,
+/// so the wrong options aren't single words.
+const GENERIC_PHRASES: &[&str] = &[
+    "Soy estudiante.",
+    "Bebo agua.",
+    "Como pan.",
+    "Voy a la escuela.",
+    "Hoy hace calor.",
+    "Me gusta el café.",
+    "Es un libro nuevo.",
+    "Mañana voy a Tokio.",
+    "Tengo hambre.",
+    "No entiendo.",
+    "Es muy caro.",
+    "¿Cuánto cuesta?",
+];
+
+/// "¿Qué significa esta frase?" — read a whole taught SENTENCE and choose what it
+/// means. The creative comprehension question Rodrigo asked for, grounded in a
+/// verified sentence.
+fn build_sentence_comprehension(
+    rng: &mut StdRng,
+    idx: usize,
+    jp: &str,
+    meaning: &str,
+    phrase_pool: &[String],
+) -> Option<Activity> {
+    let clean = meaning
+        .split(['(', '（'])
+        .next()
+        .unwrap_or(meaning)
+        .trim()
+        .to_string();
+    if clean.is_empty() {
+        return None;
+    }
+    let distractors = pick_distractors(rng, phrase_pool, &clean, 3);
+    make_quiz(
+        rng,
+        format!("gen-comp-{idx}"),
+        "¿Qué significa esta frase?".to_string(),
+        Some(jp.to_string()),
+        clean.clone(),
+        distractors,
+        format!("{jp} — {clean}"),
+    )
+}
+
+/// The lesson's OWN authored practice questions (quiz/listening). They are
+/// verified and perfectly on-topic, so we fold them into the candidate pool for
+/// extra, creative variety (particle pronunciation, sentence meaning, etc.).
+fn authored_questions(conn: &Connection, lesson_id: i64) -> Vec<Activity> {
+    let json: String = match conn.query_row(
+        "SELECT activities_json FROM lessons WHERE id = ?1",
+        [lesson_id],
+        |r| r.get(0),
+    ) {
+        Ok(j) => j,
+        Err(_) => return vec![],
+    };
+    let parsed: LessonActivities = serde_json::from_str(&json).unwrap_or(LessonActivities {
+        activities: vec![],
+    });
+    parsed
+        .activities
+        .into_iter()
+        .filter(|a| matches!(a, Activity::Quiz { .. } | Activity::Listening { .. }))
+        .collect()
+}
+
+/// Coarse "kind of question" used to spread the set so the same modality never
+/// clusters (e.g. two listening questions back to back).
+fn modality(a: &Activity) -> &'static str {
+    match a {
+        Activity::Listening { .. } => "listen",
+        Activity::WriteSentence { .. } => "write",
+        Activity::WriteKanji { .. } => "draw",
+        Activity::Quiz { id, .. } => {
+            if id.starts_with("gen-sit") {
+                "sit"
+            } else if id.starts_with("gen-gram") {
+                "gram"
+            } else if id.starts_with("gen-ctx") {
+                "blank"
+            } else if id.starts_with("gen-comp") {
+                "comp"
+            } else if id.starts_with("gen-mr") || id.starts_with("gen-rm") {
+                "read"
             } else {
-                None
+                "mcq"
             }
         }
-        // medio: writing practice — type the WORD correctly with the keyboard
-        // (works for kana greetings and kanji words alike).
-        "medio" => match roll {
-            0 | 1 => build_write_word(idx, item),
-            2 => build_listen(rng, idx, item, meaning_pool),
-            _ => None,
-        },
-        // difícil: draw the kanji, fill-the-blank in a real sentence, or write it
-        _ => match roll {
-            0 => build_draw(idx, item),
-            1 => build_blank_exercise(rng, idx, item, kanji_pool),
-            2 => build_write_word(idx, item),
-            _ => None,
-        },
-    };
-    alt.or_else(|| build_exercise(rng, idx, band, item, meaning_pool, kanji_pool, reading_pool))
+        _ => "other",
+    }
+}
+
+/// How many of a modality may appear WITHIN one band, so no band is dominated by
+/// one type (keeps audio/writing/drawing spread out).
+fn band_modality_cap(m: &str, count: usize) -> usize {
+    match m {
+        "listen" => 1,
+        "write" => 1,
+        "draw" => 2,
+        "blank" => 2,
+        "sit" => 1,
+        "gram" => 2,
+        "comp" => 2,
+        _ => count,
+    }
+}
+
+/// Select up to `count` questions from a band's candidate pool: distinct
+/// questions first (respecting per-modality caps for variety), then relax the
+/// caps, and finally allow a second copy only if the pool is too small — writing
+/// and listening never repeat. `counts` tracks copies across the whole set.
+fn select_band(
+    mut pool: Vec<Activity>,
+    count: usize,
+    counts: &mut HashMap<String, usize>,
+    rng: &mut StdRng,
+) -> Vec<Activity> {
+    pool.shuffle(rng);
+    let mut out: Vec<Activity> = Vec::new();
+    let mut mod_count: HashMap<&str, usize> = HashMap::new();
+
+    // Pass 1: fresh questions, spread across modalities.
+    for a in &pool {
+        if out.len() >= count {
+            break;
+        }
+        let sig = signature(a);
+        if counts.get(&sig).copied().unwrap_or(0) > 0 {
+            continue;
+        }
+        let m = modality(a);
+        if mod_count.get(m).copied().unwrap_or(0) >= band_modality_cap(m, count) {
+            continue;
+        }
+        *counts.entry(sig).or_insert(0) += 1;
+        *mod_count.entry(m).or_insert(0) += 1;
+        out.push(a.clone());
+    }
+    // Pass 2: still fresh, but ignore the per-modality caps.
+    if out.len() < count {
+        for a in &pool {
+            if out.len() >= count {
+                break;
+            }
+            let sig = signature(a);
+            if counts.get(&sig).copied().unwrap_or(0) > 0 {
+                continue;
+            }
+            *counts.entry(sig).or_insert(0) += 1;
+            out.push(a.clone());
+        }
+    }
+    // No repeat pass: every question in the set is DISTINCT. A tiny lesson simply
+    // gets fewer than `count` questions instead of padding with duplicates —
+    // better 12 different questions than 20 with repeats.
+    out
+}
+
+/// Reorder a band so the same "special" modality (listen/write/draw/blank) never
+/// sits next to another: interleave plain multiple-choice with the specials, and
+/// keep the band's first/last slots plain so band boundaries don't clash either.
+fn arrange(items: Vec<Activity>) -> Vec<Activity> {
+    let (special, plain): (Vec<Activity>, Vec<Activity>) = items
+        .into_iter()
+        .partition(|a| matches!(modality(a), "listen" | "write" | "draw" | "blank"));
+    let mut out = Vec::with_capacity(special.len() + plain.len());
+    let mut pi = 0usize;
+    let mut si = 0usize;
+    // Start with a plain question, then alternate plain / special.
+    while pi < plain.len() || si < special.len() {
+        if pi < plain.len() {
+            out.push(plain[pi].clone());
+            pi += 1;
+        }
+        if si < special.len() {
+            out.push(special[si].clone());
+            si += 1;
+        }
+    }
+    out
 }
 
 /// A stable fingerprint of a question (its "what am I asking" identity), used to
@@ -848,16 +1044,20 @@ fn signature(a: &Activity) -> String {
 }
 
 /// Core generator (pure, testable): produce up to TOTAL exercises for a lesson.
+///
+/// Builds a rich POOL of distinct question types from the lesson's taught items,
+/// its grammar, its example sentences, the lesson's own authored questions, and
+/// gated real-life situations — then selects a varied set per band (dedup + a
+/// per-modality cap so the same kind never clusters) and arranges each band so
+/// audio/writing/drawing don't sit next to each other. Everything stays strictly
+/// on the lesson's topic; nothing repeats needlessly.
 pub fn generate(conn: &Connection, lesson_id: i64, seed: u64) -> Vec<GeneratedExercise> {
     let mut rng = StdRng::seed_from_u64(seed ^ (lesson_id as u64).wrapping_mul(0x9E3779B97F4A7C15));
     let level = lesson_level(conn, lesson_id);
     let catalog = catalog_kanji(conn, &level);
 
-    // TARGETS = only what THIS lesson actually taught (intro_kanji/intro_vocab).
-    // We never quiz the learner on catalog items they were never shown — that was
-    // unfair (you'd fail kanji that were never in the explanation). If a lesson
-    // teaches few items we just drill those with more question variety. Only when
-    // a lesson has NO taught items at all do we fall back to the level catalog.
+    // TARGETS = only what THIS lesson actually taught. If a lesson has no taught
+    // items at all we fall back to the level catalog.
     let mut items = taught_items(conn, lesson_id);
     if items.is_empty() {
         items = catalog.clone();
@@ -868,9 +1068,6 @@ pub fn generate(conn: &Connection, lesson_id: i64, seed: u64) -> Vec<GeneratedEx
         return vec![];
     }
 
-    // Meaning distractors: taught meanings + a curated CLEAN Spanish list. We do
-    // NOT use the kanji catalog here — its long tail has English fallbacks
-    // ("Interval") that made wrong options obvious and ugly.
     let meaning_pool: Vec<String> = COMMON_MEANINGS
         .iter()
         .map(|s| s.to_string())
@@ -888,136 +1085,129 @@ pub fn generate(conn: &Connection, lesson_id: i64, seed: u64) -> Vec<GeneratedEx
         .filter(|r| !r.is_empty())
         .collect();
 
-    // Bands: cycle items (shuffled per band) so each exercise targets one.
-    let bands: [(&str, usize); 3] = [
-        ("facil", N_FACIL),
-        ("medio", N_MEDIO),
-        ("dificil", TOTAL - N_FACIL - N_MEDIO),
-    ];
-
-    // De-dup: never hand the learner the exact same question three times (the old
-    // generator repeated "¿Qué significa 学生?" as Q1/Q4/Q7). We prefer DISTINCT
-    // questions, allow a SECOND copy only once a lesson runs low on fresh ones,
-    // and NEVER a third copy. Small lessons (2 items) legitimately reuse some
-    // questions, but capped at 2 each.
-    let mut counts: HashMap<String, usize> = HashMap::new();
-
-    let mut out = Vec::with_capacity(TOTAL);
-    let mut global_idx = 0usize;
-    for (band, count) in bands {
-        let mut order: Vec<usize> = (0..items.len()).collect();
-        order.shuffle(&mut rng);
-        let mut oi = 0usize;
-        let mut made = 0usize;
-        let mut guard = 0usize;
-        let cap = count * 24;
-        while made < count && guard < cap {
-            guard += 1;
-            let item = &items[order[oi % order.len()]].clone();
-            oi += 1;
-            let activity = build_for_band(
-                &mut rng,
-                global_idx,
-                band,
-                item,
-                &meaning_pool,
-                &kanji_pool,
-                &reading_pool,
-            );
-            if let Some(activity) = activity {
-                let sig = signature(&activity);
-                let c = *counts.get(&sig).unwrap_or(&0);
-                // Writing exercises must NEVER repeat (Q12 = Q14 = "escribe hoy"
-                // felt like padding). Other questions may appear at most twice.
-                let max_copies = if matches!(activity, Activity::WriteSentence { .. }) {
-                    1
-                } else {
-                    2
-                };
-                if c >= max_copies {
-                    continue;
-                }
-                // Prefer fresh questions: reject a would-be 2nd copy until we've
-                // searched a while (past 3/4 of the attempt budget), so tiny
-                // lessons still reach the target size without over-repeating.
-                if c >= 1 && guard < cap * 3 / 4 {
-                    continue;
-                }
-                *counts.entry(sig).or_insert(0) += 1;
-                out.push(GeneratedExercise {
-                    activity,
-                    difficulty: band.to_string(),
-                });
-                global_idx += 1;
-                made += 1;
-            }
-        }
-    }
-
-    // Reinforce the lesson's grammar with a "fill the particle" question grounded
-    // in a real example sentence (e.g. 私＿学生です → は). Replace a middle-band
-    // slot so it doesn't crowd out item practice.
     let grammar = taught_grammar(conn, lesson_id);
-    let grammar_slots = [8usize, 12];
-    for (gp, &slot) in grammar.iter().take(2).zip(grammar_slots.iter()) {
-        if slot >= out.len() {
-            break;
-        }
-        if let Some(activity) = build_grammar_blank(&mut rng, global_idx, gp) {
-            let sig = signature(&activity);
-            if *counts.get(&sig).unwrap_or(&0) == 0 {
-                *counts.entry(sig).or_insert(0) += 1;
-                out[slot] = GeneratedExercise {
-                    activity,
-                    difficulty: out[slot].difficulty.clone(),
-                };
-                global_idx += 1;
-            }
-        }
-    }
-
-    // "Escribe la frase" — write a whole short taught sentence (variety beyond
-    // writing single words). Placed in the difícil band.
-    let mut sentences = taught_sentences(conn, lesson_id);
-    sentences.shuffle(&mut rng);
-    let phrase_slots = [15usize, 18];
-    for ((jp, meaning), &slot) in sentences.iter().take(2).zip(phrase_slots.iter()) {
-        if slot >= out.len() {
-            break;
-        }
-        if let Some(activity) = build_write_phrase(global_idx, jp, meaning) {
-            let sig = signature(&activity);
-            if *counts.get(&sig).unwrap_or(&0) == 0 {
-                *counts.entry(sig).or_insert(0) += 1;
-                out[slot] = GeneratedExercise {
-                    activity,
-                    difficulty: out[slot].difficulty.clone(),
-                };
-                global_idx += 1;
-            }
-        }
-    }
-
-    // Mix in real-life situational questions ("en esta situación, ¿qué dices?"),
-    // but ONLY greetings the learner has already been taught (cumulatively). In
-    // lesson 1 no greetings are taught yet → no situational question appears,
-    // instead of unfairly asking おやすみなさい / いくらですか.
+    let sentences = taught_sentences(conn, lesson_id);
+    let authored = authored_questions(conn, lesson_id);
     let taught_surfaces = cumulative_taught_surfaces(conn, lesson_id);
     let sit_indices = gated_situations(&mut rng, &taught_surfaces);
-    let sit_slots = [2usize, 10];
-    for (sit_index, &slot) in sit_indices.iter().take(2).zip(sit_slots.iter()) {
-        if slot >= out.len() {
-            break;
+
+    // Distractor pool for the "understand the sentence" question: other taught
+    // sentence meanings + generic plausible phrases.
+    let clean = |m: &str| {
+        m.split(['(', '（']).next().unwrap_or(m).trim().to_string()
+    };
+    let mut phrase_pool: Vec<String> = sentences.iter().map(|(_, m)| clean(m)).collect();
+    phrase_pool.extend(GENERIC_PHRASES.iter().map(|s| s.to_string()));
+
+    // ---- Build the candidate pools per band -------------------------------
+    let mut facil: Vec<Activity> = Vec::new();
+    let mut medio: Vec<Activity> = Vec::new();
+    let mut dificil: Vec<Activity> = Vec::new();
+    let mut idc = 0usize;
+
+    for item in &items {
+        // fácil — recognition
+        if let Some(a) = build_exercise(&mut rng, idc, "facil", item, &meaning_pool, &kanji_pool, &reading_pool) {
+            facil.push(a);
         }
-        out[slot] = GeneratedExercise {
-            activity: build_situation_at(&mut rng, global_idx, *sit_index),
-            difficulty: out[slot].difficulty.clone(),
-        };
-        global_idx += 1;
+        idc += 1;
+        if let Some(a) = build_listen(&mut rng, idc, item, &meaning_pool) {
+            facil.push(a);
+        }
+        idc += 1;
+        if let Some(a) = build_reading_to_meaning(&mut rng, idc, item, &meaning_pool) {
+            facil.push(a);
+        }
+        idc += 1;
+        // medio — production
+        if let Some(a) = build_exercise(&mut rng, idc, "medio", item, &meaning_pool, &kanji_pool, &reading_pool) {
+            medio.push(a);
+        }
+        idc += 1;
+        if let Some(a) = build_meaning_to_reading(&mut rng, idc, item, &reading_pool) {
+            medio.push(a);
+        }
+        idc += 1;
+        if let Some(a) = build_write_word(idc, item) {
+            medio.push(a);
+        }
+        idc += 1;
+        // difícil — recall / usage
+        if let Some(a) = build_exercise(&mut rng, idc, "dificil", item, &meaning_pool, &kanji_pool, &reading_pool) {
+            dificil.push(a);
+        }
+        idc += 1;
+        if let Some(a) = build_draw(idc, item) {
+            dificil.push(a);
+        }
+        idc += 1;
+        if let Some(a) = build_blank_exercise(&mut rng, idc, item, &kanji_pool) {
+            dificil.push(a);
+        }
+        idc += 1;
+    }
+
+    // Grammar → medio; sentences → comprehension (medio) + write-the-phrase (dif.)
+    for gp in &grammar {
+        if let Some(a) = build_grammar_blank(&mut rng, idc, gp) {
+            medio.push(a);
+        }
+        idc += 1;
+    }
+    for (jp, meaning) in &sentences {
+        if let Some(a) = build_sentence_comprehension(&mut rng, idc, jp, meaning, &phrase_pool) {
+            medio.push(a);
+        }
+        idc += 1;
+        if let Some(a) = build_write_phrase(idc, jp, meaning) {
+            dificil.push(a);
+        }
+        idc += 1;
+    }
+
+    // Real-life situations (already gated to taught phrases): spread facil/medio.
+    for (i, &si) in sit_indices.iter().enumerate() {
+        let a = build_situation_at(&mut rng, idc, si);
+        idc += 1;
+        if i % 2 == 0 {
+            facil.push(a);
+        } else {
+            medio.push(a);
+        }
+    }
+
+    // The lesson's own verified questions add creative variety, on-topic.
+    for a in authored {
+        match &a {
+            Activity::Listening { .. } => facil.push(a),
+            Activity::WriteSentence { .. } => dificil.push(a),
+            _ => medio.push(a),
+        }
+    }
+
+    // ---- Select a varied, non-repetitive set per band ---------------------
+    let mut counts: HashMap<String, usize> = HashMap::new();
+    let facil_sel = arrange(select_band(facil, N_FACIL, &mut counts, &mut rng));
+    let medio_sel = arrange(select_band(medio, N_MEDIO, &mut counts, &mut rng));
+    let dificil_sel = arrange(select_band(
+        dificil,
+        TOTAL - N_FACIL - N_MEDIO,
+        &mut counts,
+        &mut rng,
+    ));
+
+    let mut out = Vec::with_capacity(TOTAL);
+    for a in facil_sel {
+        out.push(GeneratedExercise { activity: a, difficulty: "facil".to_string() });
+    }
+    for a in medio_sel {
+        out.push(GeneratedExercise { activity: a, difficulty: "medio".to_string() });
+    }
+    for a in dificil_sel {
+        out.push(GeneratedExercise { activity: a, difficulty: "dificil".to_string() });
     }
     out
 }
-
 #[tauri::command]
 pub fn generate_lesson_exercises(
     db: State<'_, DbState>,
@@ -1110,10 +1300,16 @@ mod tests {
                 ..
             } = &e.activity
             {
-                // Situational questions (gen-sit) are intentionally general
-                // conversation, and grammar questions (gen-gram) target a
-                // particle, not a taught vocabulary item.
-                if id.starts_with("gen-sit") || id.starts_with("gen-gram") {
+                // Only the item-targeting GENERATED questions must draw their
+                // answer from a taught item. Situational (gen-sit), grammar
+                // (gen-gram), sentence-comprehension (gen-comp) and the lesson's
+                // own authored questions (non-"gen-" ids) are on-topic by design
+                // but don't target a single vocabulary item.
+                if !id.starts_with("gen-")
+                    || id.starts_with("gen-sit")
+                    || id.starts_with("gen-gram")
+                    || id.starts_with("gen-comp")
+                {
                     continue;
                 }
                 let correct = &options[*correct_index];
@@ -1152,11 +1348,13 @@ mod tests {
                 for e in &ex {
                     match &e.activity {
                         Activity::Quiz {
+                            id: qid,
                             options,
                             correct_index,
                             ..
                         }
                         | Activity::Listening {
+                            id: qid,
                             options,
                             correct_index,
                             ..
@@ -1174,11 +1372,16 @@ mod tests {
                                 options.len(),
                                 "options must be DISTINCT (lesson {id}): {options:?}"
                             );
-                            for o in options {
-                                assert!(
-                                    !o.contains('(') && !o.contains('（'),
-                                    "option has a parenthesis/truncated gloss (lesson {id}): '{o}'"
-                                );
+                            // The no-parenthesis rule guards GENERATED options from
+                            // truncated glosses; the lesson's own authored options
+                            // may legitimately read like "に (destino)".
+                            if qid.starts_with("gen-") {
+                                for o in options {
+                                    assert!(
+                                        !o.contains('(') && !o.contains('（'),
+                                        "generated option has a parenthesis (lesson {id}): '{o}'"
+                                    );
+                                }
                             }
                         }
                         Activity::WriteSentence {
@@ -1321,24 +1524,19 @@ mod tests {
                         *write_counts.entry(sig).or_insert(0) += 1;
                     }
                 }
+                // Every question in the set is now DISTINCT — no repeats at all.
                 let max_mult = counts.values().copied().max().unwrap_or(0);
-                assert!(
-                    max_mult <= 2,
-                    "lesson {id} seed {seed}: a question repeats {max_mult} times (must be ≤2)"
+                assert_eq!(
+                    max_mult, 1,
+                    "lesson {id} seed {seed}: a question repeats {max_mult} times (must be unique)"
                 );
-                let max_write = write_counts.values().copied().max().unwrap_or(0);
-                assert!(
-                    max_write <= 1,
-                    "lesson {id} seed {seed}: a WRITE exercise repeats {max_write} times (must be ≤1)"
+                assert_eq!(
+                    counts.len(),
+                    total,
+                    "lesson {id} seed {seed}: {}/{total} distinct — a question repeated",
+                    counts.len()
                 );
-                // Non-trivial sets must stay varied.
-                if total >= 15 {
-                    assert!(
-                        counts.len() >= 10,
-                        "lesson {id} seed {seed}: only {}/{total} distinct — too little variety",
-                        counts.len()
-                    );
-                }
+                let _ = &write_counts;
             }
         }
         assert!(
