@@ -46,6 +46,8 @@ const NOTES: Record<string, VocabNote> = {
       { jp: "おはようございます、先生。", reading: "おはようございます、せんせい", meaning: "Buenos días, profesor.", meaningEn: "Good morning, teacher." },
       { jp: "部長、おはようございます。", reading: "ぶちょう、おはようございます", meaning: "Buenos días, jefe.", meaningEn: "Good morning, boss." },
       { jp: "おはよう、みんな。", reading: "おはよう、みんな", meaning: "Buenos días a todos. (casual)", meaningEn: "Morning, everyone. (casual)" },
+      { jp: "おはようございます。今日もよろしくお願いします。", reading: "おはようございます。きょうもよろしくおねがいします。", meaning: "Buenos días. Cuento con usted hoy también.", meaningEn: "Good morning. Looking forward to today too." },
+      { jp: "朝、母におはようと言います。", reading: "あさ、ははにおはようといいます。", meaning: "Por la mañana le digo «buenos días» a mi madre.", meaningEn: "In the morning I greet my mother." },
     ],
   },
   こんにちは: {
@@ -66,6 +68,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "こんにちは、田中さん。", reading: "こんにちは、たなかさん", meaning: "Hola, Sr. Tanaka.", meaningEn: "Hello, Mr. Tanaka." },
       { jp: "こんにちは、お元気ですか。", reading: "こんにちは、おげんきですか", meaning: "Hola, ¿cómo está?", meaningEn: "Hello, how are you?" },
+      { jp: "こんにちは、いい天気ですね。", reading: "こんにちは、いいてんきですね。", meaning: "Hola, qué buen tiempo, ¿verdad?", meaningEn: "Hello, nice weather, isn't it?" },
+      { jp: "先生、こんにちは。", reading: "せんせい、こんにちは。", meaning: "Buenas tardes, profesor.", meaningEn: "Hello, teacher." },
     ],
   },
   こんばんは: {
@@ -86,6 +90,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "こんばんは。", reading: "こんばんは", meaning: "Buenas noches.", meaningEn: "Good evening." },
       { jp: "こんばんは、遅くなってすみません。", reading: "こんばんは、おそくなってすみません", meaning: "Buenas noches, perdón por la tardanza.", meaningEn: "Good evening, sorry I'm late." },
+      { jp: "こんばんは、田中さん。", reading: "こんばんは、たなかさん。", meaning: "Buenas noches, Sr. Tanaka.", meaningEn: "Good evening, Mr. Tanaka." },
+      { jp: "こんばんは、今日はありがとうございました。", reading: "こんばんは、きょうはありがとうございました。", meaning: "Buenas noches, gracias por lo de hoy.", meaningEn: "Good evening, thank you for today." },
     ],
   },
   ありがとうございます: {
@@ -107,6 +113,8 @@ const NOTES: Record<string, VocabNote> = {
       { jp: "ありがとうございます。", reading: "ありがとうございます", meaning: "Muchas gracias.", meaningEn: "Thank you very much." },
       { jp: "昨日はありがとうございました。", reading: "きのうはありがとうございました", meaning: "Gracias por lo de ayer.", meaningEn: "Thank you for yesterday." },
       { jp: "手伝ってくれてありがとう。", reading: "てつだってくれてありがとう", meaning: "Gracias por ayudarme. (casual)", meaningEn: "Thanks for helping. (casual)" },
+      { jp: "お手伝い、ありがとうございます。", reading: "おてつだい、ありがとうございます。", meaning: "Gracias por su ayuda.", meaningEn: "Thank you for your help." },
+      { jp: "いつもありがとうございます。", reading: "いつもありがとうございます。", meaning: "Gracias siempre.", meaningEn: "Thank you as always." },
     ],
   },
   さようなら: {
@@ -125,6 +133,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "さようなら、また来週。", reading: "さようなら、またらいしゅう", meaning: "Adiós, hasta la próxima semana.", meaningEn: "Goodbye, see you next week." },
       { jp: "先生、さようなら。", reading: "せんせい、さようなら", meaning: "Adiós, profesor.", meaningEn: "Goodbye, teacher." },
+      { jp: "さようなら、お元気で。", reading: "さようなら、おげんきで。", meaning: "Adiós, cuídese.", meaningEn: "Goodbye, take care." },
+      { jp: "みんな、さようなら。", reading: "みんな、さようなら。", meaning: "Adiós a todos.", meaningEn: "Goodbye, everyone." },
     ],
   },
   ありがとう: {
@@ -143,6 +153,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "手伝ってくれてありがとう。", reading: "てつだってくれてありがとう", meaning: "Gracias por ayudar.", meaningEn: "Thanks for helping." },
       { jp: "プレゼント、ありがとう。", reading: "ぷれぜんと、ありがとう", meaning: "Gracias por el regalo.", meaningEn: "Thanks for the gift." },
+      { jp: "お土産、ありがとう。", reading: "おみやげ、ありがとう。", meaning: "Gracias por el recuerdo.", meaningEn: "Thanks for the souvenir." },
+      { jp: "来てくれてありがとう。", reading: "きてくれてありがとう。", meaning: "Gracias por venir.", meaningEn: "Thanks for coming." },
     ],
   },
   学生: {
@@ -161,6 +173,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "私は学生です。", reading: "わたしはがくせいです", meaning: "Soy estudiante.", meaningEn: "I am a student." },
       { jp: "兄は大学生です。", reading: "あにはだいがくせいです", meaning: "Mi hermano mayor es universitario.", meaningEn: "My older brother is a university student." },
+      { jp: "私は日本語の学生です。", reading: "わたしはにほんごのがくせいです。", meaning: "Soy estudiante de japonés.", meaningEn: "I'm a Japanese student." },
+      { jp: "あの人も学生ですか。", reading: "あのひともがくせいですか。", meaning: "¿Aquella persona también es estudiante?", meaningEn: "Is that person a student too?" },
     ],
   },
   今日: {
@@ -179,6 +193,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "今日は日曜日です。", reading: "きょうはにちようびです", meaning: "Hoy es domingo.", meaningEn: "Today is Sunday." },
       { jp: "今日は暑いです。", reading: "きょうはあついです", meaning: "Hoy hace calor.", meaningEn: "It's hot today." },
+      { jp: "今日は仕事があります。", reading: "きょうはしごとがあります。", meaning: "Hoy tengo trabajo.", meaningEn: "I have work today." },
+      { jp: "今日は何をしますか。", reading: "きょうはなにをしますか。", meaning: "¿Qué haces hoy?", meaningEn: "What are you doing today?" },
     ],
   },
 
@@ -201,6 +217,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "すみません、メニューをください。", reading: "すみません、メニューをください", meaning: "Disculpe, el menú por favor.", meaningEn: "Excuse me, the menu please." },
       { jp: "遅れてすみません。", reading: "おくれてすみません", meaning: "Perdón por llegar tarde.", meaningEn: "Sorry I'm late." },
+      { jp: "すみません、駅はどこですか。", reading: "すみません、えきはどこですか。", meaning: "Disculpe, ¿dónde está la estación?", meaningEn: "Excuse me, where is the station?" },
+      { jp: "すみません、お水をください。", reading: "すみません、おみずをください。", meaning: "Disculpe, agua por favor.", meaningEn: "Excuse me, water please." },
     ],
   },
   はじめまして: {
@@ -219,6 +237,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "はじめまして、田中です。", reading: "はじめまして、たなかです", meaning: "Mucho gusto, soy Tanaka.", meaningEn: "Nice to meet you, I'm Tanaka." },
       { jp: "はじめまして、どうぞよろしくおねがいします。", reading: "はじめまして、どうぞよろしくおねがいします", meaning: "Mucho gusto, encantado.", meaningEn: "Nice to meet you, I look forward to it." },
+      { jp: "はじめまして、山田です。", reading: "はじめまして、やまだです。", meaning: "Mucho gusto, soy Yamada.", meaningEn: "Nice to meet you, I'm Yamada." },
+      { jp: "はじめまして、私はメキシコから来ました。", reading: "はじめまして、わたしはメキシコからきました。", meaning: "Mucho gusto, vengo de México.", meaningEn: "Nice to meet you, I'm from Mexico." },
     ],
   },
   ごちそうさま: {
@@ -239,6 +259,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "ごちそうさまでした。", reading: "ごちそうさまでした", meaning: "Gracias por la comida.", meaningEn: "Thank you for the meal." },
       { jp: "ごちそうさま、おいしかったです。", reading: "ごちそうさま、おいしかったです", meaning: "Gracias, estuvo delicioso.", meaningEn: "Thanks, it was delicious." },
+      { jp: "ごちそうさまでした。おいしかったです。", reading: "ごちそうさまでした。おいしかったです。", meaning: "Gracias por la comida. Estuvo rico.", meaningEn: "Thanks for the meal. It was delicious." },
+      { jp: "母に「ごちそうさま」と言います。", reading: "ははに「ごちそうさま」といいます。", meaning: "Le digo «gracias por la comida» a mi madre.", meaningEn: "I tell my mother thanks for the meal." },
     ],
   },
   はい: {
@@ -259,6 +281,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "はい、そうです。", reading: "はい、そうです", meaning: "Sí, así es.", meaningEn: "Yes, that's right." },
       { jp: "はい、わかりました。", reading: "はい、わかりました", meaning: "Sí, entendido.", meaningEn: "Yes, understood." },
+      { jp: "はい、大丈夫です。", reading: "はい、だいじょうぶです。", meaning: "Sí, está bien.", meaningEn: "Yes, it's fine." },
+      { jp: "はい、私が田中です。", reading: "はい、わたしがたなかです。", meaning: "Sí, yo soy Tanaka.", meaningEn: "Yes, I'm Tanaka." },
     ],
   },
   いいえ: {
@@ -279,6 +303,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "いいえ、ちがいます。", reading: "いいえ、ちがいます", meaning: "No, no es así.", meaningEn: "No, that's not right." },
       { jp: "いいえ、学生じゃないです。", reading: "いいえ、がくせいじゃないです", meaning: "No, no soy estudiante.", meaningEn: "No, I'm not a student." },
+      { jp: "いいえ、けっこうです。", reading: "いいえ、けっこうです。", meaning: "No, así está bien (no gracias).", meaningEn: "No, thank you." },
+      { jp: "いいえ、私のではありません。", reading: "いいえ、わたしのではありません。", meaning: "No, no es mío.", meaningEn: "No, it's not mine." },
     ],
   },
   また: {
@@ -297,6 +323,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "また明日。", reading: "またあした", meaning: "Hasta mañana.", meaningEn: "See you tomorrow." },
       { jp: "また来ますね。", reading: "またきますね", meaning: "Vuelvo otra vez.", meaningEn: "I'll come again." },
+      { jp: "また会いましょう。", reading: "またあいましょう。", meaning: "Nos vemos otra vez.", meaningEn: "Let's meet again." },
+      { jp: "また電話します。", reading: "またでんわします。", meaning: "Te llamo de nuevo.", meaningEn: "I'll call again." },
     ],
   },
   少々お待ちください: {
@@ -315,6 +343,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "少々お待ちください。", reading: "しょうしょうおまちください", meaning: "Espere un momento, por favor.", meaningEn: "Please wait a moment." },
       { jp: "はい、少々お待ちください。", reading: "はい、しょうしょうおまちください", meaning: "Sí, un momento por favor.", meaningEn: "Yes, one moment please." },
+      { jp: "少々お待ちください。今、確認します。", reading: "しょうしょうおまちください。いま、かくにんします。", meaning: "Espere un momento. Ahora lo confirmo.", meaningEn: "One moment please. I'll check now." },
+      { jp: "少々お待ちください。すぐ戻ります。", reading: "しょうしょうおまちください。すぐもどります。", meaning: "Un momento por favor. Vuelvo enseguida.", meaningEn: "One moment. I'll be right back." },
     ],
   },
 
@@ -337,6 +367,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "これはいくらですか。", reading: "これはいくらですか", meaning: "¿Cuánto cuesta esto?", meaningEn: "How much is this?" },
       { jp: "これをください。", reading: "これをください", meaning: "Deme esto.", meaningEn: "This one, please." },
+      { jp: "これは私のかばんです。", reading: "これはわたしのかばんです。", meaning: "Esto es mi bolso.", meaningEn: "This is my bag." },
+      { jp: "これは何ですか。", reading: "これはなんですか。", meaning: "¿Qué es esto?", meaningEn: "What is this?" },
     ],
   },
   それ: {
@@ -355,6 +387,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "それは何ですか。", reading: "それはなんですか", meaning: "¿Qué es eso?", meaningEn: "What is that?" },
       { jp: "それをください。", reading: "それをください", meaning: "Deme eso.", meaningEn: "That one, please." },
+      { jp: "それは私のペンです。", reading: "それはわたしのペンです。", meaning: "Eso es mi bolígrafo.", meaningEn: "That is my pen." },
+      { jp: "それはいくらですか。", reading: "それはいくらですか。", meaning: "¿Cuánto cuesta eso?", meaningEn: "How much is that?" },
     ],
   },
   あれ: {
@@ -373,6 +407,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "あれは駅です。", reading: "あれはえきです", meaning: "Aquello es la estación.", meaningEn: "That's the station." },
       { jp: "あれは私の車です。", reading: "あれはわたしのくるまです", meaning: "Aquello es mi coche.", meaningEn: "That's my car." },
+      { jp: "あれは何ですか。", reading: "あれはなんですか。", meaning: "¿Qué es aquello?", meaningEn: "What is that over there?" },
+      { jp: "あれは学校です。", reading: "あれはがっこうです。", meaning: "Aquello es una escuela.", meaningEn: "That over there is a school." },
     ],
   },
 
@@ -393,6 +429,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "コーヒーを一つください。", reading: "コーヒーをひとつください", meaning: "Un café, por favor.", meaningEn: "One coffee, please." },
       { jp: "今、一時です。", reading: "いま、いちじです", meaning: "Ahora es la 1.", meaningEn: "It's 1 o'clock now." },
+      { jp: "一月は寒いです。", reading: "いちがつはさむいです。", meaning: "Enero es frío.", meaningEn: "January is cold." },
+      { jp: "パンを一つください。", reading: "パンをひとつください。", meaning: "Un pan, por favor.", meaningEn: "One bread, please." },
     ],
   },
   二: {
@@ -411,6 +449,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "二人です。", reading: "ふたりです", meaning: "Somos dos.", meaningEn: "Two people." },
       { jp: "二月は寒いです。", reading: "にがつはさむいです", meaning: "Febrero es frío.", meaningEn: "February is cold." },
+      { jp: "二時に会いましょう。", reading: "にじにあいましょう。", meaning: "Nos vemos a las dos.", meaningEn: "Let's meet at two." },
+      { jp: "りんごを二つください。", reading: "りんごをふたつください。", meaning: "Dos manzanas, por favor.", meaningEn: "Two apples, please." },
     ],
   },
   三: {
@@ -421,6 +461,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "三時に会いましょう。", reading: "さんじにあいましょう", meaning: "Veámonos a las 3.", meaningEn: "Let's meet at 3." },
       { jp: "三月です。", reading: "さんがつです", meaning: "Es marzo.", meaningEn: "It's March." },
+      { jp: "三人家族です。", reading: "さんにんかぞくです。", meaning: "Somos una familia de tres.", meaningEn: "We're a family of three." },
+      { jp: "三つください。", reading: "みっつください。", meaning: "Tres, por favor.", meaningEn: "Three, please." },
     ],
   },
   四: {
@@ -439,6 +481,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "四時です。", reading: "よじです", meaning: "Son las 4.", meaningEn: "It's 4 o'clock." },
       { jp: "四つください。", reading: "よっつください", meaning: "Deme cuatro.", meaningEn: "Four, please." },
+      { jp: "四月に日本へ行きます。", reading: "しがつににほんへいきます。", meaning: "En abril voy a Japón.", meaningEn: "I go to Japan in April." },
+      { jp: "四人います。", reading: "よにんいます。", meaning: "Hay cuatro personas.", meaningEn: "There are four people." },
     ],
   },
   五: {
@@ -449,6 +493,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "五時に起きます。", reading: "ごじにおきます", meaning: "Me levanto a las 5.", meaningEn: "I get up at 5." },
       { jp: "りんごを五つ。", reading: "りんごをいつつ", meaning: "Cinco manzanas.", meaningEn: "Five apples." },
+      { jp: "五月は暑いです。", reading: "ごがつはあついです。", meaning: "Mayo es caluroso.", meaningEn: "May is hot." },
+      { jp: "五人で行きます。", reading: "ごにんでいきます。", meaning: "Vamos cinco personas.", meaningEn: "Five of us are going." },
     ],
   },
   六: {
@@ -459,6 +505,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "六時に帰ります。", reading: "ろくじにかえります", meaning: "Vuelvo a las 6.", meaningEn: "I go home at 6." },
       { jp: "六人います。", reading: "ろくにんいます", meaning: "Somos seis.", meaningEn: "There are six of us." },
+      { jp: "六月は雨が多いです。", reading: "ろくがつはあめがおおいです。", meaning: "En junio llueve mucho.", meaningEn: "It rains a lot in June." },
+      { jp: "六つください。", reading: "むっつください。", meaning: "Seis, por favor.", meaningEn: "Six, please." },
     ],
   },
   七: {
@@ -477,6 +525,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "七時です。", reading: "しちじです", meaning: "Son las 7.", meaningEn: "It's 7 o'clock." },
       { jp: "七月は暑いです。", reading: "しちがつはあついです", meaning: "Julio es caluroso.", meaningEn: "July is hot." },
+      { jp: "七時に起きます。", reading: "しちじにおきます。", meaning: "Me levanto a las siete.", meaningEn: "I get up at seven." },
+      { jp: "七人います。", reading: "しちにんいます。", meaning: "Hay siete personas.", meaningEn: "There are seven people." },
     ],
   },
   八: {
@@ -487,6 +537,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "八時に行きます。", reading: "はちじにいきます", meaning: "Voy a las 8.", meaningEn: "I go at 8." },
       { jp: "八人家族です。", reading: "はちにんかぞくです", meaning: "Somos una familia de ocho.", meaningEn: "We're a family of eight." },
+      { jp: "八月は夏休みです。", reading: "はちがつはなつやすみです。", meaning: "Agosto son las vacaciones de verano.", meaningEn: "August is summer break." },
+      { jp: "八時に始まります。", reading: "はちじにはじまります。", meaning: "Empieza a las ocho.", meaningEn: "It starts at eight." },
     ],
   },
   九: {
@@ -505,6 +557,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "九時に寝ます。", reading: "くじにねます", meaning: "Me acuesto a las 9.", meaningEn: "I go to bed at 9." },
       { jp: "九月です。", reading: "くがつです", meaning: "Es septiembre.", meaningEn: "It's September." },
+      { jp: "九月は涼しいです。", reading: "くがつはすずしいです。", meaning: "Septiembre es fresco.", meaningEn: "September is cool." },
+      { jp: "九人来ます。", reading: "きゅうにんきます。", meaning: "Vienen nueve personas.", meaningEn: "Nine people are coming." },
     ],
   },
   十: {
@@ -515,6 +569,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "十時に会議があります。", reading: "じゅうじにかいぎがあります", meaning: "Hay reunión a las 10.", meaningEn: "There's a meeting at 10." },
       { jp: "十人います。", reading: "じゅうにんいます", meaning: "Hay diez personas.", meaningEn: "There are ten people." },
+      { jp: "十月は天気がいいです。", reading: "じゅうがつはてんきがいいです。", meaning: "En octubre hace buen tiempo.", meaningEn: "The weather is nice in October." },
+      { jp: "十人います。", reading: "じゅうにんいます。", meaning: "Hay diez personas.", meaningEn: "There are ten people." },
     ],
   },
   ひとつ: {
@@ -533,6 +589,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "これをひとつください。", reading: "これをひとつください", meaning: "Deme uno de esto.", meaningEn: "One of these, please." },
       { jp: "ケーキをひとつ。", reading: "ケーキをひとつ", meaning: "Un pastel.", meaningEn: "One cake." },
+      { jp: "ひとつだけください。", reading: "ひとつだけください。", meaning: "Solo uno, por favor.", meaningEn: "Just one, please." },
+      { jp: "ひとつ質問があります。", reading: "ひとつしつもんがあります。", meaning: "Tengo una pregunta.", meaningEn: "I have one question." },
     ],
   },
   ふたつ: {
@@ -551,6 +609,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "コーヒーをふたつください。", reading: "コーヒーをふたつください", meaning: "Dos cafés, por favor.", meaningEn: "Two coffees, please." },
       { jp: "ふたつで十分です。", reading: "ふたつでじゅうぶんです", meaning: "Con dos es suficiente.", meaningEn: "Two is enough." },
+      { jp: "パンをふたつください。", reading: "パンをふたつください。", meaning: "Dos panes, por favor.", meaningEn: "Two breads, please." },
+      { jp: "ふたつとも好きです。", reading: "ふたつともすきです。", meaning: "Me gustan los dos.", meaningEn: "I like both." },
     ],
   },
   一枚: {
@@ -569,6 +629,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "切符を一枚ください。", reading: "きっぷをいちまいください", meaning: "Un boleto, por favor.", meaningEn: "One ticket, please." },
       { jp: "紙を一枚ください。", reading: "かみをいちまいください", meaning: "Una hoja de papel, por favor.", meaningEn: "One sheet of paper, please." },
+      { jp: "写真を一枚お願いします。", reading: "しゃしんをいちまいおねがいします。", meaning: "Una foto, por favor.", meaningEn: "One photo, please." },
+      { jp: "Tシャツを一枚買います。", reading: "ティーシャツをいちまいかいます。", meaning: "Compro una camiseta.", meaningEn: "I buy one T-shirt." },
     ],
   },
   二人: {
@@ -587,6 +649,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "二人です。", reading: "ふたりです", meaning: "Somos dos.", meaningEn: "Two, please. / We're two." },
       { jp: "家族は二人です。", reading: "かぞくはふたりです", meaning: "Somos dos en la familia.", meaningEn: "There are two of us in the family." },
+      { jp: "二人で行きます。", reading: "ふたりでいきます。", meaning: "Vamos los dos.", meaningEn: "The two of us are going." },
+      { jp: "二人分お願いします。", reading: "ふたりぶんおねがいします。", meaning: "Para dos personas, por favor.", meaningEn: "For two, please." },
     ],
   },
 
@@ -607,6 +671,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "今日は月曜日です。", reading: "きょうはげつようびです", meaning: "Hoy es lunes.", meaningEn: "Today is Monday." },
       { jp: "月曜日に会議があります。", reading: "げつようびにかいぎがあります", meaning: "El lunes hay reunión.", meaningEn: "There's a meeting on Monday." },
+      { jp: "月曜日から働きます。", reading: "げつようびからはたらきます。", meaning: "Trabajo desde el lunes.", meaningEn: "I work from Monday." },
+      { jp: "来週の月曜日に会いましょう。", reading: "らいしゅうのげつようびにあいましょう。", meaning: "Nos vemos el lunes que viene.", meaningEn: "Let's meet next Monday." },
     ],
   },
   火曜日: {
@@ -617,6 +683,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "火曜日は忙しいです。", reading: "かようびはいそがしいです", meaning: "El martes estoy ocupado.", meaningEn: "I'm busy on Tuesday." },
       { jp: "火曜日に行きます。", reading: "かようびにいきます", meaning: "Voy el martes.", meaningEn: "I'll go on Tuesday." },
+      { jp: "火曜日は日本語の授業があります。", reading: "かようびはにほんごのじゅぎょうがあります。", meaning: "El martes tengo clase de japonés.", meaningEn: "I have Japanese class on Tuesday." },
+      { jp: "火曜日の朝は忙しいです。", reading: "かようびのあさはいそがしいです。", meaning: "El martes por la mañana estoy ocupado.", meaningEn: "Tuesday mornings are busy." },
     ],
   },
   水曜日: {
@@ -627,6 +695,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "水曜日は休みです。", reading: "すいようびはやすみです", meaning: "El miércoles es día libre.", meaningEn: "Wednesday is a day off." },
       { jp: "水曜日に会いましょう。", reading: "すいようびにあいましょう", meaning: "Veámonos el miércoles.", meaningEn: "Let's meet on Wednesday." },
+      { jp: "水曜日に病院へ行きます。", reading: "すいようびにびょういんへいきます。", meaning: "El miércoles voy al hospital.", meaningEn: "I go to the hospital on Wednesday." },
+      { jp: "水曜日は雨でした。", reading: "すいようびはあめでした。", meaning: "El miércoles llovió.", meaningEn: "It rained on Wednesday." },
     ],
   },
   土曜日: {
@@ -637,6 +707,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "土曜日に映画を見ます。", reading: "どようびにえいがをみます", meaning: "El sábado veo una película.", meaningEn: "I watch a movie on Saturday." },
       { jp: "土曜日は休みです。", reading: "どようびはやすみです", meaning: "El sábado es libre.", meaningEn: "Saturday is off." },
+      { jp: "土曜日に友達と会います。", reading: "どようびにともだちとあいます。", meaning: "El sábado me veo con un amigo.", meaningEn: "I meet a friend on Saturday." },
+      { jp: "土曜日は仕事がありません。", reading: "どようびはしごとがありません。", meaning: "El sábado no tengo trabajo.", meaningEn: "I don't have work on Saturday." },
     ],
   },
   日曜日: {
@@ -647,6 +719,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "今日は日曜日です。", reading: "きょうはにちようびです", meaning: "Hoy es domingo.", meaningEn: "Today is Sunday." },
       { jp: "日曜日は家にいます。", reading: "にちようびはいえにいます", meaning: "El domingo estoy en casa.", meaningEn: "On Sunday I'm at home." },
+      { jp: "日曜日に映画を見ます。", reading: "にちようびにえいがをみます。", meaning: "El domingo veo una película.", meaningEn: "I watch a movie on Sunday." },
+      { jp: "日曜日はいつも家にいます。", reading: "にちようびはいつもいえにいます。", meaning: "Los domingos siempre estoy en casa.", meaningEn: "I'm always home on Sundays." },
     ],
   },
 
@@ -659,6 +733,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "今、何時ですか。", reading: "いま、なんじですか", meaning: "¿Qué hora es ahora?", meaningEn: "What time is it now?" },
       { jp: "今、行きます。", reading: "いま、いきます", meaning: "Voy ahora.", meaningEn: "I'm coming now." },
+      { jp: "今、忙しいです。", reading: "いま、いそがしいです。", meaning: "Ahora estoy ocupado.", meaningEn: "I'm busy now." },
+      { jp: "今から行きます。", reading: "いまからいきます。", meaning: "Voy ahora.", meaningEn: "I'm going now." },
     ],
   },
   何時: {
@@ -669,6 +745,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "今、何時ですか。", reading: "いま、なんじですか", meaning: "¿Qué hora es?", meaningEn: "What time is it?" },
       { jp: "何時に起きますか。", reading: "なんじにおきますか", meaning: "¿A qué hora te levantas?", meaningEn: "What time do you get up?" },
+      { jp: "会議は何時からですか。", reading: "かいぎはなんじからですか。", meaning: "¿A qué hora es la reunión?", meaningEn: "What time is the meeting?" },
+      { jp: "お店は何時までですか。", reading: "おみせはなんじまでですか。", meaning: "¿Hasta qué hora abre la tienda?", meaningEn: "Until what time is the shop open?" },
     ],
   },
   時: {
@@ -681,6 +759,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "三時に会いましょう。", reading: "さんじにあいましょう", meaning: "Veámonos a las 3.", meaningEn: "Let's meet at 3." },
       { jp: "今、七時です。", reading: "いま、しちじです", meaning: "Son las 7.", meaningEn: "It's 7 o'clock." },
+      { jp: "九時に始まります。", reading: "くじにはじまります。", meaning: "Empieza a las nueve.", meaningEn: "It starts at nine." },
+      { jp: "五時に帰ります。", reading: "ごじにかえります。", meaning: "Vuelvo a casa a las cinco.", meaningEn: "I go home at five." },
     ],
   },
   歳: {
@@ -693,6 +773,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "二十歳です。", reading: "はたちです", meaning: "Tengo 20 años.", meaningEn: "I'm 20 years old." },
       { jp: "妹は十歳です。", reading: "いもうとはじゅっさいです", meaning: "Mi hermana tiene 10 años.", meaningEn: "My sister is 10." },
+      { jp: "私は三十歳です。", reading: "わたしはさんじゅっさいです。", meaning: "Tengo treinta años.", meaningEn: "I'm thirty years old." },
+      { jp: "父は五十歳です。", reading: "ちちはごじゅっさいです。", meaning: "Mi padre tiene cincuenta años.", meaningEn: "My father is fifty." },
     ],
   },
   何歳: {
@@ -703,6 +785,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "何歳ですか。", reading: "なんさいですか", meaning: "¿Cuántos años tienes?", meaningEn: "How old are you?" },
       { jp: "お子さんは何歳ですか。", reading: "おこさんはなんさいですか", meaning: "¿Cuántos años tiene su hijo?", meaningEn: "How old is your child?" },
+      { jp: "お母さんは何歳ですか。", reading: "おかあさんはなんさいですか。", meaning: "¿Cuántos años tiene su madre?", meaningEn: "How old is your mother?" },
+      { jp: "妹さんは何歳ですか。", reading: "いもうとさんはなんさいですか。", meaning: "¿Cuántos años tiene su hermana menor?", meaningEn: "How old is your younger sister?" },
     ],
   },
   次: {
@@ -713,6 +797,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "次の駅で降ります。", reading: "つぎのえきでおります", meaning: "Bajo en la próxima estación.", meaningEn: "I get off at the next station." },
       { jp: "次は私です。", reading: "つぎはわたしです", meaning: "El siguiente soy yo.", meaningEn: "I'm next." },
+      { jp: "次の電車に乗ります。", reading: "つぎのでんしゃにのります。", meaning: "Tomo el próximo tren.", meaningEn: "I take the next train." },
+      { jp: "次の月曜日は休みです。", reading: "つぎのげつようびはやすみです。", meaning: "El próximo lunes es día libre.", meaningEn: "Next Monday is a day off." },
     ],
   },
   毎日: {
@@ -723,6 +809,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "毎日、日本語を勉強します。", reading: "まいにち、にほんごをべんきょうします", meaning: "Estudio japonés todos los días.", meaningEn: "I study Japanese every day." },
       { jp: "毎日、コーヒーを飲みます。", reading: "まいにち、コーヒーをのみます", meaning: "Bebo café todos los días.", meaningEn: "I drink coffee every day." },
+      { jp: "毎日、電車で行きます。", reading: "まいにち、でんしゃでいきます。", meaning: "Voy en tren todos los días.", meaningEn: "I go by train every day." },
+      { jp: "毎日、七時に起きます。", reading: "まいにち、しちじにおきます。", meaning: "Me levanto a las siete todos los días.", meaningEn: "I get up at seven every day." },
     ],
   },
 
@@ -735,6 +823,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "家族と住んでいます。", reading: "かぞくとすんでいます", meaning: "Vivo con mi familia.", meaningEn: "I live with my family." },
       { jp: "家族は四人です。", reading: "かぞくはよにんです", meaning: "Somos cuatro en la familia.", meaningEn: "There are four in my family." },
+      { jp: "家族は五人です。", reading: "かぞくはごにんです。", meaning: "Mi familia son cinco.", meaningEn: "My family has five people." },
+      { jp: "家族と旅行します。", reading: "かぞくとりょこうします。", meaning: "Viajo con mi familia.", meaningEn: "I travel with my family." },
     ],
   },
   母: {
@@ -745,6 +835,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "母は先生です。", reading: "はははせんせいです", meaning: "Mi madre es profesora.", meaningEn: "My mother is a teacher." },
       { jp: "母に電話します。", reading: "ははにでんわします", meaning: "Llamo a mi madre.", meaningEn: "I'll call my mother." },
+      { jp: "母に手紙を書きます。", reading: "ははにてがみをかきます。", meaning: "Le escribo una carta a mi madre.", meaningEn: "I write a letter to my mother." },
+      { jp: "母の料理はおいしいです。", reading: "ははのりょうりはおいしいです。", meaning: "La comida de mi madre es deliciosa.", meaningEn: "My mother's cooking is delicious." },
     ],
   },
   父: {
@@ -755,6 +847,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "父は会社員です。", reading: "ちちはかいしゃいんです", meaning: "Mi padre es oficinista.", meaningEn: "My father is an office worker." },
       { jp: "父と話します。", reading: "ちちとはなします", meaning: "Hablo con mi padre.", meaningEn: "I talk with my father." },
+      { jp: "父に電話します。", reading: "ちちにでんわします。", meaning: "Llamo a mi padre.", meaningEn: "I call my father." },
+      { jp: "父の車は新しいです。", reading: "ちちのくるまはあたらしいです。", meaning: "El coche de mi padre es nuevo.", meaningEn: "My father's car is new." },
     ],
   },
   名前: {
@@ -765,6 +859,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "お名前は何ですか。", reading: "おなまえはなんですか", meaning: "¿Cómo se llama?", meaningEn: "What's your name?" },
       { jp: "名前を教えてください。", reading: "なまえをおしえてください", meaning: "Dígame su nombre, por favor.", meaningEn: "Please tell me your name." },
+      { jp: "お名前を教えてください。", reading: "おなまえをおしえてください。", meaning: "Dígame su nombre, por favor.", meaningEn: "Please tell me your name." },
+      { jp: "ここに名前を書いてください。", reading: "ここになまえをかいてください。", meaning: "Escriba su nombre aquí, por favor.", meaningEn: "Please write your name here." },
     ],
   },
   会社員: {
@@ -775,6 +871,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "私は会社員です。", reading: "わたしはかいしゃいんです", meaning: "Soy oficinista.", meaningEn: "I'm an office worker." },
       { jp: "父も会社員です。", reading: "ちちもかいしゃいんです", meaning: "Mi padre también es oficinista.", meaningEn: "My father is an office worker too." },
+      { jp: "兄は会社員です。", reading: "あにはかいしゃいんです。", meaning: "Mi hermano mayor es oficinista.", meaningEn: "My older brother is an office worker." },
+      { jp: "会社員は忙しいです。", reading: "かいしゃいんはいそがしいです。", meaning: "Los oficinistas están ocupados.", meaningEn: "Office workers are busy." },
     ],
   },
   国: {
@@ -785,6 +883,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "お国はどこですか。", reading: "おくにはどこですか", meaning: "¿De qué país es?", meaningEn: "What country are you from?" },
       { jp: "私の国はメキシコです。", reading: "わたしのくにはメキシコです", meaning: "Mi país es México.", meaningEn: "My country is Mexico." },
+      { jp: "あなたの国はどこですか。", reading: "あなたのくにはどこですか。", meaning: "¿De qué país eres?", meaningEn: "What country are you from?" },
+      { jp: "私の国は暑いです。", reading: "わたしのくにはあついです。", meaning: "Mi país es caluroso.", meaningEn: "My country is hot." },
     ],
   },
   出身: {
@@ -795,6 +895,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "メキシコ出身です。", reading: "メキシコしゅっしんです", meaning: "Soy de México.", meaningEn: "I'm from Mexico." },
       { jp: "ご出身はどこですか。", reading: "ごしゅっしんはどこですか", meaning: "¿De dónde es usted?", meaningEn: "Where are you from?" },
+      { jp: "東京の出身です。", reading: "とうきょうのしゅっしんです。", meaning: "Soy de Tokio.", meaningEn: "I'm from Tokyo." },
+      { jp: "ご出身はどちらですか。", reading: "ごしゅっしんはどちらですか。", meaning: "¿De dónde es usted?", meaningEn: "Where are you from?" },
     ],
   },
 
@@ -807,6 +909,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "ご飯を食べます。", reading: "ごはんをたべます", meaning: "Como (arroz/comida).", meaningEn: "I eat rice / a meal." },
       { jp: "朝ご飯はパンです。", reading: "あさごはんはパンです", meaning: "El desayuno es pan.", meaningEn: "Breakfast is bread." },
+      { jp: "もうご飯を食べましたか。", reading: "もうごはんをたべましたか。", meaning: "¿Ya comiste?", meaningEn: "Have you eaten yet?" },
+      { jp: "夜ご飯は何ですか。", reading: "よるごはんはなんですか。", meaning: "¿Qué hay de cena?", meaningEn: "What's for dinner?" },
     ],
   },
   お弁当: {
@@ -817,6 +921,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "お弁当を買います。", reading: "おべんとうをかいます", meaning: "Compro un bento.", meaningEn: "I'll buy a bento." },
       { jp: "このお弁当はおいしいです。", reading: "このおべんとうはおいしいです", meaning: "Este bento está rico.", meaningEn: "This bento is delicious." },
+      { jp: "コンビニでお弁当を買います。", reading: "コンビニでおべんとうをかいます。", meaning: "Compro un bento en el konbini.", meaningEn: "I buy a bento at the konbini." },
+      { jp: "お弁当を持って行きます。", reading: "おべんとうをもっていきます。", meaning: "Llevo mi bento.", meaningEn: "I take my bento with me." },
     ],
   },
   卵: {
@@ -827,6 +933,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "卵を食べます。", reading: "たまごをたべます", meaning: "Como huevo.", meaningEn: "I eat eggs." },
       { jp: "卵は好きですか。", reading: "たまごはすきですか", meaning: "¿Te gustan los huevos?", meaningEn: "Do you like eggs?" },
+      { jp: "毎朝、卵を食べます。", reading: "まいあさ、たまごをたべます。", meaning: "Como huevo cada mañana.", meaningEn: "I eat eggs every morning." },
+      { jp: "卵を二つください。", reading: "たまごをふたつください。", meaning: "Dos huevos, por favor.", meaningEn: "Two eggs, please." },
     ],
   },
   お茶: {
@@ -837,6 +945,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "お茶をください。", reading: "おちゃをください", meaning: "Un té, por favor.", meaningEn: "Tea, please." },
       { jp: "お茶を飲みます。", reading: "おちゃをのみます", meaning: "Bebo té.", meaningEn: "I drink tea." },
+      { jp: "お茶はいかがですか。", reading: "おちゃはいかがですか。", meaning: "¿Le apetece un té?", meaningEn: "Would you like some tea?" },
+      { jp: "温かいお茶をください。", reading: "あたたかいおちゃをください。", meaning: "Un té caliente, por favor.", meaningEn: "Hot tea, please." },
     ],
   },
   お水: {
@@ -847,6 +957,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "お水をください。", reading: "おみずをください", meaning: "Agua, por favor.", meaningEn: "Water, please." },
       { jp: "お水をお願いします。", reading: "おみずをおねがいします", meaning: "Un agua, por favor.", meaningEn: "Water, please." },
+      { jp: "お水を一杯ください。", reading: "おみずをいっぱいください。", meaning: "Un vaso de agua, por favor.", meaningEn: "A glass of water, please." },
+      { jp: "冷たいお水はありますか。", reading: "つめたいおみずはありますか。", meaning: "¿Hay agua fría?", meaningEn: "Is there cold water?" },
     ],
   },
   水: {
@@ -857,6 +969,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "水を飲みます。", reading: "みずをのみます", meaning: "Bebo agua.", meaningEn: "I drink water." },
       { jp: "冷たい水がほしいです。", reading: "つめたいみずがほしいです", meaning: "Quiero agua fría.", meaningEn: "I want cold water." },
+      { jp: "水を飲みたいです。", reading: "みずをのみたいです。", meaning: "Quiero beber agua.", meaningEn: "I want to drink water." },
+      { jp: "水は大切です。", reading: "みずはたいせつです。", meaning: "El agua es importante.", meaningEn: "Water is important." },
     ],
   },
   コーヒー: {
@@ -867,6 +981,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "コーヒーをください。", reading: "コーヒーをください", meaning: "Un café, por favor.", meaningEn: "A coffee, please." },
       { jp: "毎朝コーヒーを飲みます。", reading: "まいあさコーヒーをのみます", meaning: "Bebo café cada mañana.", meaningEn: "I drink coffee every morning." },
+      { jp: "コーヒーを二つお願いします。", reading: "コーヒーをふたつおねがいします。", meaning: "Dos cafés, por favor.", meaningEn: "Two coffees, please." },
+      { jp: "熱いコーヒーが好きです。", reading: "あついコーヒーがすきです。", meaning: "Me gusta el café caliente.", meaningEn: "I like hot coffee." },
     ],
   },
   ビール: {
@@ -877,6 +993,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "ビールを一つください。", reading: "ビールをひとつください", meaning: "Una cerveza, por favor.", meaningEn: "One beer, please." },
       { jp: "生ビールをお願いします。", reading: "なまビールをおねがいします", meaning: "Una de barril, por favor.", meaningEn: "A draft beer, please." },
+      { jp: "冷たいビールをください。", reading: "つめたいビールをください。", meaning: "Una cerveza fría, por favor.", meaningEn: "A cold beer, please." },
+      { jp: "ビールを飲みますか。", reading: "ビールをのみますか。", meaning: "¿Bebes cerveza?", meaningEn: "Do you drink beer?" },
     ],
   },
   ミルク: {
@@ -887,6 +1005,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "ミルクを入れますか。", reading: "ミルクをいれますか", meaning: "¿Le pongo leche?", meaningEn: "Shall I add milk?" },
       { jp: "コーヒーにミルクをください。", reading: "コーヒーにミルクをください", meaning: "Leche para el café, por favor.", meaningEn: "Milk for the coffee, please." },
+      { jp: "コーヒーにミルクを入れます。", reading: "コーヒーにミルクをいれます。", meaning: "Le pongo leche al café.", meaningEn: "I put milk in the coffee." },
+      { jp: "ミルクはいりません。", reading: "ミルクはいりません。", meaning: "No necesito leche.", meaningEn: "I don't need milk." },
     ],
   },
   砂糖: {
@@ -897,6 +1017,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "砂糖をください。", reading: "さとうをください", meaning: "Azúcar, por favor.", meaningEn: "Sugar, please." },
       { jp: "砂糖は入れません。", reading: "さとうはいれません", meaning: "No le pongo azúcar.", meaningEn: "I don't add sugar." },
+      { jp: "コーヒーに砂糖を入れますか。", reading: "コーヒーにさとうをいれますか。", meaning: "¿Le pone azúcar al café?", meaningEn: "Do you put sugar in your coffee?" },
+      { jp: "砂糖は少しでいいです。", reading: "さとうはすこしでいいです。", meaning: "Con un poco de azúcar está bien.", meaningEn: "Just a little sugar is fine." },
     ],
   },
   ケーキ: {
@@ -907,6 +1029,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "ケーキを一つください。", reading: "ケーキをひとつください", meaning: "Un pastel, por favor.", meaningEn: "One cake, please." },
       { jp: "このケーキはおいしいです。", reading: "このケーキはおいしいです", meaning: "Este pastel está rico.", meaningEn: "This cake is delicious." },
+      { jp: "誕生日にケーキを食べます。", reading: "たんじょうびにケーキをたべます。", meaning: "Como pastel en mi cumpleaños.", meaningEn: "I eat cake on my birthday." },
+      { jp: "チョコレートケーキが好きです。", reading: "チョコレートケーキがすきです。", meaning: "Me gusta el pastel de chocolate.", meaningEn: "I like chocolate cake." },
     ],
   },
   おいしい: {
@@ -917,6 +1041,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "このケーキはおいしいです。", reading: "このケーキはおいしいです", meaning: "Este pastel está rico.", meaningEn: "This cake is delicious." },
       { jp: "とてもおいしかったです。", reading: "とてもおいしかったです", meaning: "Estuvo muy rico.", meaningEn: "It was very delicious." },
+      { jp: "この店のラーメンはおいしいです。", reading: "このみせのラーメンはおいしいです。", meaning: "El ramen de esta tienda es delicioso.", meaningEn: "The ramen at this place is delicious." },
+      { jp: "日本の料理はおいしいですね。", reading: "にほんのりょうりはおいしいですね。", meaning: "La comida japonesa es rica, ¿verdad?", meaningEn: "Japanese food is delicious, isn't it?" },
     ],
   },
   メニュー: {
@@ -927,6 +1053,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "メニューをください。", reading: "メニューをください", meaning: "El menú, por favor.", meaningEn: "The menu, please." },
       { jp: "メニューを見せてください。", reading: "メニューをみせてください", meaning: "Muéstreme el menú.", meaningEn: "Please show me the menu." },
+      { jp: "英語のメニューはありますか。", reading: "えいごのメニューはありますか。", meaning: "¿Hay menú en inglés?", meaningEn: "Is there an English menu?" },
+      { jp: "メニューをお願いします。", reading: "メニューをおねがいします。", meaning: "La carta, por favor.", meaningEn: "The menu, please." },
     ],
   },
   おすすめ: {
@@ -937,6 +1065,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "おすすめは何ですか。", reading: "おすすめはなんですか", meaning: "¿Qué recomienda?", meaningEn: "What do you recommend?" },
       { jp: "これがおすすめです。", reading: "これがおすすめです", meaning: "Esto es lo recomendado.", meaningEn: "This is our recommendation." },
+      { jp: "今日のおすすめは何ですか。", reading: "きょうのおすすめはなんですか。", meaning: "¿Cuál es la recomendación de hoy?", meaningEn: "What's today's recommendation?" },
+      { jp: "おすすめの店を教えてください。", reading: "おすすめのみせをおしえてください。", meaning: "Recomiéndeme una tienda, por favor.", meaningEn: "Please recommend a place." },
     ],
   },
   席: {
@@ -947,6 +1077,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "窓側の席をお願いします。", reading: "まどがわのせきをおねがいします", meaning: "Un asiento junto a la ventana, por favor.", meaningEn: "A window seat, please." },
       { jp: "席はありますか。", reading: "せきはありますか", meaning: "¿Hay asiento?", meaningEn: "Are there any seats?" },
+      { jp: "席を予約したいです。", reading: "せきをよやくしたいです。", meaning: "Quiero reservar un asiento.", meaningEn: "I'd like to reserve a seat." },
+      { jp: "この席は空いていますか。", reading: "このせきはあいていますか。", meaning: "¿Está libre este asiento?", meaningEn: "Is this seat free?" },
     ],
   },
   テーブル: {
@@ -957,6 +1089,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "テーブル席をお願いします。", reading: "テーブルせきをおねがいします", meaning: "Una mesa, por favor.", meaningEn: "A table, please." },
       { jp: "テーブルを予約しました。", reading: "テーブルをよやくしました", meaning: "Reservé una mesa.", meaningEn: "I reserved a table." },
+      { jp: "テーブルを片付けます。", reading: "テーブルをかたづけます。", meaning: "Recojo la mesa.", meaningEn: "I clear the table." },
+      { jp: "窓側のテーブルをお願いします。", reading: "まどがわのテーブルをおねがいします。", meaning: "Una mesa junto a la ventana, por favor.", meaningEn: "A table by the window, please." },
     ],
   },
   持ち帰り: {
@@ -967,6 +1101,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "持ち帰りでお願いします。", reading: "もちかえりでおねがいします", meaning: "Para llevar, por favor.", meaningEn: "To go, please." },
       { jp: "持ち帰りできますか。", reading: "もちかえりできますか", meaning: "¿Se puede para llevar?", meaningEn: "Can I get it to go?" },
+      { jp: "これは持ち帰りできますか。", reading: "これはもちかえりできますか。", meaning: "¿Esto lo puedo llevar?", meaningEn: "Can I take this to go?" },
+      { jp: "持ち帰りと店内、どちらですか。", reading: "もちかえりとてんない、どちらですか。", meaning: "¿Para llevar o para comer aquí?", meaningEn: "For here or to go?" },
     ],
   },
   ここで: {
@@ -977,6 +1113,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "ここで食べます。", reading: "ここでたべます", meaning: "Como aquí.", meaningEn: "I'll eat here." },
       { jp: "ここで待ちます。", reading: "ここでまちます", meaning: "Espero aquí.", meaningEn: "I'll wait here." },
+      { jp: "ここで写真を撮ってもいいですか。", reading: "ここでしゃしんをとってもいいですか。", meaning: "¿Puedo tomar fotos aquí?", meaningEn: "May I take photos here?" },
+      { jp: "ここで待っていてください。", reading: "ここでまっていてください。", meaning: "Espere aquí, por favor.", meaningEn: "Please wait here." },
     ],
   },
   お会計: {
@@ -987,6 +1125,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "お会計をお願いします。", reading: "おかいけいをおねがいします", meaning: "La cuenta, por favor.", meaningEn: "The check, please." },
       { jp: "お会計は別々でお願いします。", reading: "おかいけいはべつべつでおねがいします", meaning: "Cuentas separadas, por favor.", meaningEn: "Separate checks, please." },
+      { jp: "お会計はどこですか。", reading: "おかいけいはどこですか。", meaning: "¿Dónde se paga?", meaningEn: "Where do I pay?" },
+      { jp: "すみません、お会計をお願いします。", reading: "すみません、おかいけいをおねがいします。", meaning: "Disculpe, la cuenta por favor.", meaningEn: "Excuse me, the bill please." },
     ],
   },
   全部で: {
@@ -997,6 +1137,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "全部でいくらですか。", reading: "ぜんぶでいくらですか", meaning: "¿Cuánto es en total?", meaningEn: "How much is it in total?" },
       { jp: "全部で千円です。", reading: "ぜんぶでせんえんです", meaning: "Son 1000 yenes en total.", meaningEn: "It's 1000 yen in total." },
+      { jp: "全部でいくらになりますか。", reading: "ぜんぶでいくらになりますか。", meaning: "¿Cuánto es en total?", meaningEn: "How much is it in total?" },
+      { jp: "全部で三つです。", reading: "ぜんぶでみっつです。", meaning: "Son tres en total.", meaningEn: "Three in total." },
     ],
   },
   食べます: {
@@ -1007,6 +1149,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "パンを食べます。", reading: "パンをたべます", meaning: "Como pan.", meaningEn: "I eat bread." },
       { jp: "朝ご飯を食べません。", reading: "あさごはんをたべません", meaning: "No desayuno.", meaningEn: "I don't eat breakfast." },
+      { jp: "昼ご飯を食べます。", reading: "ひるごはんをたべます。", meaning: "Como el almuerzo.", meaningEn: "I eat lunch." },
+      { jp: "何を食べますか。", reading: "なにをたべますか。", meaning: "¿Qué vas a comer?", meaningEn: "What will you eat?" },
     ],
   },
   飲みます: {
@@ -1017,6 +1161,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "水を飲みます。", reading: "みずをのみます", meaning: "Bebo agua.", meaningEn: "I drink water." },
       { jp: "お酒は飲みません。", reading: "おさけはのみません", meaning: "No bebo alcohol.", meaningEn: "I don't drink alcohol." },
+      { jp: "毎朝コーヒーを飲みます。", reading: "まいあさコーヒーをのみます。", meaning: "Bebo café cada mañana.", meaningEn: "I drink coffee every morning." },
+      { jp: "薬を飲みます。", reading: "くすりをのみます。", meaning: "Tomo medicina.", meaningEn: "I take medicine." },
     ],
   },
   食べられません: {
@@ -1027,6 +1173,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "肉が食べられません。", reading: "にくがたべられません", meaning: "No puedo comer carne.", meaningEn: "I can't eat meat." },
       { jp: "卵が食べられません。", reading: "たまごがたべられません", meaning: "No puedo comer huevo.", meaningEn: "I can't eat eggs." },
+      { jp: "辛いものが食べられません。", reading: "からいものがたべられません。", meaning: "No puedo comer cosas picantes.", meaningEn: "I can't eat spicy things." },
+      { jp: "お腹がいっぱいで食べられません。", reading: "おなかがいっぱいでたべられません。", meaning: "Estoy lleno, no puedo comer más.", meaningEn: "I'm full, I can't eat." },
     ],
   },
 
@@ -1039,6 +1187,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "これはいくらですか。", reading: "これはいくらですか", meaning: "¿Cuánto cuesta esto?", meaningEn: "How much is this?" },
       { jp: "全部でいくらですか。", reading: "ぜんぶでいくらですか", meaning: "¿Cuánto es en total?", meaningEn: "How much is it in total?" },
+      { jp: "この靴はいくらですか。", reading: "このくつはいくらですか。", meaning: "¿Cuánto cuestan estos zapatos?", meaningEn: "How much are these shoes?" },
+      { jp: "切符はいくらですか。", reading: "きっぷはいくらですか。", meaning: "¿Cuánto cuesta el boleto?", meaningEn: "How much is the ticket?" },
     ],
   },
   サイズ: {
@@ -1049,6 +1199,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "Mサイズをお願いします。", reading: "エムサイズをおねがいします", meaning: "Talla M, por favor.", meaningEn: "Size M, please." },
       { jp: "このサイズはありますか。", reading: "このサイズはありますか", meaning: "¿Tienen esta talla?", meaningEn: "Do you have this size?" },
+      { jp: "もっと大きいサイズはありますか。", reading: "もっとおおきいサイズはありますか。", meaning: "¿Tiene una talla más grande?", meaningEn: "Do you have a bigger size?" },
+      { jp: "サイズはこれで大丈夫です。", reading: "サイズはこれでだいじょうぶです。", meaning: "La talla está bien así.", meaningEn: "This size is fine." },
     ],
   },
   カード: {
@@ -1059,6 +1211,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "カードで払います。", reading: "カードではらいます", meaning: "Pago con tarjeta.", meaningEn: "I'll pay by card." },
       { jp: "カードは使えますか。", reading: "カードはつかえますか", meaning: "¿Aceptan tarjeta?", meaningEn: "Can I use a card?" },
+      { jp: "カードで払えますか。", reading: "カードではらえますか。", meaning: "¿Puedo pagar con tarjeta?", meaningEn: "Can I pay by card?" },
+      { jp: "このカードは使えますか。", reading: "このカードはつかえますか。", meaning: "¿Puedo usar esta tarjeta?", meaningEn: "Can I use this card?" },
     ],
   },
   現金: {
@@ -1069,6 +1223,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "現金で払います。", reading: "げんきんではらいます", meaning: "Pago en efectivo.", meaningEn: "I'll pay in cash." },
       { jp: "現金だけです。", reading: "げんきんだけです", meaning: "Solo efectivo.", meaningEn: "Cash only." },
+      { jp: "現金でお願いします。", reading: "げんきんでおねがいします。", meaning: "En efectivo, por favor.", meaningEn: "Cash, please." },
+      { jp: "現金しか使えません。", reading: "げんきんしかつかえません。", meaning: "Solo se puede pagar en efectivo.", meaningEn: "Only cash is accepted." },
     ],
   },
   袋: {
@@ -1079,6 +1235,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "袋をください。", reading: "ふくろをください", meaning: "Una bolsa, por favor.", meaningEn: "A bag, please." },
       { jp: "袋はいりません。", reading: "ふくろはいりません", meaning: "No necesito bolsa.", meaningEn: "I don't need a bag." },
+      { jp: "袋はいりますか。", reading: "ふくろはいりますか。", meaning: "¿Necesita bolsa?", meaningEn: "Do you need a bag?" },
+      { jp: "袋を二つください。", reading: "ふくろをふたつください。", meaning: "Dos bolsas, por favor.", meaningEn: "Two bags, please." },
     ],
   },
   試着: {
@@ -1089,6 +1247,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "試着してもいいですか。", reading: "しちゃくしてもいいですか", meaning: "¿Puedo probármelo?", meaningEn: "May I try it on?" },
       { jp: "試着室はどこですか。", reading: "しちゃくしつはどこですか", meaning: "¿Dónde está el probador?", meaningEn: "Where is the fitting room?" },
+      { jp: "これを試着したいです。", reading: "これをしちゃくしたいです。", meaning: "Quiero probarme esto.", meaningEn: "I'd like to try this on." },
+      { jp: "別のサイズを試着したいです。", reading: "べつのサイズをしちゃくしたいです。", meaning: "Quiero probarme otra talla.", meaningEn: "I want to try another size." },
     ],
   },
   店: {
@@ -1099,6 +1259,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "この店は安いです。", reading: "このみせはやすいです", meaning: "Esta tienda es barata.", meaningEn: "This shop is cheap." },
       { jp: "店は何時までですか。", reading: "みせはなんじまでですか", meaning: "¿Hasta qué hora abre la tienda?", meaningEn: "Until what time is the shop open?" },
+      { jp: "あの店は有名です。", reading: "あのみせはゆうめいです。", meaning: "Aquella tienda es famosa.", meaningEn: "That shop is famous." },
+      { jp: "この店は何時に閉まりますか。", reading: "このみせはなんじにしまりますか。", meaning: "¿A qué hora cierra esta tienda?", meaningEn: "What time does this shop close?" },
     ],
   },
   コンビニ: {
@@ -1109,6 +1271,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "コンビニで買います。", reading: "コンビニでかいます", meaning: "Compro en el konbini.", meaningEn: "I'll buy it at the konbini." },
       { jp: "コンビニはどこですか。", reading: "コンビニはどこですか", meaning: "¿Dónde hay un konbini?", meaningEn: "Where is a konbini?" },
+      { jp: "コンビニで水を買います。", reading: "コンビニでみずをかいます。", meaning: "Compro agua en el konbini.", meaningEn: "I buy water at the konbini." },
+      { jp: "コンビニは駅の前にあります。", reading: "コンビニはえきのまえにあります。", meaning: "El konbini está frente a la estación.", meaningEn: "The konbini is in front of the station." },
     ],
   },
   安い: {
@@ -1119,6 +1283,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "この店は安いです。", reading: "このみせはやすいです", meaning: "Esta tienda es barata.", meaningEn: "This shop is cheap." },
       { jp: "もっと安いのはありますか。", reading: "もっとやすいのはありますか", meaning: "¿Hay uno más barato?", meaningEn: "Is there a cheaper one?" },
+      { jp: "この店は安くておいしいです。", reading: "このみせはやすくておいしいです。", meaning: "Esta tienda es barata y rica.", meaningEn: "This place is cheap and tasty." },
+      { jp: "安いですね。", reading: "やすいですね。", meaning: "Es barato, ¿verdad?", meaningEn: "It's cheap, isn't it?" },
     ],
   },
   高い: {
@@ -1129,6 +1295,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "これは高いです。", reading: "これはたかいです", meaning: "Esto es caro.", meaningEn: "This is expensive." },
       { jp: "高いビルですね。", reading: "たかいビルですね", meaning: "Es un edificio alto, ¿no?", meaningEn: "That's a tall building, isn't it?" },
+      { jp: "この時計は高いです。", reading: "このとけいはたかいです。", meaning: "Este reloj es caro.", meaningEn: "This watch is expensive." },
+      { jp: "あのビルは高いです。", reading: "あのビルはたかいです。", meaning: "Aquel edificio es alto.", meaningEn: "That building is tall." },
     ],
   },
   色: {
@@ -1139,6 +1307,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "何色が好きですか。", reading: "なにいろがすきですか", meaning: "¿Qué color te gusta?", meaningEn: "What color do you like?" },
       { jp: "色は白です。", reading: "いろはしろです", meaning: "El color es blanco.", meaningEn: "The color is white." },
+      { jp: "好きな色は何ですか。", reading: "すきないろはなんですか。", meaning: "¿Cuál es tu color favorito?", meaningEn: "What's your favorite color?" },
+      { jp: "この色はきれいです。", reading: "このいろはきれいです。", meaning: "Este color es bonito.", meaningEn: "This color is pretty." },
     ],
   },
   白: {
@@ -1149,6 +1319,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "白が好きです。", reading: "しろがすきです", meaning: "Me gusta el blanco.", meaningEn: "I like white." },
       { jp: "白いシャツをください。", reading: "しろいシャツをください", meaning: "Una camisa blanca, por favor.", meaningEn: "A white shirt, please." },
+      { jp: "白いシャツが好きです。", reading: "しろいシャツがすきです。", meaning: "Me gustan las camisas blancas.", meaningEn: "I like white shirts." },
+      { jp: "白い車を買いました。", reading: "しろいくるまをかいました。", meaning: "Compré un coche blanco.", meaningEn: "I bought a white car." },
     ],
   },
   赤: {
@@ -1159,6 +1331,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "赤が好きです。", reading: "あかがすきです", meaning: "Me gusta el rojo.", meaningEn: "I like red." },
       { jp: "赤いりんごです。", reading: "あかいりんごです", meaning: "Es una manzana roja.", meaningEn: "It's a red apple." },
+      { jp: "赤いかばんをください。", reading: "あかいかばんをください。", meaning: "Deme el bolso rojo, por favor.", meaningEn: "The red bag, please." },
+      { jp: "信号が赤です。", reading: "しんごうがあかです。", meaning: "El semáforo está en rojo.", meaningEn: "The light is red." },
     ],
   },
   青: {
@@ -1169,6 +1343,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "青が好きです。", reading: "あおがすきです", meaning: "Me gusta el azul.", meaningEn: "I like blue." },
       { jp: "青い空ですね。", reading: "あおいそらですね", meaning: "Es un cielo azul, ¿verdad?", meaningEn: "It's a blue sky, isn't it?" },
+      { jp: "青いシャツはありますか。", reading: "あおいシャツはありますか。", meaning: "¿Hay camisas azules?", meaningEn: "Do you have blue shirts?" },
+      { jp: "今日は空が青いです。", reading: "きょうはそらがあおいです。", meaning: "Hoy el cielo está azul.", meaningEn: "The sky is blue today." },
     ],
   },
   黒: {
@@ -1179,6 +1355,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "黒が好きです。", reading: "くろがすきです", meaning: "Me gusta el negro.", meaningEn: "I like black." },
       { jp: "黒いかばんです。", reading: "くろいかばんです", meaning: "Es una bolsa negra.", meaningEn: "It's a black bag." },
+      { jp: "黒いかばんが欲しいです。", reading: "くろいかばんがほしいです。", meaning: "Quiero un bolso negro.", meaningEn: "I want a black bag." },
+      { jp: "黒いスーツを着ます。", reading: "くろいスーツをきます。", meaning: "Me pongo un traje negro.", meaningEn: "I wear a black suit." },
     ],
   },
   大きい: {
@@ -1189,6 +1367,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "大きいサイズをください。", reading: "おおきいサイズをください", meaning: "Talla grande, por favor.", meaningEn: "A large size, please." },
       { jp: "この部屋は大きいです。", reading: "このへやはおおきいです", meaning: "Esta habitación es grande.", meaningEn: "This room is big." },
+      { jp: "大きい犬が好きです。", reading: "おおきいいぬがすきです。", meaning: "Me gustan los perros grandes.", meaningEn: "I like big dogs." },
+      { jp: "もっと大きいのはありますか。", reading: "もっとおおきいのはありますか。", meaning: "¿Hay uno más grande?", meaningEn: "Do you have a bigger one?" },
     ],
   },
   小さい: {
@@ -1199,6 +1379,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "小さいサイズはありますか。", reading: "ちいさいサイズはありますか", meaning: "¿Hay talla pequeña?", meaningEn: "Do you have a small size?" },
       { jp: "小さい犬です。", reading: "ちいさいいぬです", meaning: "Es un perro pequeño.", meaningEn: "It's a small dog." },
+      { jp: "小さい部屋です。", reading: "ちいさいへやです。", meaning: "Es una habitación pequeña.", meaningEn: "It's a small room." },
+      { jp: "もっと小さいサイズをください。", reading: "もっとちいさいサイズをください。", meaning: "Deme una talla más pequeña.", meaningEn: "A smaller size, please." },
     ],
   },
   新しい: {
@@ -1209,6 +1391,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "新しい車を買いました。", reading: "あたらしいくるまをかいました", meaning: "Compré un coche nuevo.", meaningEn: "I bought a new car." },
       { jp: "この店は新しいです。", reading: "このみせはあたらしいです", meaning: "Esta tienda es nueva.", meaningEn: "This shop is new." },
+      { jp: "新しい携帯が欲しいです。", reading: "あたらしいけいたいがほしいです。", meaning: "Quiero un celular nuevo.", meaningEn: "I want a new phone." },
+      { jp: "新しい仕事は楽しいです。", reading: "あたらしいしごとはたのしいです。", meaning: "Mi trabajo nuevo es divertido.", meaningEn: "My new job is fun." },
     ],
   },
 
@@ -1221,6 +1405,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "駅はどこですか。", reading: "えきはどこですか", meaning: "¿Dónde está la estación?", meaningEn: "Where is the station?" },
       { jp: "東京駅で会いましょう。", reading: "とうきょうえきであいましょう", meaning: "Veámonos en la estación de Tokio.", meaningEn: "Let's meet at Tokyo Station." },
+      { jp: "駅で友達を待ちます。", reading: "えきでともだちをまちます。", meaning: "Espero a un amigo en la estación.", meaningEn: "I wait for a friend at the station." },
+      { jp: "この駅で降ります。", reading: "このえきでおります。", meaning: "Me bajo en esta estación.", meaningEn: "I get off at this station." },
     ],
   },
   電車: {
@@ -1231,6 +1417,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "電車で行きます。", reading: "でんしゃでいきます", meaning: "Voy en tren.", meaningEn: "I'll go by train." },
       { jp: "次の電車に乗ります。", reading: "つぎのでんしゃにのります", meaning: "Subo al próximo tren.", meaningEn: "I'll take the next train." },
+      { jp: "電車が来ました。", reading: "でんしゃがきました。", meaning: "Llegó el tren.", meaningEn: "The train came." },
+      { jp: "電車の中で本を読みます。", reading: "でんしゃのなかでほんをよみます。", meaning: "Leo un libro en el tren.", meaningEn: "I read a book on the train." },
     ],
   },
   切符: {
@@ -1241,6 +1429,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "切符を一枚ください。", reading: "きっぷをいちまいください", meaning: "Un boleto, por favor.", meaningEn: "One ticket, please." },
       { jp: "切符はどこで買いますか。", reading: "きっぷはどこでかいますか", meaning: "¿Dónde compro el boleto?", meaningEn: "Where do I buy a ticket?" },
+      { jp: "切符を二枚ください。", reading: "きっぷをにまいください。", meaning: "Dos boletos, por favor.", meaningEn: "Two tickets, please." },
+      { jp: "切符をなくしました。", reading: "きっぷをなくしました。", meaning: "Perdí mi boleto.", meaningEn: "I lost my ticket." },
     ],
   },
   乗ります: {
@@ -1251,6 +1441,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "電車に乗ります。", reading: "でんしゃにのります", meaning: "Subo al tren.", meaningEn: "I get on the train." },
       { jp: "バスに乗ります。", reading: "バスにのります", meaning: "Subo al autobús.", meaningEn: "I get on the bus." },
+      { jp: "次の駅で電車に乗ります。", reading: "つぎのえきででんしゃにのります。", meaning: "Subo al tren en la próxima estación.", meaningEn: "I get on the train at the next station." },
+      { jp: "タクシーに乗ります。", reading: "タクシーにのります。", meaning: "Tomo un taxi.", meaningEn: "I take a taxi." },
     ],
   },
   乗り換え: {
@@ -1261,6 +1453,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "次の駅で乗り換えます。", reading: "つぎのえきでのりかえます", meaning: "Hago transbordo en la próxima estación.", meaningEn: "I transfer at the next station." },
       { jp: "乗り換えはどこですか。", reading: "のりかえはどこですか", meaning: "¿Dónde es el transbordo?", meaningEn: "Where is the transfer?" },
+      { jp: "東京駅で乗り換えます。", reading: "とうきょうえきでのりかえます。", meaning: "Hago transbordo en la estación de Tokio.", meaningEn: "I transfer at Tokyo station." },
+      { jp: "乗り換えは何番線ですか。", reading: "のりかえはなんばんせんですか。", meaning: "¿En qué andén es el transbordo?", meaningEn: "Which platform is the transfer?" },
     ],
   },
   入口: {
@@ -1271,6 +1465,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "入口はどこですか。", reading: "いりぐちはどこですか", meaning: "¿Dónde está la entrada?", meaningEn: "Where is the entrance?" },
       { jp: "ここが入口です。", reading: "ここがいりぐちです", meaning: "Aquí es la entrada.", meaningEn: "This is the entrance." },
+      { jp: "入口はあちらです。", reading: "いりぐちはあちらです。", meaning: "La entrada está por allá.", meaningEn: "The entrance is over there." },
+      { jp: "駅の入口で待ちます。", reading: "えきのいりぐちでまちます。", meaning: "Espero en la entrada de la estación.", meaningEn: "I'll wait at the station entrance." },
     ],
   },
   出口: {
@@ -1281,6 +1477,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "出口はどこですか。", reading: "でぐちはどこですか", meaning: "¿Dónde está la salida?", meaningEn: "Where is the exit?" },
       { jp: "東口で会いましょう。", reading: "ひがしぐちであいましょう", meaning: "Veámonos en la salida este.", meaningEn: "Let's meet at the east exit." },
+      { jp: "出口はどちらですか。", reading: "でぐちはどちらですか。", meaning: "¿Por dónde es la salida?", meaningEn: "Which way is the exit?" },
+      { jp: "南出口で会いましょう。", reading: "みなみでぐちであいましょう。", meaning: "Nos vemos en la salida sur.", meaningEn: "Let's meet at the south exit." },
     ],
   },
   何番線: {
@@ -1291,6 +1489,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "東京行きは何番線ですか。", reading: "とうきょうゆきはなんばんせんですか", meaning: "¿De qué andén sale el de Tokio?", meaningEn: "Which platform is the Tokyo train?" },
       { jp: "三番線です。", reading: "さんばんせんです", meaning: "Es el andén 3.", meaningEn: "It's platform 3." },
+      { jp: "大阪行きは何番線ですか。", reading: "おおさかゆきはなんばんせんですか。", meaning: "¿En qué andén sale el de Osaka?", meaningEn: "Which platform for Osaka?" },
+      { jp: "何番線で待てばいいですか。", reading: "なんばんせんでまてばいいですか。", meaning: "¿En qué andén debo esperar?", meaningEn: "Which platform should I wait on?" },
     ],
   },
 
@@ -1303,6 +1503,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "学校に行きます。", reading: "がっこうにいきます", meaning: "Voy a la escuela.", meaningEn: "I go to school." },
       { jp: "明日、東京に行きます。", reading: "あした、とうきょうにいきます", meaning: "Mañana voy a Tokio.", meaningEn: "Tomorrow I'll go to Tokyo." },
+      { jp: "日曜日に映画館に行きます。", reading: "にちようびにえいがかんにいきます。", meaning: "El domingo voy al cine.", meaningEn: "I go to the movies on Sunday." },
+      { jp: "一緒に行きますか。", reading: "いっしょにいきますか。", meaning: "¿Vamos juntos?", meaningEn: "Shall we go together?" },
     ],
   },
   話します: {
@@ -1313,6 +1515,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "日本語を話します。", reading: "にほんごをはなします", meaning: "Hablo japonés.", meaningEn: "I speak Japanese." },
       { jp: "友達と話します。", reading: "ともだちとはなします", meaning: "Hablo con un amigo.", meaningEn: "I talk with a friend." },
+      { jp: "英語で話します。", reading: "えいごではなします。", meaning: "Hablo en inglés.", meaningEn: "I speak in English." },
+      { jp: "先生と話します。", reading: "せんせいとはなします。", meaning: "Hablo con el profesor.", meaningEn: "I talk with the teacher." },
     ],
   },
   起きます: {
@@ -1323,6 +1527,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "毎日、七時に起きます。", reading: "まいにち、しちじにおきます", meaning: "Me levanto a las 7 cada día.", meaningEn: "I get up at 7 every day." },
       { jp: "今日は早く起きました。", reading: "きょうははやくおきました", meaning: "Hoy me levanté temprano.", meaningEn: "I got up early today." },
+      { jp: "週末は遅く起きます。", reading: "しゅうまつはおそくおきます。", meaning: "Los fines de semana me levanto tarde.", meaningEn: "I wake up late on weekends." },
+      { jp: "何時に起きますか。", reading: "なんじにおきますか。", meaning: "¿A qué hora te levantas?", meaningEn: "What time do you get up?" },
     ],
   },
   寝ます: {
@@ -1333,6 +1539,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "十一時に寝ます。", reading: "じゅういちじにねます", meaning: "Me acuesto a las 11.", meaningEn: "I go to bed at 11." },
       { jp: "今日は早く寝ます。", reading: "きょうははやくねます", meaning: "Hoy me acuesto temprano.", meaningEn: "I'll go to bed early today." },
+      { jp: "毎日十一時に寝ます。", reading: "まいにちじゅういちじにねます。", meaning: "Me acuesto a las once cada día.", meaningEn: "I go to bed at eleven every day." },
+      { jp: "眠いので寝ます。", reading: "ねむいのでねます。", meaning: "Tengo sueño, me voy a dormir.", meaningEn: "I'm sleepy, so I'll sleep." },
     ],
   },
 
@@ -1345,6 +1553,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "家に帰ります。", reading: "いえにかえります", meaning: "Vuelvo a casa.", meaningEn: "I'm going home." },
       { jp: "家で勉強します。", reading: "いえでべんきょうします", meaning: "Estudio en casa.", meaningEn: "I study at home." },
+      { jp: "家でテレビを見ます。", reading: "いえでテレビをみます。", meaning: "Veo la tele en casa.", meaningEn: "I watch TV at home." },
+      { jp: "もう家に帰ります。", reading: "もういえにかえります。", meaning: "Ya me voy a casa.", meaningEn: "I'm going home now." },
     ],
   },
   部屋: {
@@ -1355,6 +1565,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "部屋は静かです。", reading: "へやはしずかです", meaning: "La habitación es tranquila.", meaningEn: "The room is quiet." },
       { jp: "部屋を予約しました。", reading: "へやをよやくしました", meaning: "Reservé una habitación.", meaningEn: "I reserved a room." },
+      { jp: "部屋を掃除します。", reading: "へやをそうじします。", meaning: "Limpio la habitación.", meaningEn: "I clean the room." },
+      { jp: "私の部屋は二階です。", reading: "わたしのへやはにかいです。", meaning: "Mi habitación está en el segundo piso.", meaningEn: "My room is on the second floor." },
     ],
   },
   窓: {
@@ -1365,6 +1577,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "窓を開けてもいいですか。", reading: "まどをあけてもいいですか", meaning: "¿Puedo abrir la ventana?", meaningEn: "May I open the window?" },
       { jp: "窓側の席をお願いします。", reading: "まどがわのせきをおねがいします", meaning: "Un asiento junto a la ventana, por favor.", meaningEn: "A window seat, please." },
+      { jp: "窓を閉めてください。", reading: "まどをしめてください。", meaning: "Cierre la ventana, por favor.", meaningEn: "Please close the window." },
+      { jp: "窓から海が見えます。", reading: "まどからうみがみえます。", meaning: "Se ve el mar desde la ventana.", meaningEn: "You can see the sea from the window." },
     ],
   },
   病院: {
@@ -1375,6 +1589,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "病院はどこですか。", reading: "びょういんはどこですか", meaning: "¿Dónde está el hospital?", meaningEn: "Where is the hospital?" },
       { jp: "病院に行きます。", reading: "びょういんにいきます", meaning: "Voy al hospital.", meaningEn: "I'm going to the hospital." },
+      { jp: "兄は病院で働いています。", reading: "あにはびょういんではたらいています。", meaning: "Mi hermano trabaja en un hospital.", meaningEn: "My brother works at a hospital." },
+      { jp: "病院は駅の近くです。", reading: "びょういんはえきのちかくです。", meaning: "El hospital está cerca de la estación.", meaningEn: "The hospital is near the station." },
     ],
   },
   銀行: {
@@ -1385,6 +1601,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "銀行はどこですか。", reading: "ぎんこうはどこですか", meaning: "¿Dónde está el banco?", meaningEn: "Where is the bank?" },
       { jp: "銀行は三時までです。", reading: "ぎんこうはさんじまでです", meaning: "El banco cierra a las 3.", meaningEn: "The bank is open until 3." },
+      { jp: "銀行でお金を下ろします。", reading: "ぎんこうでおかねをおろします。", meaning: "Saco dinero en el banco.", meaningEn: "I withdraw money at the bank." },
+      { jp: "銀行は何時からですか。", reading: "ぎんこうはなんじからですか。", meaning: "¿A qué hora abre el banco?", meaningEn: "What time does the bank open?" },
     ],
   },
   映画: {
@@ -1395,6 +1613,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "映画を見ます。", reading: "えいがをみます", meaning: "Veo una película.", meaningEn: "I watch a movie." },
       { jp: "映画が好きです。", reading: "えいががすきです", meaning: "Me gusta el cine.", meaningEn: "I like movies." },
+      { jp: "週末に映画を見ました。", reading: "しゅうまつにえいがをみました。", meaning: "Vi una película el fin de semana.", meaningEn: "I watched a movie on the weekend." },
+      { jp: "この映画は面白いです。", reading: "このえいがはおもしろいです。", meaning: "Esta película es interesante.", meaningEn: "This movie is interesting." },
     ],
   },
 
@@ -1407,6 +1627,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "今日はいい天気です。", reading: "きょうはいいてんきです", meaning: "Hoy hace buen tiempo.", meaningEn: "The weather is nice today." },
       { jp: "天気はどうですか。", reading: "てんきはどうですか", meaning: "¿Qué tal el clima?", meaningEn: "How's the weather?" },
+      { jp: "明日の天気はどうですか。", reading: "あしたのてんきはどうですか。", meaning: "¿Qué tiempo hará mañana?", meaningEn: "How's the weather tomorrow?" },
+      { jp: "いい天気ですね。", reading: "いいてんきですね。", meaning: "Qué buen tiempo, ¿verdad?", meaningEn: "Nice weather, isn't it?" },
     ],
   },
   雨: {
@@ -1417,6 +1639,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "今日は雨です。", reading: "きょうはあめです", meaning: "Hoy llueve.", meaningEn: "It's raining today." },
       { jp: "明日は雨が降ります。", reading: "あしたはあめがふります", meaning: "Mañana lloverá.", meaningEn: "It will rain tomorrow." },
+      { jp: "雨が降っています。", reading: "あめがふっています。", meaning: "Está lloviendo.", meaningEn: "It's raining." },
+      { jp: "雨の日は家にいます。", reading: "あめのひはいえにいます。", meaning: "Los días de lluvia me quedo en casa.", meaningEn: "On rainy days I stay home." },
     ],
   },
   寒い: {
@@ -1427,6 +1651,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "今日は寒いです。", reading: "きょうはさむいです", meaning: "Hoy hace frío.", meaningEn: "It's cold today." },
       { jp: "冬は寒いです。", reading: "ふゆはさむいです", meaning: "El invierno es frío.", meaningEn: "Winter is cold." },
+      { jp: "今朝はとても寒いです。", reading: "けさはとてもさむいです。", meaning: "Esta mañana hace mucho frío.", meaningEn: "It's very cold this morning." },
+      { jp: "寒いので上着を着ます。", reading: "さむいのでうわぎをきます。", meaning: "Como hace frío, me pongo abrigo.", meaningEn: "It's cold, so I put on a jacket." },
     ],
   },
   暑い: {
@@ -1437,6 +1663,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "今日は暑いです。", reading: "きょうはあついです", meaning: "Hoy hace calor.", meaningEn: "It's hot today." },
       { jp: "夏は暑いです。", reading: "なつはあついです", meaning: "El verano es caluroso.", meaningEn: "Summer is hot." },
+      { jp: "今日はとても暑いですね。", reading: "きょうはとてもあついですね。", meaning: "Hoy hace mucho calor, ¿verdad?", meaningEn: "It's very hot today, isn't it?" },
+      { jp: "暑いので水を飲みます。", reading: "あついのでみずをのみます。", meaning: "Como hace calor, bebo agua.", meaningEn: "It's hot, so I drink water." },
     ],
   },
 
@@ -1449,6 +1677,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "音楽が好きです。", reading: "おんがくがすきです", meaning: "Me gusta la música.", meaningEn: "I like music." },
       { jp: "日本語が大好きです。", reading: "にほんごがだいすきです", meaning: "Me encanta el japonés.", meaningEn: "I love Japanese." },
+      { jp: "犬が好きですか。", reading: "いぬがすきですか。", meaning: "¿Te gustan los perros?", meaningEn: "Do you like dogs?" },
+      { jp: "私は日本の映画が好きです。", reading: "わたしはにほんのえいががすきです。", meaning: "Me gustan las películas japonesas.", meaningEn: "I like Japanese movies." },
     ],
   },
   趣味: {
@@ -1459,6 +1689,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "趣味は何ですか。", reading: "しゅみはなんですか", meaning: "¿Cuál es tu pasatiempo?", meaningEn: "What's your hobby?" },
       { jp: "趣味は映画です。", reading: "しゅみはえいがです", meaning: "Mi hobby es el cine.", meaningEn: "My hobby is movies." },
+      { jp: "私の趣味は音楽です。", reading: "わたしのしゅみはおんがくです。", meaning: "Mi hobby es la música.", meaningEn: "My hobby is music." },
+      { jp: "趣味は読書です。", reading: "しゅみはどくしょです。", meaning: "Mi hobby es leer.", meaningEn: "My hobby is reading." },
     ],
   },
   音楽: {
@@ -1469,6 +1701,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "音楽を聞きます。", reading: "おんがくをききます", meaning: "Escucho música.", meaningEn: "I listen to music." },
       { jp: "どんな音楽が好きですか。", reading: "どんなおんがくがすきですか", meaning: "¿Qué música te gusta?", meaningEn: "What kind of music do you like?" },
+      { jp: "よく音楽を聞きます。", reading: "よくおんがくをききます。", meaning: "Escucho música a menudo.", meaningEn: "I often listen to music." },
+      { jp: "日本の音楽が好きです。", reading: "にほんのおんがくがすきです。", meaning: "Me gusta la música japonesa.", meaningEn: "I like Japanese music." },
     ],
   },
   スペイン語: {
@@ -1479,6 +1713,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "スペイン語を話します。", reading: "スペインごをはなします", meaning: "Hablo español.", meaningEn: "I speak Spanish." },
       { jp: "スペイン語は難しいですか。", reading: "スペインごはむずかしいですか", meaning: "¿El español es difícil?", meaningEn: "Is Spanish difficult?" },
+      { jp: "私はスペイン語が話せます。", reading: "わたしはスペインごがはなせます。", meaning: "Sé hablar español.", meaningEn: "I can speak Spanish." },
+      { jp: "スペイン語を教えてください。", reading: "スペインごをおしえてください。", meaning: "Enséñame español, por favor.", meaningEn: "Please teach me Spanish." },
     ],
   },
   仕事: {
@@ -1489,6 +1725,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "仕事は忙しいです。", reading: "しごとはいそがしいです", meaning: "El trabajo está ajetreado.", meaningEn: "Work is busy." },
       { jp: "お仕事は何ですか。", reading: "おしごとはなんですか", meaning: "¿En qué trabaja?", meaningEn: "What do you do for work?" },
+      { jp: "仕事は何時に終わりますか。", reading: "しごとはなんじにおわりますか。", meaning: "¿A qué hora terminas el trabajo?", meaningEn: "What time do you finish work?" },
+      { jp: "今日は仕事が休みです。", reading: "きょうはしごとがやすみです。", meaning: "Hoy tengo el día libre.", meaningEn: "I'm off work today." },
     ],
   },
   電話番号: {
@@ -1499,6 +1737,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "電話番号を教えてください。", reading: "でんわばんごうをおしえてください", meaning: "Dame tu número, por favor.", meaningEn: "Please tell me your phone number." },
       { jp: "電話番号は何番ですか。", reading: "でんわばんごうはなんばんですか", meaning: "¿Cuál es tu número?", meaningEn: "What's your phone number?" },
+      { jp: "電話番号を書いてください。", reading: "でんわばんごうをかいてください。", meaning: "Escriba su número de teléfono, por favor.", meaningEn: "Please write your phone number." },
+      { jp: "彼の電話番号を知っていますか。", reading: "かれのでんわばんごうをしっていますか。", meaning: "¿Sabes su número de teléfono?", meaningEn: "Do you know his phone number?" },
     ],
   },
   ワイファイ: {
@@ -1509,6 +1749,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "ワイファイはありますか。", reading: "ワイファイはありますか", meaning: "¿Hay wifi?", meaningEn: "Is there Wi-Fi?" },
       { jp: "ワイファイのパスワードは何ですか。", reading: "ワイファイのぱすわーどはなんですか", meaning: "¿Cuál es la contraseña del wifi?", meaningEn: "What's the Wi-Fi password?" },
+      { jp: "ここにワイファイはありますか。", reading: "ここにワイファイはありますか。", meaning: "¿Hay wifi aquí?", meaningEn: "Is there Wi-Fi here?" },
+      { jp: "ワイファイが使えますか。", reading: "ワイファイがつかえますか。", meaning: "¿Se puede usar wifi?", meaningEn: "Can I use the Wi-Fi?" },
     ],
   },
   予約: {
@@ -1525,6 +1767,8 @@ const NOTES: Record<string, VocabNote> = {
     examples: [
       { jp: "予約をお願いします。", reading: "よやくをおねがいします", meaning: "Una reserva, por favor.", meaningEn: "A reservation, please." },
       { jp: "テーブルを予約しました。", reading: "テーブルをよやくしました", meaning: "Reservé una mesa.", meaningEn: "I reserved a table." },
+      { jp: "レストランを予約します。", reading: "レストランをよやくします。", meaning: "Reservo un restaurante.", meaningEn: "I book a restaurant." },
+      { jp: "三人で予約したいです。", reading: "さんにんでよやくしたいです。", meaning: "Quiero reservar para tres.", meaningEn: "I'd like to reserve for three." },
     ],
   },
 };

@@ -62,6 +62,8 @@ export const GRAMMAR_NOTES: Record<string, GrammarNote> = {
     examples: [
       { jp: "私は田中です。", reading: "わたしはたなかです", meaning: "Yo soy Tanaka.", meaningEn: "I am Tanaka." },
       { jp: "これは本です。", reading: "これはほんです", meaning: "Esto es un libro.", meaningEn: "This is a book." },
+      { jp: "田中さんは学生です。", reading: "たなかさんはがくせいです", meaning: "El Sr. Tanaka es estudiante.", meaningEn: "Mr. Tanaka is a student." },
+      { jp: "今日は日曜日です。", reading: "きょうはにちようびです", meaning: "Hoy es domingo.", meaningEn: "Today is Sunday." },
     ],
   },
   が: {
@@ -92,6 +94,8 @@ export const GRAMMAR_NOTES: Record<string, GrammarNote> = {
     examples: [
       { jp: "水が好きです。", reading: "みずがすきです", meaning: "Me gusta el agua.", meaningEn: "I like water." },
       { jp: "犬がいます。", reading: "いぬがいます", meaning: "Hay un perro.", meaningEn: "There is a dog." },
+      { jp: "部屋に猫がいます。", reading: "へやにねこがいます", meaning: "Hay un gato en la habitación.", meaningEn: "There is a cat in the room." },
+      { jp: "誰が来ましたか。", reading: "だれがきましたか", meaning: "¿Quién vino?", meaningEn: "Who came?" },
     ],
   },
   を: {
@@ -120,6 +124,8 @@ export const GRAMMAR_NOTES: Record<string, GrammarNote> = {
     examples: [
       { jp: "ご飯を食べます。", reading: "ごはんをたべます", meaning: "Como (arroz/comida).", meaningEn: "I eat (rice/a meal)." },
       { jp: "水を飲みます。", reading: "みずをのみます", meaning: "Bebo agua.", meaningEn: "I drink water." },
+      { jp: "本を読みます。", reading: "ほんをよみます", meaning: "Leo un libro.", meaningEn: "I read a book." },
+      { jp: "音楽を聞きます。", reading: "おんがくをききます", meaning: "Escucho música.", meaningEn: "I listen to music." },
     ],
   },
   に: {
@@ -150,6 +156,8 @@ export const GRAMMAR_NOTES: Record<string, GrammarNote> = {
     examples: [
       { jp: "日本に行きます。", reading: "にほんにいきます", meaning: "Voy a Japón.", meaningEn: "I'm going to Japan." },
       { jp: "8時に来ます。", reading: "はちじにきます", meaning: "Vengo a las 8.", meaningEn: "I'll come at 8." },
+      { jp: "七時に起きます。", reading: "しちじにおきます", meaning: "Me levanto a las siete.", meaningEn: "I get up at seven." },
+      { jp: "机の上に本があります。", reading: "つくえのうえにほんがあります", meaning: "Hay un libro sobre la mesa.", meaningEn: "There is a book on the desk." },
     ],
   },
   へ: {
@@ -176,6 +184,8 @@ export const GRAMMAR_NOTES: Record<string, GrammarNote> = {
     examples: [
       { jp: "学校へ行きます。", reading: "がっこうへいきます", meaning: "Voy hacia la escuela.", meaningEn: "I'm heading to school." },
       { jp: "日本へようこそ。", reading: "にほんへようこそ", meaning: "Bienvenido a Japón.", meaningEn: "Welcome to Japan." },
+      { jp: "東京へ行きます。", reading: "とうきょうへいきます", meaning: "Voy a Tokio.", meaningEn: "I'm going to Tokyo." },
+      { jp: "家へ帰ります。", reading: "いえへかえります", meaning: "Vuelvo a casa.", meaningEn: "I go home." },
     ],
   },
   で: {
@@ -202,6 +212,8 @@ export const GRAMMAR_NOTES: Record<string, GrammarNote> = {
     examples: [
       { jp: "家で勉強します。", reading: "いえでべんきょうします", meaning: "Estudio en casa.", meaningEn: "I study at home." },
       { jp: "バスで行きます。", reading: "ばすでいきます", meaning: "Voy en autobús.", meaningEn: "I go by bus." },
+      { jp: "レストランで昼ご飯を食べます。", reading: "レストランでひるごはんをたべます", meaning: "Almuerzo en un restaurante.", meaningEn: "I have lunch at a restaurant." },
+      { jp: "電車で会社に行きます。", reading: "でんしゃでかいしゃにいきます", meaning: "Voy a la empresa en tren.", meaningEn: "I go to work by train." },
     ],
   },
   の: {
@@ -230,6 +242,8 @@ export const GRAMMAR_NOTES: Record<string, GrammarNote> = {
     examples: [
       { jp: "友達の電話。", reading: "ともだちのでんわ", meaning: "El teléfono de un amigo.", meaningEn: "A friend's phone." },
       { jp: "これは私のかばんです。", reading: "これはわたしのかばんです", meaning: "Esta es mi bolsa.", meaningEn: "This is my bag." },
+      { jp: "私の名前は田中です。", reading: "わたしのなまえはたなかです", meaning: "Mi nombre es Tanaka.", meaningEn: "My name is Tanaka." },
+      { jp: "日本語の先生です。", reading: "にほんごのせんせいです", meaning: "Es profesor de japonés.", meaningEn: "He is a Japanese teacher." },
     ],
   },
   と: {
@@ -256,6 +270,8 @@ export const GRAMMAR_NOTES: Record<string, GrammarNote> = {
     examples: [
       { jp: "犬と猫。", reading: "いぬとねこ", meaning: "Perro y gato.", meaningEn: "Dog and cat." },
       { jp: "家族と住んでいます。", reading: "かぞくとすんでいます", meaning: "Vivo con mi familia.", meaningEn: "I live with my family." },
+      { jp: "友達と映画を見ます。", reading: "ともだちとえいがをみます", meaning: "Veo una película con un amigo.", meaningEn: "I watch a movie with a friend." },
+      { jp: "パンと卵を買います。", reading: "パンとたまごをかいます", meaning: "Compro pan y huevos.", meaningEn: "I buy bread and eggs." },
     ],
   },
   か: {
@@ -282,6 +298,8 @@ export const GRAMMAR_NOTES: Record<string, GrammarNote> = {
     examples: [
       { jp: "お元気ですか。", reading: "おげんきですか", meaning: "¿Cómo estás?", meaningEn: "How are you?" },
       { jp: "これは何ですか。", reading: "これはなんですか", meaning: "¿Qué es esto?", meaningEn: "What is this?" },
+      { jp: "コーヒーを飲みますか。", reading: "コーヒーをのみますか", meaning: "¿Bebes café?", meaningEn: "Do you drink coffee?" },
+      { jp: "学生ですか。", reading: "がくせいですか", meaning: "¿Eres estudiante?", meaningEn: "Are you a student?" },
     ],
   },
   です: {
@@ -310,6 +328,8 @@ export const GRAMMAR_NOTES: Record<string, GrammarNote> = {
     examples: [
       { jp: "私は先生です。", reading: "わたしはせんせいです", meaning: "Soy profesor.", meaningEn: "I am a teacher." },
       { jp: "今日は寒いです。", reading: "きょうはさむいです", meaning: "Hoy hace frío.", meaningEn: "It's cold today." },
+      { jp: "あの人は先生です。", reading: "あのひとはせんせいです", meaning: "Aquella persona es profesor.", meaningEn: "That person is a teacher." },
+      { jp: "これは私のかばんです。", reading: "これはわたしのかばんです", meaning: "Esto es mi bolso.", meaningEn: "This is my bag." },
     ],
   },
   "adj-i": {
@@ -338,6 +358,8 @@ export const GRAMMAR_NOTES: Record<string, GrammarNote> = {
     examples: [
       { jp: "新しい車。", reading: "あたらしいくるま", meaning: "Coche nuevo.", meaningEn: "A new car." },
       { jp: "このパンは安いです。", reading: "このぱんはやすいです", meaning: "Este pan es barato.", meaningEn: "This bread is cheap." },
+      { jp: "この映画は面白いです。", reading: "このえいがはおもしろいです", meaning: "Esta película es interesante.", meaningEn: "This movie is interesting." },
+      { jp: "今日は天気がいいです。", reading: "きょうはてんきがいいです", meaning: "Hoy hace buen tiempo.", meaningEn: "The weather is nice today." },
     ],
   },
   ます: {
@@ -368,6 +390,8 @@ export const GRAMMAR_NOTES: Record<string, GrammarNote> = {
     examples: [
       { jp: "昨日、寿司を食べました。", reading: "きのう、すしをたべました", meaning: "Ayer comí sushi.", meaningEn: "Yesterday I ate sushi." },
       { jp: "今日は行きません。", reading: "きょうはいきません", meaning: "Hoy no voy.", meaningEn: "I'm not going today." },
+      { jp: "毎日日本語を勉強します。", reading: "まいにちにほんごをべんきょうします", meaning: "Estudio japonés todos los días.", meaningEn: "I study Japanese every day." },
+      { jp: "週末は働きません。", reading: "しゅうまつははたらきません", meaning: "Los fines de semana no trabajo.", meaningEn: "I don't work on weekends." },
     ],
   },
   て: {
@@ -396,6 +420,8 @@ export const GRAMMAR_NOTES: Record<string, GrammarNote> = {
     examples: [
       { jp: "ちょっと待ってください。", reading: "ちょっとまってください", meaning: "Espere un momento, por favor.", meaningEn: "Please wait a moment." },
       { jp: "今、勉強しています。", reading: "いま、べんきょうしています", meaning: "Ahora estoy estudiando.", meaningEn: "I'm studying now." },
+      { jp: "ドアを開けてください。", reading: "ドアをあけてください", meaning: "Abre la puerta, por favor.", meaningEn: "Please open the door." },
+      { jp: "朝起きて、コーヒーを飲みます。", reading: "あさおきて、コーヒーをのみます", meaning: "Me levanto y bebo café.", meaningEn: "I get up and drink coffee." },
     ],
   },
   "adj-na": {
@@ -424,6 +450,8 @@ export const GRAMMAR_NOTES: Record<string, GrammarNote> = {
     examples: [
       { jp: "有名なレストラン。", reading: "ゆうめいなレストラン", meaning: "Un restaurante famoso.", meaningEn: "A famous restaurant." },
       { jp: "日本語は便利です。", reading: "にほんごはべんりです", meaning: "El japonés es útil.", meaningEn: "Japanese is useful." },
+      { jp: "ここは静かです。", reading: "ここはしずかです", meaning: "Aquí es tranquilo.", meaningEn: "It's quiet here." },
+      { jp: "彼は親切な人です。", reading: "かれはしんせつなひとです", meaning: "Él es una persona amable.", meaningEn: "He is a kind person." },
     ],
   },
   これ: {
@@ -450,6 +478,8 @@ export const GRAMMAR_NOTES: Record<string, GrammarNote> = {
     examples: [
       { jp: "これはいくらですか。", reading: "これはいくらですか", meaning: "¿Cuánto cuesta esto?", meaningEn: "How much is this?" },
       { jp: "あれは私の車です。", reading: "あれはわたしのくるまです", meaning: "Aquello es mi coche.", meaningEn: "That is my car." },
+      { jp: "これは何ですか。", reading: "これはなんですか", meaning: "¿Qué es esto?", meaningEn: "What is this?" },
+      { jp: "それをください。", reading: "それをください", meaning: "Deme eso, por favor.", meaningEn: "That one, please." },
     ],
   },
   から: {
@@ -478,6 +508,8 @@ export const GRAMMAR_NOTES: Record<string, GrammarNote> = {
     examples: [
       { jp: "月曜日から金曜日まで。", reading: "げつようびからきんようびまで", meaning: "De lunes a viernes.", meaningEn: "From Monday to Friday." },
       { jp: "ここから駅まで遠いです。", reading: "ここからえきまでとおいです", meaning: "De aquí a la estación es lejos.", meaningEn: "It's far from here to the station." },
+      { jp: "九時から五時まで働きます。", reading: "くじからごじまではたらきます", meaning: "Trabajo de nueve a cinco.", meaningEn: "I work from nine to five." },
+      { jp: "家から駅まで歩きます。", reading: "いえからえきまであるきます", meaning: "Camino de casa a la estación.", meaningEn: "I walk from home to the station." },
     ],
   },
   も: {
@@ -504,6 +536,8 @@ export const GRAMMAR_NOTES: Record<string, GrammarNote> = {
     examples: [
       { jp: "田中さんも来ます。", reading: "たなかさんもきます", meaning: "El Sr. Tanaka también viene.", meaningEn: "Mr. Tanaka is coming too." },
       { jp: "これもください。", reading: "これもください", meaning: "Deme esto también.", meaningEn: "This one too, please." },
+      { jp: "私も学生です。", reading: "わたしもがくせいです", meaning: "Yo también soy estudiante.", meaningEn: "I'm a student too." },
+      { jp: "お茶もお願いします。", reading: "おちゃもおねがいします", meaning: "También un té, por favor.", meaningEn: "Tea too, please." },
     ],
   },
 
@@ -534,6 +568,8 @@ export const GRAMMAR_NOTES: Record<string, GrammarNote> = {
     examples: [
       { jp: "毎朝コーヒーを飲む。", reading: "まいあさコーヒーをのむ", meaning: "Bebo café cada mañana.", meaningEn: "I drink coffee every morning." },
       { jp: "日本語を話す。", reading: "にほんごをはなす", meaning: "Hablo japonés.", meaningEn: "I speak Japanese." },
+      { jp: "私はテレビを見る。", reading: "わたしはテレビをみる", meaning: "Yo veo la tele.", meaningEn: "I watch TV." },
+      { jp: "毎日、本を読む。", reading: "まいにち、ほんをよむ", meaning: "Leo un libro todos los días.", meaningEn: "I read a book every day." },
     ],
   },
   "ta-form": {
@@ -560,6 +596,8 @@ export const GRAMMAR_NOTES: Record<string, GrammarNote> = {
     examples: [
       { jp: "週末、友達に会った。", reading: "しゅうまつ、ともだちにあった", meaning: "El fin de semana vi a un amigo.", meaningEn: "I met a friend on the weekend." },
       { jp: "もう昼ご飯を食べた。", reading: "もうひるごはんをたべた", meaning: "Ya comí (el almuerzo).", meaningEn: "I already ate lunch." },
+      { jp: "昨日、映画を見た。", reading: "きのう、えいがをみた", meaning: "Ayer vi una película.", meaningEn: "Yesterday I watched a movie." },
+      { jp: "朝ご飯を食べた。", reading: "あさごはんをたべた", meaning: "Desayuné.", meaningEn: "I ate breakfast." },
     ],
   },
   tai: {
@@ -586,6 +624,8 @@ export const GRAMMAR_NOTES: Record<string, GrammarNote> = {
     examples: [
       { jp: "温泉に入りたいです。", reading: "おんせんにはいりたいです", meaning: "Quiero entrar a un onsen.", meaningEn: "I want to get into a hot spring." },
       { jp: "今日は何もしたくない。", reading: "きょうはなにもしたくない", meaning: "Hoy no quiero hacer nada.", meaningEn: "I don't want to do anything today." },
+      { jp: "日本へ行きたいです。", reading: "にほんへいきたいです", meaning: "Quiero ir a Japón.", meaningEn: "I want to go to Japan." },
+      { jp: "水が飲みたいです。", reading: "みずがのみたいです", meaning: "Quiero beber agua.", meaningEn: "I want to drink water." },
     ],
   },
   tsumori: {
@@ -610,6 +650,8 @@ export const GRAMMAR_NOTES: Record<string, GrammarNote> = {
     examples: [
       { jp: "来月、車を買うつもりです。", reading: "らいげつ、くるまをかうつもりです", meaning: "El mes que viene pienso comprar un coche.", meaningEn: "I plan to buy a car next month." },
       { jp: "今日は早く寝るつもりです。", reading: "きょうははやくねるつもりです", meaning: "Hoy pienso dormir temprano.", meaningEn: "I plan to sleep early today." },
+      { jp: "週末は勉強するつもりです。", reading: "しゅうまつはべんきょうするつもりです", meaning: "Pienso estudiar el fin de semana.", meaningEn: "I plan to study this weekend." },
+      { jp: "明日は行かないつもりです。", reading: "あしたはいかないつもりです", meaning: "No pienso ir mañana.", meaningEn: "I don't plan to go tomorrow." },
     ],
   },
   temoii: {
@@ -638,6 +680,8 @@ export const GRAMMAR_NOTES: Record<string, GrammarNote> = {
     examples: [
       { jp: "トイレを使ってもいいですか。", reading: "トイレをつかってもいいですか", meaning: "¿Puedo usar el baño?", meaningEn: "May I use the restroom?" },
       { jp: "ここに入ってはいけません。", reading: "ここにはいってはいけません", meaning: "No se puede entrar aquí.", meaningEn: "You must not enter here." },
+      { jp: "写真を撮ってもいいですか。", reading: "しゃしんをとってもいいですか", meaning: "¿Puedo tomar fotos?", meaningEn: "May I take photos?" },
+      { jp: "ここで食べてもいいです。", reading: "ここでたべてもいいです", meaning: "Puedes comer aquí.", meaningEn: "You may eat here." },
     ],
   },
   nakereba: {
@@ -664,6 +708,8 @@ export const GRAMMAR_NOTES: Record<string, GrammarNote> = {
     examples: [
       { jp: "明日、早く起きなければなりません。", reading: "あした、はやくおきなければなりません", meaning: "Mañana tengo que levantarme temprano.", meaningEn: "I have to get up early tomorrow." },
       { jp: "レポートを書かなければなりません。", reading: "レポートをかかなければなりません", meaning: "Tengo que escribir el reporte.", meaningEn: "I have to write the report." },
+      { jp: "薬を飲まなければなりません。", reading: "くすりをのまなければなりません", meaning: "Tengo que tomar la medicina.", meaningEn: "I have to take medicine." },
+      { jp: "毎日勉強しなければなりません。", reading: "まいにちべんきょうしなければなりません", meaning: "Tengo que estudiar todos los días.", meaningEn: "I have to study every day." },
     ],
   },
   yori: {
@@ -690,6 +736,8 @@ export const GRAMMAR_NOTES: Record<string, GrammarNote> = {
     examples: [
       { jp: "夏より冬のほうが好きです。", reading: "なつよりふゆのほうがすきです", meaning: "Me gusta más el invierno que el verano.", meaningEn: "I like winter more than summer." },
       { jp: "今日は昨日より暑いです。", reading: "きょうはきのうよりあついです", meaning: "Hoy hace más calor que ayer.", meaningEn: "Today is hotter than yesterday." },
+      { jp: "電車よりバスのほうが安いです。", reading: "でんしゃよりバスのほうがやすいです", meaning: "El autobús es más barato que el tren.", meaningEn: "The bus is cheaper than the train." },
+      { jp: "犬より猫のほうが好きです。", reading: "いぬよりねこのほうがすきです", meaning: "Me gustan más los gatos que los perros.", meaningEn: "I like cats more than dogs." },
     ],
   },
   toomou: {
@@ -716,6 +764,8 @@ export const GRAMMAR_NOTES: Record<string, GrammarNote> = {
     examples: [
       { jp: "この映画は面白いと思います。", reading: "このえいがはおもしろいとおもいます", meaning: "Creo que esta película es interesante.", meaningEn: "I think this movie is interesting." },
       { jp: "彼は来ないと思います。", reading: "かれはこないとおもいます", meaning: "Creo que él no vendrá.", meaningEn: "I don't think he'll come." },
+      { jp: "明日は雨だと思います。", reading: "あしたはあめだとおもいます", meaning: "Creo que mañana lloverá.", meaningEn: "I think it'll rain tomorrow." },
+      { jp: "彼は学生だと思います。", reading: "かれはがくせいだとおもいます", meaning: "Creo que él es estudiante.", meaningEn: "I think he's a student." },
     ],
   },
   dekiru: {
@@ -744,6 +794,8 @@ export const GRAMMAR_NOTES: Record<string, GrammarNote> = {
     examples: [
       { jp: "車の運転ができます。", reading: "くるまのうんてんができます", meaning: "Sé conducir.", meaningEn: "I can drive." },
       { jp: "刺身が食べられますか。", reading: "さしみがたべられますか", meaning: "¿Puedes comer sashimi?", meaningEn: "Can you eat sashimi?" },
+      { jp: "日本語が少しできます。", reading: "にほんごがすこしできます", meaning: "Puedo hablar un poco de japonés.", meaningEn: "I can speak a little Japanese." },
+      { jp: "明日は来られますか。", reading: "あしたはこられますか", meaning: "¿Puedes venir mañana?", meaningEn: "Can you come tomorrow?" },
     ],
   },
   tara: {
@@ -770,6 +822,8 @@ export const GRAMMAR_NOTES: Record<string, GrammarNote> = {
     examples: [
       { jp: "お金があったら、旅行したいです。", reading: "おかねがあったら、りょこうしたいです", meaning: "Si tuviera dinero, querría viajar.", meaningEn: "If I had money, I'd want to travel." },
       { jp: "駅に着いたら、電話してください。", reading: "えきについたら、でんわしてください", meaning: "Cuando llegues a la estación, llama.", meaningEn: "When you arrive at the station, please call." },
+      { jp: "時間があったら、映画を見ます。", reading: "じかんがあったら、えいがをみます", meaning: "Si tengo tiempo, veo una película.", meaningEn: "If I have time, I'll watch a movie." },
+      { jp: "家に帰ったら、電話します。", reading: "いえにかえったら、でんわします", meaning: "Cuando llegue a casa, te llamo.", meaningEn: "When I get home, I'll call." },
     ],
   },
   ba: {
@@ -796,6 +850,8 @@ export const GRAMMAR_NOTES: Record<string, GrammarNote> = {
     examples: [
       { jp: "押せば、開きます。", reading: "おせば、あきます", meaning: "Si lo empujas, se abre.", meaningEn: "If you push it, it opens." },
       { jp: "安ければ、買います。", reading: "やすければ、かいます", meaning: "Si es barato, lo compro.", meaningEn: "If it's cheap, I'll buy it." },
+      { jp: "天気が良ければ、出かけます。", reading: "てんきがよければ、でかけます", meaning: "Si hace buen tiempo, salgo.", meaningEn: "If the weather is good, I'll go out." },
+      { jp: "時間があれば、行きます。", reading: "じかんがあれば、いきます", meaning: "Si tengo tiempo, voy.", meaningEn: "If I have time, I'll go." },
     ],
   },
   yarimorai: {
@@ -824,6 +880,8 @@ export const GRAMMAR_NOTES: Record<string, GrammarNote> = {
     examples: [
       { jp: "先生が本をくれました。", reading: "せんせいがほんをくれました", meaning: "El profesor me dio un libro.", meaningEn: "The teacher gave me a book." },
       { jp: "母にセーターをもらいました。", reading: "ははにセーターをもらいました", meaning: "Recibí un suéter de mi madre.", meaningEn: "I got a sweater from my mother." },
+      { jp: "友達にプレゼントをあげました。", reading: "ともだちにプレゼントをあげました", meaning: "Le di un regalo a un amigo.", meaningEn: "I gave my friend a present." },
+      { jp: "父に時計をもらいました。", reading: "ちちにとけいをもらいました", meaning: "Recibí un reloj de mi padre.", meaningEn: "I got a watch from my father." },
     ],
   },
 };

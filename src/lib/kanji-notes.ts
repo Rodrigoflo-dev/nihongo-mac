@@ -54,6 +54,7 @@ const NOTES: Record<string, KanjiNote> = {
       { jp: "私は先生です。", reading: "わたしはせんせいです", meaning: "Yo soy profesor(a).", meaningEn: "I am a teacher." },
       { jp: "私の友だちです。", reading: "わたしのともだちです", meaning: "Es mi amigo(a).", meaningEn: "This is my friend." },
       { jp: "私も日本語を勉強します。", reading: "わたしもにほんごをべんきょうします", meaning: "Yo también estudio japonés.", meaningEn: "I study Japanese too." },
+      { jp: "私は日本人です。", reading: "わたしはにほんじんです", meaning: "Yo soy japonés.", meaningEn: "I am Japanese." },
     ],
   },
   学: {
@@ -81,6 +82,7 @@ const NOTES: Record<string, KanjiNote> = {
       { jp: "私は日本語を学びます。", reading: "わたしはにほんごをまなびます", meaning: "Aprendo japonés.", meaningEn: "I learn Japanese." },
       { jp: "学校に行きます。", reading: "がっこうにいきます", meaning: "Voy a la escuela.", meaningEn: "I go to school." },
       { jp: "兄は大学生です。", reading: "あにはだいがくせいです", meaning: "Mi hermano mayor es universitario.", meaningEn: "My older brother is a university student." },
+      { jp: "大学で日本語を勉強します。", reading: "だいがくでにほんごをべんきょうします", meaning: "Estudio japonés en la universidad.", meaningEn: "I study Japanese at university." },
     ],
   },
   日: {
@@ -107,6 +109,8 @@ const NOTES: Record<string, KanjiNote> = {
     examples: [
       { jp: "今日は日曜日です。", reading: "きょうはにちようびです", meaning: "Hoy es domingo.", meaningEn: "Today is Sunday." },
       { jp: "毎日、日本語を勉強します。", reading: "まいにちにほんごをべんきょうします", meaning: "Estudio japonés todos los días.", meaningEn: "I study Japanese every day." },
+      { jp: "日本語を勉強します。", reading: "にほんごをべんきょうします", meaning: "Estudio japonés.", meaningEn: "I study Japanese." },
+      { jp: "今日はいい天気です。", reading: "きょうはいいてんきです", meaning: "Hoy hace buen tiempo.", meaningEn: "The weather is nice today." },
     ],
   },
   月: {
@@ -133,6 +137,8 @@ const NOTES: Record<string, KanjiNote> = {
     examples: [
       { jp: "一月は寒いです。", reading: "いちがつはさむいです", meaning: "Enero es frío.", meaningEn: "January is cold." },
       { jp: "来月、日本に行きます。", reading: "らいげつ、にほんにいきます", meaning: "El mes que viene voy a Japón.", meaningEn: "Next month I'm going to Japan." },
+      { jp: "今月は忙しいです。", reading: "こんげつはいそがしいです", meaning: "Este mes estoy ocupado.", meaningEn: "I'm busy this month." },
+      { jp: "月曜日に会いましょう。", reading: "げつようびにあいましょう", meaning: "Nos vemos el lunes.", meaningEn: "Let's meet on Monday." },
     ],
   },
   一: {
@@ -158,6 +164,8 @@ const NOTES: Record<string, KanjiNote> = {
     examples: [
       { jp: "りんごを一つください。", reading: "りんごをひとつください", meaning: "Deme una manzana, por favor.", meaningEn: "One apple, please." },
       { jp: "一人で行きます。", reading: "ひとりでいきます", meaning: "Voy solo.", meaningEn: "I'm going alone." },
+      { jp: "コーヒーを一つください。", reading: "コーヒーをひとつください", meaning: "Un café, por favor.", meaningEn: "One coffee, please." },
+      { jp: "一月は寒いです。", reading: "いちがつはさむいです", meaning: "Enero es frío.", meaningEn: "January is cold." },
     ],
   },
   行: {
@@ -183,6 +191,8 @@ const NOTES: Record<string, KanjiNote> = {
     examples: [
       { jp: "明日、東京に行きます。", reading: "あした、とうきょうにいきます", meaning: "Mañana voy a Tokio.", meaningEn: "Tomorrow I'm going to Tokyo." },
       { jp: "銀行はどこですか。", reading: "ぎんこうはどこですか", meaning: "¿Dónde está el banco?", meaningEn: "Where is the bank?" },
+      { jp: "学校に行きます。", reading: "がっこうにいきます", meaning: "Voy a la escuela.", meaningEn: "I go to school." },
+      { jp: "来月、旅行します。", reading: "らいげつ、りょこうします", meaning: "El mes que viene viajo.", meaningEn: "I'm traveling next month." },
     ],
   },
 };
