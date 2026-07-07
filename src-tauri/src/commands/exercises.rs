@@ -1088,8 +1088,18 @@ pub fn generate(conn: &Connection, lesson_id: i64, seed: u64) -> Vec<GeneratedEx
     let grammar = taught_grammar(conn, lesson_id);
     let sentences = taught_sentences(conn, lesson_id);
     let authored = authored_questions(conn, lesson_id);
-    let taught_surfaces = cumulative_taught_surfaces(conn, lesson_id);
-    let sit_indices = gated_situations(&mut rng, &taught_surfaces);
+    // Situational questions must be ON-TOPIC: only appear when the situation's
+    // phrase is taught in THIS lesson (not cumulatively). Otherwise a greeting
+    // scenario ('¿qué respondes a おはようございます?') would leak into the numbers
+    // lesson just because greetings were taught earlier — off-topic and confusing.
+    let current_surfaces: HashSet<String> = items
+        .iter()
+        .flat_map(|it| {
+            [normalize_phrase(&it.jp), normalize_phrase(&it.reading)]
+        })
+        .filter(|s| !s.is_empty())
+        .collect();
+    let sit_indices = gated_situations(&mut rng, &current_surfaces);
 
     // Distractor pool for the "understand the sentence" question: other taught
     // sentence meanings + generic plausible phrases.
@@ -1545,27 +1555,45 @@ mod tests {
         );
     }
 
-    /// GUARD for the "me pregunta cosas que no ha enseñado" complaint (おやすみなさい,
-    /// いくらですか in lesson 1): every situational question must use a phrase the
-    /// learner has already been taught, and lesson 1 must have none at all.
+    /// GUARD for the "pregunta que nada que ver" complaint: situational questions
+    /// must be ON-TOPIC — their answer is taught IN THIS LESSON, never leaking a
+    /// greeting scenario into the numbers / これ / はい lessons. Lesson 1 (no
+    /// greetings) has none at all. Uses the cumulative helper as a sanity anchor.
     #[test]
-    fn situations_only_use_already_taught_phrases() {
+    fn situations_only_use_current_lesson_phrases() {
         let conn = fresh_db();
+        let _cumulative = cumulative_taught_surfaces(&conn, 1); // helper still exercised
 
         // Lesson 1 teaches no greetings yet → zero situational questions.
-        let l1 = generate(&conn, 1, 7);
-        let l1_sits = l1
+        let l1_sits = generate(&conn, 1, 7)
             .iter()
             .filter(|e| matches!(&e.activity, Activity::Quiz { id, .. } if id.starts_with("gen-sit")))
             .count();
-        assert_eq!(
-            l1_sits, 0,
-            "lesson 1 must not ask situational greetings it never taught"
-        );
+        assert_eq!(l1_sits, 0, "lesson 1 must not ask situational greetings");
 
-        // Across lessons: any situational question's answer must be taught.
-        for id in 1..=5 {
-            let taught = cumulative_taught_surfaces(&conn, id);
+        // A NUMBERS lesson (301) must never show a greeting situation.
+        for seed in [1u64, 3, 9, 42] {
+            let sits: Vec<_> = generate(&conn, 301, seed)
+                .into_iter()
+                .filter(|e| matches!(&e.activity, Activity::Quiz { id, .. } if id.starts_with("gen-sit")))
+                .collect();
+            assert!(
+                sits.is_empty(),
+                "the numbers lesson (301) must have NO situational greeting questions"
+            );
+        }
+
+        // For every lesson: a situational answer must be taught IN THAT lesson.
+        for id in 1..=600 {
+            let items = taught_items(&conn, id);
+            if items.is_empty() {
+                continue;
+            }
+            let current: std::collections::HashSet<String> = items
+                .iter()
+                .flat_map(|it| [normalize_phrase(&it.jp), normalize_phrase(&it.reading)])
+                .filter(|s| !s.is_empty())
+                .collect();
             for seed in [1u64, 3, 9] {
                 for e in generate(&conn, id, seed) {
                     if let Activity::Quiz {
@@ -1578,8 +1606,8 @@ mod tests {
                         if qid.starts_with("gen-sit") {
                             let correct = normalize_phrase(&options[*correct_index]);
                             assert!(
-                                taught.contains(&correct),
-                                "lesson {id}: situational answer '{correct}' was never taught"
+                                current.contains(&correct),
+                                "lesson {id}: off-topic situational answer '{correct}' (not taught in THIS lesson)"
                             );
                         }
                     }
