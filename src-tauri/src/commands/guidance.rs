@@ -35,15 +35,34 @@ fn count(conn: &Connection, sql: &str) -> AppResult<i64> {
 fn next_pending_lesson(
     c: &Connection,
 ) -> AppResult<Option<(i64, String, Option<String>, Option<String>, i64)>> {
+    // The first not-completed lesson IN ORDER (course → unit → lesson), gated to
+    // the unlocked level. Must match the "Curso" page order exactly, so the
+    // dashboard's "próximo paso" never jumps to another course (e.g. the
+    // situational course) or a locked level.
+    let unlocked: String = c
+        .query_row("SELECT unlocked_level FROM player_state WHERE id = 1", [], |r| {
+            r.get(0)
+        })
+        .unwrap_or_else(|_| "N5".to_string());
+    let rank = match unlocked.as_str() {
+        "N4" => 1,
+        "N3" => 2,
+        "N2" => 3,
+        "N1" => 4,
+        _ => 0,
+    };
     let row = c.query_row(
         "SELECT l.id, l.title, l.jp_title, l.summary, l.duration_minutes
            FROM lessons l
-           LEFT JOIN lesson_progress p ON p.lesson_id = l.id
            JOIN units u ON u.id = l.unit_id
+           JOIN courses co ON co.id = u.course_id
+           LEFT JOIN lesson_progress p ON p.lesson_id = l.id
           WHERE COALESCE(p.status, 'available') != 'completed'
-          ORDER BY u.ordering, l.ordering, l.id
+            AND (CASE co.jlpt_level WHEN 'N5' THEN 0 WHEN 'N4' THEN 1 WHEN 'N3' THEN 2
+                                    WHEN 'N2' THEN 3 WHEN 'N1' THEN 4 ELSE 0 END) <= ?1
+          ORDER BY co.ordering, u.ordering, l.ordering, l.id
           LIMIT 1",
-        [],
+        [rank],
         |r| {
             Ok((
                 r.get(0)?,
@@ -293,4 +312,31 @@ fn compute(c: &Connection) -> AppResult<NextAction> {
         estimated_minutes: 5,
         kanji_hint: "前".into(),
     })
+}
+
+#[cfg(test)]
+mod _next_action_order_tests {
+    #[test]
+    fn dashboard_next_lesson_respects_course_order() {
+        let c = rusqlite::Connection::open_in_memory().unwrap();
+        c.execute_batch("PRAGMA foreign_keys = ON;").unwrap();
+        crate::db::migrations::run(&c).unwrap();
+        crate::seed::run_if_empty(&c).unwrap();
+        // Complete the first N5 course-1 lessons up to "Números del 1 al 10".
+        for id in [1i64, 2, 3, 300] {
+            c.execute(
+                "INSERT OR REPLACE INTO lesson_progress (lesson_id, status, completions) VALUES (?1, 'completed', 1)",
+                [id],
+            ).unwrap();
+        }
+        let next = super::next_pending_lesson(&c).unwrap().expect("a next lesson");
+        // Must be lesson 301 (course 1, next in order) — NOT the situational
+        // course's lesson (201 "Pedir en un restaurante").
+        assert_eq!(next.0, 301, "dashboard next must follow course order, got '{}'", next.1);
+        // And it must never point at a locked N4 lesson while unlocked is N5.
+        let lvl: String = c.query_row(
+            "SELECT co.jlpt_level FROM lessons l JOIN units u ON u.id=l.unit_id JOIN courses co ON co.id=u.course_id WHERE l.id=?1",
+            [next.0], |r| r.get(0)).unwrap();
+        assert_eq!(lvl, "N5");
+    }
 }
