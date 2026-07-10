@@ -1,4 +1,5 @@
-import { Link } from "react-router-dom";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   ArrowRight,
@@ -8,10 +9,13 @@ import {
   GraduationCap,
   Lock,
   Play,
+  RotateCcw,
   Sparkles,
+  Trophy,
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/layout/page-header";
 import { HudPanel } from "@/components/visual/hud-panel";
 import { HoloKanji } from "@/components/visual/holo-kanji";
@@ -138,6 +142,8 @@ function LevelFinalExamCard({
 }
 
 function UnitBlock({ unit }: { unit: Unit }) {
+  const navigate = useNavigate();
+  const [confirmRetake, setConfirmRetake] = useState(false);
   const completedCount = unit.lessons.filter((l) => l.status === "completed")
     .length;
   const totalCount = unit.lessons.length;
@@ -192,7 +198,31 @@ function UnitBlock({ unit }: { unit: Unit }) {
         })}
       </ol>
 
-      {allDone ? (
+      {allDone && unit.examPassed ? (
+        // Already passed → show APROBADO; clicking asks whether to retake.
+        <button
+          onClick={() => setConfirmRetake(true)}
+          className={cn(
+            "group relative mt-5 flex w-full items-center gap-3 overflow-hidden rounded-2xl border border-success/40 bg-success/5 px-5 py-4 text-left",
+            "transition-all hover:bg-success/10 hover:ring-1 hover:ring-success/60"
+          )}
+        >
+          <span className="hud-corner left-2 top-2 border-l-2 border-t-2 border-success/50" />
+          <span className="hud-corner bottom-2 right-2 border-b-2 border-r-2 border-success/50" />
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-success to-emerald-500 text-white shadow-[0_10px_30px_-8px_color-mix(in_oklch,var(--color-success)_60%,transparent)]">
+            <Trophy className="size-4" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold text-success">
+              Examen de unidad — Aprobado ✓
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Mejor nota: {unit.examBestScore}%. Toca para repetirlo y mejorar.
+            </p>
+          </div>
+          <RotateCcw className="size-4 shrink-0 text-success transition-transform group-hover:rotate-[-30deg]" />
+        </button>
+      ) : allDone ? (
         <Link to={`/exam/${unit.id}`} className="mt-5 block">
           <motion.div
             whileHover={{ y: -2 }}
@@ -234,6 +264,43 @@ function UnitBlock({ unit }: { unit: Unit }) {
         </div>
       )}
       </HudPanel>
+
+      {confirmRetake ? (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-background/70 p-8 backdrop-blur-sm">
+          <HudPanel glow className="w-full max-w-sm p-6 text-center">
+            <div className="relative">
+              <div className="mx-auto grid size-12 place-items-center rounded-2xl bg-gradient-to-br from-success/30 to-emerald-500/10 text-success">
+                <Trophy className="size-6" />
+              </div>
+              <p className="mt-3 font-mono text-[10px] uppercase tracking-[0.3em] text-success">
+                合格 · Aprobado
+              </p>
+              <h2 className="mt-1 font-display text-xl font-extrabold tracking-tight">
+                Ya aprobaste este examen
+              </h2>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Tu mejor nota es {unit.examBestScore}%. ¿Quieres repetirlo para
+                practicar o mejorar tu nota?
+              </p>
+              <div className="mt-6 flex gap-2">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => setConfirmRetake(false)}
+                >
+                  No, gracias
+                </Button>
+                <Button
+                  className="flex-1 bg-gradient-to-br from-primary via-primary to-neon-violet"
+                  onClick={() => navigate(`/exam/${unit.id}`)}
+                >
+                  <RotateCcw className="size-3.5" /> Sí, repetir
+                </Button>
+              </div>
+            </div>
+          </HudPanel>
+        </div>
+      ) : null}
     </motion.div>
   );
 }

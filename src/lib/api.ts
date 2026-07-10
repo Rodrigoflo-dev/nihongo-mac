@@ -289,6 +289,8 @@ export interface Unit {
   jpTitle: string | null;
   ordering: number;
   lessons: LessonSummary[];
+  examBestScore: number | null;
+  examPassed: boolean;
 }
 
 export interface Course {

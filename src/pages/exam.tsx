@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
 import {
   ArrowRight,
+  Check,
   GraduationCap,
   RotateCcw,
   Sparkles,
@@ -18,7 +19,21 @@ import { HudPanel } from "@/components/visual/hud-panel";
 import { HoloKanji } from "@/components/visual/holo-kanji";
 import { burstLevelUp, burstXp } from "@/components/visual/confetti";
 import { useCompleteUnitExam, useUnitExam } from "@/hooks/use-exams";
-import type { UnitExamResult } from "@/lib/api";
+import type { Activity, UnitExamResult } from "@/lib/api";
+
+/** A short human label for an exam question, for the results breakdown. */
+function questionLabel(a: Activity): string {
+  switch (a.kind) {
+    case "quiz":
+      return a.promptJp ? `${a.promptJp} — ${a.prompt}` : a.prompt;
+    case "listening":
+      return a.textJp ? `🎧 ${a.textJp}` : a.prompt;
+    case "write_sentence":
+      return a.prompt;
+    default:
+      return "Pregunta";
+  }
+}
 
 export default function ExamPage() {
   const { unitId: unitParam } = useParams<{ unitId: string }>();
@@ -35,10 +50,10 @@ export default function ExamPage() {
   const [startedAt, setStartedAt] = useState<number>(() => Date.now());
   const [completion, setCompletion] = useState<UnitExamResult | null>(null);
   const [confirmingExit, setConfirmingExit] = useState(false);
-  // Per-question outcome, so the results screen can point back to the exact
-  // lessons the learner missed.
+  // Per-question outcome, so the results screen can show a question-by-question
+  // breakdown first and then point back to the exact lessons the learner missed.
   const [results, setResults] = useState<
-    { lessonId: number; lessonTitle: string; correct: boolean }[]
+    { label: string; lessonId: number; lessonTitle: string; correct: boolean }[]
   >([]);
 
   const activities = useMemo(() => exam?.activities ?? [], [exam]);
@@ -98,6 +113,7 @@ export default function ExamPage() {
       <CompletionScreen
         completion={completion}
         unitTitle={exam.unitTitle}
+        results={results}
         reviewLessons={reviewLessons}
         onBack={() => navigate("/learn")}
         onReviewLesson={(lessonId) => navigate(`/learn/${lessonId}`)}
@@ -161,6 +177,7 @@ export default function ExamPage() {
     setResults((r) => [
       ...r,
       {
+        label: questionLabel(current),
         lessonId: src?.lessonId ?? 0,
         lessonTitle: src?.lessonTitle ?? "",
         correct: wasCorrect,
@@ -300,6 +317,7 @@ export default function ExamPage() {
 function CompletionScreen({
   completion,
   unitTitle,
+  results,
   reviewLessons,
   onBack,
   onRetry,
@@ -308,12 +326,14 @@ function CompletionScreen({
 }: {
   completion: UnitExamResult;
   unitTitle: string;
+  results: { label: string; lessonId: number; lessonTitle: string; correct: boolean }[];
   reviewLessons: { lessonId: number; lessonTitle: string }[];
   onBack: () => void;
   onRetry: () => void;
   onReviewLesson: (lessonId: number) => void;
   onNextUnit?: () => void;
 }) {
+  const correctTotal = results.filter((r) => r.correct).length;
   return (
     <div className="relative grid h-screen w-screen place-items-center overflow-y-auto bg-background text-foreground">
       <MeshBackground />
@@ -378,16 +398,66 @@ function CompletionScreen({
             </p>
           ) : null}
 
-          {/* Lessons to review — the questions you missed came from these. */}
+          {/* Question-by-question breakdown FIRST, so the learner sees exactly
+              what they got right and wrong (Rodrigo's request). */}
+          {results.length > 0 ? (
+            <div className="mt-6 rounded-2xl border border-border/40 bg-card/40 p-4 text-left">
+              <div className="flex items-center justify-between">
+                <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-neon-cyan">
+                  結果 · Tus respuestas
+                </p>
+                <p className="font-mono text-[11px] tabular-nums text-muted-foreground">
+                  {correctTotal}/{results.length}
+                </p>
+              </div>
+              <ol className="mt-3 space-y-1.5">
+                {results.map((r, i) => (
+                  <li
+                    key={i}
+                    className="flex items-start gap-2 text-sm"
+                  >
+                    <span
+                      className={`mt-0.5 grid size-5 shrink-0 place-items-center rounded-full text-[11px] font-bold ${
+                        r.correct
+                          ? "bg-success/20 text-success"
+                          : "bg-destructive/20 text-destructive"
+                      }`}
+                    >
+                      {r.correct ? <Check className="size-3" /> : <X className="size-3" />}
+                    </span>
+                    <span className="min-w-0">
+                      <span className="font-mono text-[10px] text-muted-foreground">
+                        {i + 1}.
+                      </span>{" "}
+                      <span
+                        className={
+                          r.correct ? "text-foreground/80" : "text-foreground"
+                        }
+                      >
+                        {r.label}
+                      </span>
+                      {!r.correct && r.lessonTitle ? (
+                        <span className="ml-1 text-xs text-muted-foreground">
+                          · {r.lessonTitle}
+                        </span>
+                      ) : null}
+                    </span>
+                  </li>
+                ))}
+              </ol>
+            </div>
+          ) : null}
+
+          {/* Then: lessons to review — the questions you missed came from these. */}
           {reviewLessons.length > 0 ? (
             <div className="mt-6 rounded-2xl border border-warning/30 bg-warning/5 p-4 text-left">
               <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-warning">
-                復習 · Repasa estas lecciones
+                復習 · Te recomendamos repasar
               </p>
               <p className="mt-1 text-xs text-muted-foreground">
-                Fallaste alguna pregunta de{" "}
+                Las preguntas que fallaste se enseñan en{" "}
                 {reviewLessons.length === 1 ? "esta lección" : "estas lecciones"}.
-                Toca para repasarla.
+                Toca para repasar y ver cuál fue el error.
               </p>
               <div className="mt-3 space-y-2">
                 {reviewLessons.map((l) => (

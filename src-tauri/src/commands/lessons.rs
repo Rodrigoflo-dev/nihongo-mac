@@ -71,6 +71,15 @@ fn list_units_for_course(c: &Connection, course_id: i64) -> AppResult<Vec<Unit>>
     let mut units = Vec::new();
     for (uid, title, description, jp_title, ordering) in unit_rows {
         let lessons = list_lessons_for_unit(c, uid)?;
+        let exam_best_score: Option<i64> = c
+            .query_row(
+                "SELECT best_score FROM unit_exam_progress WHERE unit_id = ?1",
+                [uid],
+                |r| r.get(0),
+            )
+            .ok()
+            .flatten();
+        let exam_passed = exam_best_score.map_or(false, |s| s >= 70);
         units.push(Unit {
             id: uid,
             title,
@@ -78,6 +87,8 @@ fn list_units_for_course(c: &Connection, course_id: i64) -> AppResult<Vec<Unit>>
             jp_title,
             ordering,
             lessons,
+            exam_best_score,
+            exam_passed,
         });
     }
     Ok(units)

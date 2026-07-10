@@ -302,6 +302,10 @@ pub struct Unit {
     pub jp_title: Option<String>,
     pub ordering: i64,
     pub lessons: Vec<LessonSummary>,
+    /// Best score on this unit's exam (None if never taken).
+    pub exam_best_score: Option<i64>,
+    /// Whether the unit exam has been passed (best score ≥ 70).
+    pub exam_passed: bool,
 }
 
 #[derive(Debug, Clone, Serialize)]
