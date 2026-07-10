@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
 import {
+  ArrowRight,
   GraduationCap,
   RotateCcw,
   Sparkles,
@@ -34,6 +35,11 @@ export default function ExamPage() {
   const [startedAt, setStartedAt] = useState<number>(() => Date.now());
   const [completion, setCompletion] = useState<UnitExamResult | null>(null);
   const [confirmingExit, setConfirmingExit] = useState(false);
+  // Per-question outcome, so the results screen can point back to the exact
+  // lessons the learner missed.
+  const [results, setResults] = useState<
+    { lessonId: number; lessonTitle: string; correct: boolean }[]
+  >([]);
 
   const activities = useMemo(() => exam?.activities ?? [], [exam]);
   const current = activities[step];
@@ -80,11 +86,24 @@ export default function ExamPage() {
   }
 
   if (completion) {
+    // Distinct lessons the learner missed at least one question in.
+    const reviewMap = new Map<number, string>();
+    for (const r of results) {
+      if (!r.correct && r.lessonId) reviewMap.set(r.lessonId, r.lessonTitle);
+    }
+    const reviewLessons = [...reviewMap.entries()].map(
+      ([lessonId, lessonTitle]) => ({ lessonId, lessonTitle })
+    );
     return (
       <CompletionScreen
         completion={completion}
         unitTitle={exam.unitTitle}
+        reviewLessons={reviewLessons}
         onBack={() => navigate("/learn")}
+        onReviewLesson={(lessonId) => navigate(`/learn/${lessonId}`)}
+        onNextUnit={
+          completion.nextUnitId ? () => navigate("/learn") : undefined
+        }
         onRetry={() => {
           setCompletion(null);
           setStep(0);
@@ -92,6 +111,7 @@ export default function ExamPage() {
           setAnswered(null);
           setAttempt(0);
           setCorrectCount(0);
+          setResults([]);
           setStartedAt(Date.now());
         }}
       />
@@ -129,13 +149,24 @@ export default function ExamPage() {
 
   const handleNext = () => {
     if (isQuiz && !verified) {
+      // First click on a quiz: reveal the explanation before moving on.
       setVerified(true);
-      if (answered?.correct && attempt === 0) {
-        setCorrectCount((n) => n + 1);
-      }
       return;
     }
-    // No retries in exam: move on regardless of correct/wrong
+    // Leaving this question — record the outcome (quiz AND write questions) and
+    // which lesson it came from, so we can build the "repasa estas lecciones"
+    // summary. No retries in the exam.
+    const wasCorrect = answered?.correct ?? false;
+    const src = exam.sourceLessons?.[step];
+    setResults((r) => [
+      ...r,
+      {
+        lessonId: src?.lessonId ?? 0,
+        lessonTitle: src?.lessonTitle ?? "",
+        correct: wasCorrect,
+      },
+    ]);
+    if (wasCorrect) setCorrectCount((n) => n + 1);
     setVerified(false);
     setAnswered(null);
     setAttempt(0);
@@ -269,18 +300,24 @@ export default function ExamPage() {
 function CompletionScreen({
   completion,
   unitTitle,
+  reviewLessons,
   onBack,
   onRetry,
+  onReviewLesson,
+  onNextUnit,
 }: {
   completion: UnitExamResult;
   unitTitle: string;
+  reviewLessons: { lessonId: number; lessonTitle: string }[];
   onBack: () => void;
   onRetry: () => void;
+  onReviewLesson: (lessonId: number) => void;
+  onNextUnit?: () => void;
 }) {
   return (
-    <div className="relative grid h-screen w-screen place-items-center bg-background text-foreground">
+    <div className="relative grid h-screen w-screen place-items-center overflow-y-auto bg-background text-foreground">
       <MeshBackground />
-      <div className="relative z-10 w-full max-w-xl px-8">
+      <div className="relative z-10 w-full max-w-xl px-8 py-10">
         <HudPanel glow className="p-10 text-center">
           <div className="relative">
           <HoloKanji
@@ -341,12 +378,58 @@ function CompletionScreen({
             </p>
           ) : null}
 
-          <div className="mt-7 grid grid-cols-2 gap-2">
+          {/* Lessons to review — the questions you missed came from these. */}
+          {reviewLessons.length > 0 ? (
+            <div className="mt-6 rounded-2xl border border-warning/30 bg-warning/5 p-4 text-left">
+              <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-warning">
+                復習 · Repasa estas lecciones
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Fallaste alguna pregunta de{" "}
+                {reviewLessons.length === 1 ? "esta lección" : "estas lecciones"}.
+                Toca para repasarla.
+              </p>
+              <div className="mt-3 space-y-2">
+                {reviewLessons.map((l) => (
+                  <button
+                    key={l.lessonId}
+                    onClick={() => onReviewLesson(l.lessonId)}
+                    className="flex w-full items-center justify-between rounded-xl border border-border/40 bg-card/50 px-4 py-2.5 text-left text-sm font-medium transition-colors hover:border-warning/50 hover:bg-warning/10"
+                  >
+                    <span>{l.lessonTitle}</span>
+                    <ArrowRight className="size-4 text-warning" />
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : completion.passed ? (
+            <p className="mt-6 rounded-2xl border border-success/30 bg-success/5 p-4 text-sm text-success">
+              ¡Perfecto! No fallaste ninguna lección. 🎌
+            </p>
+          ) : null}
+
+          {/* Passed → offer to continue to the next unit. */}
+          {completion.passed && onNextUnit && completion.nextUnitTitle ? (
+            <Button
+              className="mt-5 w-full bg-gradient-to-br from-primary via-primary to-neon-violet"
+              onClick={onNextUnit}
+            >
+              Continuar con {completion.nextUnitTitle}
+              <ArrowRight className="size-4" />
+            </Button>
+          ) : null}
+
+          <div className="mt-4 grid grid-cols-2 gap-2">
             <Button variant="outline" onClick={onRetry}>
               <RotateCcw className="size-3.5" /> Volver a intentar
             </Button>
             <Button
-              className="bg-gradient-to-br from-streak via-warning to-neon-amber text-warning-foreground"
+              className={
+                completion.passed && onNextUnit
+                  ? ""
+                  : "bg-gradient-to-br from-streak via-warning to-neon-amber text-warning-foreground"
+              }
+              variant={completion.passed && onNextUnit ? "outline" : "default"}
               onClick={onBack}
             >
               Al curso

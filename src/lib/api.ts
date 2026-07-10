@@ -324,6 +324,8 @@ export interface LessonCompletionResponse {
   passed: boolean;
   alreadyCompleted: boolean;
   nextLessonId: number | null;
+  unitId: number;
+  unitCompleted: boolean;
   award: XpAward;
 }
 
@@ -339,11 +341,17 @@ export interface NextLessonInfo {
 }
 
 // Unit exam
+export interface ExamSource {
+  lessonId: number;
+  lessonTitle: string;
+}
+
 export interface UnitExam {
   unitId: number;
   unitTitle: string;
   unitJpTitle: string | null;
   activities: Activity[];
+  sourceLessons: ExamSource[];
   allLessonsComplete: boolean;
   bestScore: number | null;
   lastScore: number | null;
@@ -355,6 +363,8 @@ export interface UnitExamResult {
   passed: boolean;
   previousBest: number | null;
   newBest: boolean;
+  nextUnitId: number | null;
+  nextUnitTitle: string | null;
   award: XpAward;
 }
 

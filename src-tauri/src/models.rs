@@ -448,6 +448,12 @@ pub struct LessonCompletionResponse {
     pub passed: bool,
     pub already_completed: bool,
     pub next_lesson_id: Option<i64>,
+    /// The unit this lesson belongs to.
+    pub unit_id: i64,
+    /// True when THIS completion made every lesson of the unit complete — the UI
+    /// then celebrates the unit and offers the unit exam instead of just jumping
+    /// straight to the next lesson.
+    pub unit_completed: bool,
     pub award: XpAward,
 }
 

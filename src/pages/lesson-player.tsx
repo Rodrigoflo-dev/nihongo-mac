@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
-import { ArrowLeft, ArrowRight, Check, RotateCcw, Sparkles, Star, Trophy, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, GraduationCap, RotateCcw, Sparkles, Star, Trophy, X } from "lucide-react";
 import { motion } from "framer-motion";
 
 import { Button } from "@/components/ui/button";
@@ -246,6 +246,8 @@ export default function LessonPlayer() {
             navigate("/learn");
           }
         }}
+        onExam={() => navigate(`/exam/${completion.unitId}`)}
+        onReview={() => navigate("/learn")}
       />
     );
   }
@@ -578,25 +580,40 @@ function CompletionScreen({
   onBack,
   onReplay,
   onContinue,
+  onExam,
+  onReview,
 }: {
   completion: LessonCompletionResponse;
   lessonTitle: string;
   onBack: () => void;
   onReplay: () => void;
   onContinue: () => void;
+  onExam: () => void;
+  onReview: () => void;
 }) {
+  // Finishing the LAST lesson of a unit → celebrate the whole unit and offer the
+  // two choices Rodrigo asked for: review a lesson, or take the unit exam.
+  const unitDone = completion.passed && completion.unitCompleted;
   return (
     <div className="relative grid h-screen w-screen place-items-center bg-background text-foreground">
       <MeshBackground />
       <div className="relative z-10 w-full max-w-xl px-8">
         <div className="overflow-hidden rounded-3xl glass-strong p-10 text-center">
           <p className="font-jp text-xs tracking-[0.4em] text-primary">
-            {completion.passed ? "合格" : "もう少し"}
+            {unitDone ? "単元クリア" : completion.passed ? "合格" : "もう少し"}
           </p>
           <h1 className="mt-2 text-3xl font-semibold tracking-tight">
-            {completion.passed ? "¡Lección completada!" : "Casi"}
+            {unitDone
+              ? "¡Completaste la unidad!"
+              : completion.passed
+                ? "¡Lección completada!"
+                : "Casi"}
           </h1>
-          <p className="mt-2 text-sm text-muted-foreground">{lessonTitle}</p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            {unitDone
+              ? "Terminaste todas las lecciones de esta unidad. ¿Qué quieres hacer?"
+              : lessonTitle}
+          </p>
 
           <div className="mt-6 grid grid-cols-2 gap-3">
             <Metric label="Puntuación" value={`${completion.score}%`} />
@@ -636,21 +653,46 @@ function CompletionScreen({
             </div>
           ) : null}
 
-          <div className="mt-7 grid grid-cols-3 gap-2">
-            <Button variant="ghost" onClick={onBack}>
-              Al inicio
-            </Button>
-            <Button variant="outline" onClick={onReplay}>
-              <RotateCcw className="size-3.5" />
-              Repetir
-            </Button>
-            <Button
-              className="bg-gradient-to-br from-primary via-primary to-neon-violet"
-              onClick={onContinue}
-            >
-              {completion.nextLessonId ? "Siguiente" : "Curso"}
-            </Button>
-          </div>
+          {unitDone ? (
+            <div className="mt-7 space-y-2">
+              <Button
+                size="lg"
+                className="w-full bg-gradient-to-br from-streak via-warning to-neon-amber text-warning-foreground"
+                onClick={onExam}
+              >
+                <GraduationCap className="size-4" />
+                Tomar el examen final de la unidad
+              </Button>
+              <Button
+                size="lg"
+                variant="outline"
+                className="w-full"
+                onClick={onReview}
+              >
+                <RotateCcw className="size-3.5" />
+                Repasar una lección
+              </Button>
+              <Button variant="ghost" className="w-full" onClick={onBack}>
+                Al inicio
+              </Button>
+            </div>
+          ) : (
+            <div className="mt-7 grid grid-cols-3 gap-2">
+              <Button variant="ghost" onClick={onBack}>
+                Al inicio
+              </Button>
+              <Button variant="outline" onClick={onReplay}>
+                <RotateCcw className="size-3.5" />
+                Repetir
+              </Button>
+              <Button
+                className="bg-gradient-to-br from-primary via-primary to-neon-violet"
+                onClick={onContinue}
+              >
+                {completion.nextLessonId ? "Siguiente" : "Curso"}
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     </div>

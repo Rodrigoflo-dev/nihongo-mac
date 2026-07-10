@@ -24,6 +24,16 @@ const STAR_EXAM_PERFECT_BONUS: i64 = 6;
 
 const EXAM_QUESTION_COUNT: usize = 10;
 
+/// Which lesson an exam question came from — so the results screen can point the
+/// learner back to the exact lessons they missed. Aligned by index with
+/// `UnitExam.activities`.
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ExamSource {
+    pub lesson_id: i64,
+    pub lesson_title: String,
+}
+
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct UnitExam {
@@ -31,6 +41,8 @@ pub struct UnitExam {
     pub unit_title: String,
     pub unit_jp_title: Option<String>,
     pub activities: Vec<Activity>,
+    /// Same length/order as `activities`: the lesson each question came from.
+    pub source_lessons: Vec<ExamSource>,
     pub all_lessons_complete: bool,
     pub best_score: Option<i64>,
     pub last_score: Option<i64>,
@@ -44,6 +56,10 @@ pub struct UnitExamResult {
     pub passed: bool,
     pub previous_best: Option<i64>,
     pub new_best: bool,
+    /// The next unit in course order (only when passed) — the UI offers to
+    /// continue to it: "¿continuar con la unidad 2?".
+    pub next_unit_id: Option<i64>,
+    pub next_unit_title: Option<String>,
     pub award: XpAward,
 }
 
@@ -83,14 +99,22 @@ fn build_unit_exam(c: &Connection, unit_id: i64) -> AppResult<UnitExam> {
         )
         .unwrap_or((None, None, 0));
 
-    let mut all_pool: Vec<Activity> = Vec::new();
+    // Each candidate carries the lesson it came from, so the results screen can
+    // send the learner back to the exact lessons they missed.
+    let mut all_pool: Vec<(Activity, ExamSource)> = Vec::new();
     {
         let mut stmt = c.prepare(
-            "SELECT activities_json FROM lessons WHERE unit_id = ?1 ORDER BY ordering, id",
+            "SELECT id, title, activities_json FROM lessons WHERE unit_id = ?1 ORDER BY ordering, id",
         )?;
-        let rows = stmt.query_map([unit_id], |r| r.get::<_, String>(0))?;
+        let rows = stmt.query_map([unit_id], |r| {
+            Ok((
+                r.get::<_, i64>(0)?,
+                r.get::<_, String>(1)?,
+                r.get::<_, String>(2)?,
+            ))
+        })?;
         for r in rows {
-            let raw = r?;
+            let (lesson_id, lesson_title, raw) = r?;
             if let Ok(parsed) = serde_json::from_str::<LessonActivities>(&raw) {
                 for a in parsed.activities {
                     if matches!(
@@ -99,7 +123,13 @@ fn build_unit_exam(c: &Connection, unit_id: i64) -> AppResult<UnitExam> {
                             | Activity::Listening { .. }
                             | Activity::WriteSentence { .. }
                     ) {
-                        all_pool.push(a);
+                        all_pool.push((
+                            a,
+                            ExamSource {
+                                lesson_id,
+                                lesson_title: lesson_title.clone(),
+                            },
+                        ));
                     }
                 }
             }
@@ -108,16 +138,16 @@ fn build_unit_exam(c: &Connection, unit_id: i64) -> AppResult<UnitExam> {
 
     let mut rng = rand::thread_rng();
     all_pool.shuffle(&mut rng);
-    let picked = all_pool
-        .into_iter()
-        .take(EXAM_QUESTION_COUNT)
-        .collect::<Vec<_>>();
+    all_pool.truncate(EXAM_QUESTION_COUNT);
+    let (activities, source_lessons): (Vec<Activity>, Vec<ExamSource>) =
+        all_pool.into_iter().unzip();
 
     Ok(UnitExam {
         unit_id,
         unit_title,
         unit_jp_title,
-        activities: picked,
+        activities,
+        source_lessons,
         all_lessons_complete,
         best_score,
         last_score,
@@ -199,11 +229,39 @@ pub fn complete_unit_exam(
 
         let outcome = apply_event(c, MissionEvent::KanjiReviewed, now)?;
 
+        // Next unit in proper order (course → unit ordering), only surfaced when
+        // the learner passes — "¿continuar con la unidad 2?".
+        let next_unit: Option<(i64, String)> = if passed {
+            c.query_row(
+                "SELECT u2.id, u2.title
+                   FROM units u1
+                   JOIN courses c1 ON c1.id = u1.course_id
+                   JOIN units u2 ON TRUE
+                   JOIN courses c2 ON c2.id = u2.course_id
+                  WHERE u1.id = ?1
+                    AND (c2.ordering, u2.ordering, u2.id) >
+                        (c1.ordering, u1.ordering, u1.id)
+                  ORDER BY c2.ordering, u2.ordering, u2.id
+                  LIMIT 1",
+                [unit_id],
+                |r| Ok((r.get(0)?, r.get(1)?)),
+            )
+            .ok()
+        } else {
+            None
+        };
+        let (next_unit_id, next_unit_title) = match next_unit {
+            Some((id, title)) => (Some(id), Some(title)),
+            None => (None, None),
+        };
+
         Ok(UnitExamResult {
             score,
             passed,
             previous_best,
             new_best,
+            next_unit_id,
+            next_unit_title,
             award: XpAward {
                 xp_amount: xp_awarded + outcome.xp_awarded,
                 star_amount: stars_awarded + outcome.stars_awarded,
