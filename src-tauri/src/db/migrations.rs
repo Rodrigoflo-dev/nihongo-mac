@@ -124,6 +124,11 @@ const MIGRATIONS: &[(u32, &str, &str)] = &[
         "024_extend_demonstratives_yesno",
         include_str!("../../migrations/024_extend_demonstratives_yesno.sql"),
     ),
+    (
+        25,
+        "025_days_complete",
+        include_str!("../../migrations/025_days_complete.sql"),
+    ),
 ];
 
 /// Run all pending migrations against the connection.

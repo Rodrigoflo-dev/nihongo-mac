@@ -185,16 +185,21 @@ export default function ExamPage() {
         <Progress value={progress} className="h-1" />
       </div>
 
-      <main className="relative z-10 flex flex-1 items-center justify-center overflow-y-auto px-8 py-8">
-        <AnimatePresence mode="wait">
-          <ActivityView
-            key={`${current.id}-${step}-${attempt}`}
-            activity={current}
-            verified={verified}
-            attempt={attempt}
-            onAnswer={(c) => setAnswered({ correct: c })}
-          />
-        </AnimatePresence>
+      {/* overflow-y-auto on main + inner min-h-full centering: tall activities
+          (e.g. the write question with the kana keyboard) flow from the top so
+          their prompt is never clipped above the viewport. */}
+      <main className="relative z-10 flex-1 overflow-y-auto px-8 py-8">
+        <div className="flex min-h-full items-center justify-center">
+          <AnimatePresence mode="wait">
+            <ActivityView
+              key={`${current.id}-${step}-${attempt}`}
+              activity={current}
+              verified={verified}
+              attempt={attempt}
+              onAnswer={(c) => setAnswered({ correct: c })}
+            />
+          </AnimatePresence>
+        </div>
       </main>
 
       <footer className="relative z-10 px-8 pb-8 pt-4">

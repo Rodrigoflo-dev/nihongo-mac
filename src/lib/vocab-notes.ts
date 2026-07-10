@@ -723,6 +723,30 @@ const NOTES: Record<string, VocabNote> = {
       { jp: "日曜日はいつも家にいます。", reading: "にちようびはいつもいえにいます。", meaning: "Los domingos siempre estoy en casa.", meaningEn: "I'm always home on Sundays." },
     ],
   },
+  木曜日: {
+    usage: "«Jueves». Termina en 曜日 (ようび) y usa 木 (árbol): 木曜日 (もくようび). Va entre 水曜日 (miércoles) y 金曜日 (viernes).",
+    usageEn: "“Thursday”. Ends in 曜日 (yōbi) and uses 木 (tree): 木曜日 (mokuyōbi). It comes between 水曜日 (Wed.) and 金曜日 (Fri.).",
+    notes: ["Se lee もくようび.", "El kanji 木 significa «árbol»; aquí se lee もく.", "Cuarto día de la semana japonesa (月火水木…)."],
+    notesEn: ["Read もくようび.", "The kanji 木 means “tree”; here it reads もく.", "Fourth day of the Japanese week (月火水木…)."],
+    examples: [
+      { jp: "今日は木曜日です。", reading: "きょうはもくようびです", meaning: "Hoy es jueves.", meaningEn: "Today is Thursday." },
+      { jp: "木曜日に会いましょう。", reading: "もくようびにあいましょう", meaning: "Veámonos el jueves.", meaningEn: "Let's meet on Thursday." },
+      { jp: "木曜日は授業があります。", reading: "もくようびはじゅぎょうがあります", meaning: "El jueves tengo clase.", meaningEn: "I have class on Thursday." },
+      { jp: "木曜日の夜は暇です。", reading: "もくようびのよるはひまです", meaning: "El jueves por la noche estoy libre.", meaningEn: "I'm free on Thursday night." },
+    ],
+  },
+  金曜日: {
+    usage: "«Viernes». Termina en 曜日 y usa 金 (oro/dinero): 金曜日 (きんようび). Es el último día laboral de la semana.",
+    usageEn: "“Friday”. Ends in 曜日 and uses 金 (gold/money): 金曜日 (kinyōbi). It's the last workday of the week.",
+    notes: ["Se lee きんようび.", "El kanji 金 significa «oro/dinero»; aquí se lee きん.", "Va entre 木曜日 (jueves) y 土曜日 (sábado)."],
+    notesEn: ["Read きんようび.", "The kanji 金 means “gold/money”; here it reads きん.", "It comes between 木曜日 (Thu.) and 土曜日 (Sat.)."],
+    examples: [
+      { jp: "今日は金曜日です。", reading: "きょうはきんようびです", meaning: "Hoy es viernes.", meaningEn: "Today is Friday." },
+      { jp: "金曜日に映画を見ます。", reading: "きんようびにえいがをみます", meaning: "El viernes veo una película.", meaningEn: "I watch a movie on Friday." },
+      { jp: "金曜日の夜は忙しいです。", reading: "きんようびのよるはいそがしいです", meaning: "El viernes por la noche estoy ocupado.", meaningEn: "Friday night is busy." },
+      { jp: "金曜日まで仕事です。", reading: "きんようびまでしごとです", meaning: "Trabajo hasta el viernes.", meaningEn: "I work until Friday." },
+    ],
+  },
 
   // ---- Tiempo --------------------------------------------------------------
   今: {
