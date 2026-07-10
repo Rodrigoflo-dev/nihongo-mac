@@ -364,6 +364,20 @@ function WordChips({
   );
 }
 
+/** A short "why is it used like this?" note shown on the examples page, so the
+ * learner sees the reason next to the sentences (Rodrigo's request). Reuses the
+ * card's already-verified explanation — no new unverified Japanese. */
+function WhyBox({ text }: { text: string }) {
+  return (
+    <div className="mb-3 rounded-xl border border-l-2 border-neon-violet/30 border-l-neon-violet/70 bg-neon-violet/5 p-3">
+      <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-neon-violet">
+        なぜ · Por qué se usa así
+      </p>
+      <p className="mt-1 text-xs leading-relaxed text-foreground/85">{text}</p>
+    </div>
+  );
+}
+
 /** Read words aloud: Japanese pronunciation, then meaning in `lang`. */
 function wordSegments(items: KanjiWord[], lang: "es" | "en") {
   return items.flatMap((w) => [
@@ -414,7 +428,12 @@ function kanjiPages(note: KanjiNote): DeepDivePage[] {
         { text: lang === "en" ? "Examples:" : "Ejemplos:", lang },
         ...wordSegments(note.examples, lang),
       ],
-      body: <WordChips items={note.examples} />,
+      body: (
+        <div>
+          <WhyBox text={note.usage} />
+          <WordChips items={note.examples} />
+        </div>
+      ),
     },
   ];
   return pages;
@@ -479,7 +498,12 @@ function grammarPages(note: GrammarNote): DeepDivePage[] {
           { text: lang === "en" ? e.meaningEn ?? e.meaning : e.meaning, lang },
         ]),
       ],
-      body: <WordChips items={note.examples} />,
+      body: (
+        <div>
+          <WhyBox text={note.why} />
+          <WordChips items={note.examples} />
+        </div>
+      ),
     },
   ];
 }
@@ -521,7 +545,12 @@ function vocabPages(note: VocabNote): DeepDivePage[] {
           { text: lang === "en" ? e.meaningEn : e.meaning, lang },
         ]),
       ],
-      body: <WordChips items={note.examples} />,
+      body: (
+        <div>
+          <WhyBox text={note.usage} />
+          <WordChips items={note.examples} />
+        </div>
+      ),
     },
   ];
 }

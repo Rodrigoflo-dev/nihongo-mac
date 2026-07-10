@@ -105,34 +105,75 @@ export async function listVoicesByLang(): Promise<
   };
 }
 
+// Rodrigo's friends found the voices too "robotic" and asked for a consistent
+// set: SOFTER, FEMALE voices — Spanish in a Latin-American accent, Japanese as
+// human as possible. We can't bundle a neural voice offline, so we pick the best
+// female voice the OS already ships and steer hard toward the good ones.
+//
+// Known FEMALE voices (macOS/Windows). We rank these first and demote the male
+// ones (so the authored dialogue voice "Otoya" no longer plays — all Japanese
+// narration is female, as requested).
+const FEMALE_JA = ["kyoko", "o-ren", "oren", "sakura", "haruka", "nanami", "ayumi"];
+const MALE_JA = ["otoya", "hattori", "daniel", "ichiro", "rocko", "reed", "eddy", "grandpa", "ralph"];
+const FEMALE_ES = ["paulina", "mónica", "monica", "angelica", "angélica", "juana", "ximena", "sabina", "helena", "marisol"];
+const MALE_ES = ["jorge", "diego", "carlos", "juan", "reed", "rocko", "eddy", "grandpa", "ralph"];
+// English also female & softer (Rodrigo: "la voz en inglés tampoco la olvides").
+const FEMALE_EN = ["samantha", "ava", "allison", "susan", "karen", "moira", "tessa", "zoe", "kate", "serena", "fiona", "nicky", "joelle"];
+const MALE_EN = ["alex", "daniel", "fred", "aaron", "tom", "reed", "rocko", "eddy", "grandpa", "ralph", "arthur", "gordon"];
+// Latin-American Spanish locales (Rodrigo: "siempre español latino").
+const LATAM = /^es[-_](mx|419|us|co|ar|cl|pe|ve|la)/i;
+
+function nameHas(v: SpeechSynthesisVoice, list: string[]): boolean {
+  const n = v.name.toLowerCase();
+  return list.some((k) => n.includes(k));
+}
+
+/** Score a voice so the softest, female, (for Spanish) Latin-American, highest
+ * quality option wins. Higher = better. */
+function scoreVoice(v: SpeechSynthesisVoice, kind: VoiceKind): number {
+  let s = 0;
+  const female =
+    kind === "ja" ? FEMALE_JA : kind === "es" ? FEMALE_ES : FEMALE_EN;
+  const male = kind === "ja" ? MALE_JA : kind === "es" ? MALE_ES : MALE_EN;
+  if (nameHas(v, female)) s += 100; // strongly prefer known female voices
+  if (nameHas(v, male)) s -= 100; // avoid known male voices
+  if (kind === "es" && LATAM.test(v.lang)) s += 40; // Latin-American accent
+  if (kind === "es" && /^es[-_]es/i.test(v.lang)) s += 5; // Spain as a fallback
+  if (kind === "en" && /^en[-_]us/i.test(v.lang)) s += 10; // neutral US English
+  if (v.localService) s += 8; // offline, lower latency
+  if (/premium|enhanced|neural|natural/i.test(v.name)) s += 20; // nicer timbre
+  if (/compact|eloquence|novelty/i.test(v.name)) s -= 15; // robotic
+  return s;
+}
+
+/** Pick the best voice for a language kind using the female/Latin-American ranking. */
+function pickBestVoice(
+  voices: SpeechSynthesisVoice[],
+  kind: VoiceKind = "ja"
+): SpeechSynthesisVoice | null {
+  if (voices.length === 0) return null;
+  return [...voices].sort((a, b) => scoreVoice(b, kind) - scoreVoice(a, kind))[0];
+}
+
 /**
- * Find a Japanese voice. Priority: an explicit `preferred` name (e.g. the
- * dialogue's "Otoya"), then the learner's saved preference, then the first
- * available Japanese voice.
+ * Find a Japanese voice. The learner's saved Settings preference wins; otherwise
+ * we always pick the best FEMALE voice (Kyoko / O-ren…). The authored `preferred`
+ * hint (e.g. the male "Otoya") is intentionally ignored so every Japanese line is
+ * spoken by a consistent female voice, per Rodrigo's request.
  */
 export async function getJapaneseVoice(
-  preferred?: string
+  _preferred?: string
 ): Promise<SpeechSynthesisVoice | null> {
   const voices = (await loadVoices()).filter(isJapanese);
   if (voices.length === 0) return null;
-  const want = preferred ?? getPreferredVoiceName("ja") ?? undefined;
+  const want = getPreferredVoiceName("ja") ?? undefined;
   if (want) {
     const match = voices.find((v) =>
       v.name.toLowerCase().includes(want.toLowerCase())
     );
     if (match) return match;
   }
-  return pickBestVoice(voices);
-}
-
-/** Prefer higher-quality (non-"compact") local voices — they sound less robotic. */
-function pickBestVoice(
-  voices: SpeechSynthesisVoice[]
-): SpeechSynthesisVoice | null {
-  if (voices.length === 0) return null;
-  const nonCompact = voices.filter((v) => !/compact|eloquence/i.test(v.name));
-  const pool = nonCompact.length ? nonCompact : voices;
-  return pool.find((v) => v.localService) ?? pool[0];
+  return pickBestVoice(voices, "ja");
 }
 
 export async function hasJapaneseVoice(): Promise<boolean> {
@@ -143,7 +184,7 @@ export async function hasJapaneseVoice(): Promise<boolean> {
 export type NarrationLang = "es" | "en";
 
 const LANG_CODE: Record<NarrationLang, string> = {
-  es: "es-ES",
+  es: "es-MX", // Latin-American Spanish by default (Rodrigo's request)
   en: "en-US",
 };
 
@@ -162,8 +203,8 @@ export async function getVoiceForLang(
     const chosen = matches.find((v) => v.name === pref);
     if (chosen) return chosen;
   }
-  // …otherwise prefer a higher-quality local voice.
-  return pickBestVoice(matches);
+  // …otherwise pick the best female (Latin-American for Spanish) voice.
+  return pickBestVoice(matches, lang);
 }
 
 /**
