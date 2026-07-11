@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   ArrowRight,
   Check,
+  ChevronLeft,
+  ChevronRight,
   ExternalLink,
   GraduationCap,
   Info,
@@ -14,6 +16,7 @@ import {
   Square,
   Trophy,
   Volume2,
+  X,
 } from "lucide-react";
 import { toKana, toRomaji } from "wanakana";
 
@@ -53,6 +56,18 @@ function romajiHint(text: string): string | null {
   } catch {
     return null;
   }
+}
+
+/** Stable small hash of a string → used to vary a question's PRESENTATION style
+ * deterministically (same question always looks the same, but consecutive
+ * questions differ) so practice doesn't feel like the same card every time. */
+function hashStr(s: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return Math.abs(h);
 }
 
 /** Inline warning shown under a play button when TTS fails (e.g. no JP voice). */
@@ -378,6 +393,93 @@ function WhyBox({ text }: { text: string }) {
   );
 }
 
+/** Examples shown ONE AT A TIME in a clean, centered card with arrows + dots and
+ * a slide animation (Rodrigo asked for a carousel — less cramped, more focused). */
+function ExampleCarousel({
+  items,
+}: {
+  items: { jp: string; reading: string; meaning: string }[];
+}) {
+  const [idx, setIdx] = useState(0);
+  const [dir, setDir] = useState(1);
+  if (items.length === 0) return null;
+  const clamped = Math.min(idx, items.length - 1);
+  const ex = items[clamped];
+  const go = (d: number) => {
+    setDir(d);
+    setIdx((i) => (i + d + items.length) % items.length);
+  };
+  return (
+    <div>
+      <div className="relative overflow-hidden rounded-2xl border border-neon-cyan/25 bg-gradient-to-br from-card/70 to-background/40 p-6 min-h-[10rem]">
+        <span className="hud-corner left-2 top-2 border-l-2 border-t-2 border-neon-cyan/40" />
+        <span className="hud-corner bottom-2 right-2 border-b-2 border-r-2 border-neon-cyan/40" />
+        <AnimatePresence mode="wait" custom={dir}>
+          <motion.div
+            key={clamped}
+            custom={dir}
+            variants={{
+              enter: (d: number) => ({ opacity: 0, x: d * 40 }),
+              center: { opacity: 1, x: 0 },
+              exit: (d: number) => ({ opacity: 0, x: d * -40 }),
+            }}
+            initial="enter"
+            animate="center"
+            exit="exit"
+            transition={{ duration: 0.25 }}
+            className="flex flex-col items-center text-center"
+          >
+            <div className="flex items-center gap-3">
+              <p className="font-jp text-2xl leading-snug sm:text-3xl">{ex.jp}</p>
+              <JaSpeakButton text={ex.jp} aria-label={`Escuchar ${ex.jp}`} />
+            </div>
+            <p className="mt-2 font-jp text-sm text-muted-foreground">{ex.reading}</p>
+            <p className="mt-1 text-sm text-foreground/85">{ex.meaning}</p>
+          </motion.div>
+        </AnimatePresence>
+      </div>
+
+      {items.length > 1 ? (
+        <div className="mt-3 flex items-center justify-between">
+          <button
+            type="button"
+            onClick={() => go(-1)}
+            aria-label="Ejemplo anterior"
+            className="grid size-8 place-items-center rounded-full border border-border/50 text-muted-foreground transition-colors hover:border-neon-cyan/60 hover:text-neon-cyan"
+          >
+            <ChevronLeft className="size-4" />
+          </button>
+          <div className="flex items-center gap-1.5">
+            {items.map((_, i) => (
+              <button
+                key={i}
+                type="button"
+                aria-label={`Ejemplo ${i + 1}`}
+                onClick={() => {
+                  setDir(i > clamped ? 1 : -1);
+                  setIdx(i);
+                }}
+                className={cn(
+                  "h-1.5 rounded-full transition-all",
+                  i === clamped ? "w-5 bg-neon-cyan" : "w-1.5 bg-muted-foreground/30"
+                )}
+              />
+            ))}
+          </div>
+          <button
+            type="button"
+            onClick={() => go(1)}
+            aria-label="Ejemplo siguiente"
+            className="grid size-8 place-items-center rounded-full border border-border/50 text-muted-foreground transition-colors hover:border-neon-cyan/60 hover:text-neon-cyan"
+          >
+            <ChevronRight className="size-4" />
+          </button>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 /** Read words aloud: Japanese pronunciation, then meaning in `lang`. */
 function wordSegments(items: KanjiWord[], lang: "es" | "en") {
   return items.flatMap((w) => [
@@ -431,7 +533,7 @@ function kanjiPages(note: KanjiNote): DeepDivePage[] {
       body: (
         <div>
           <WhyBox text={note.usage} />
-          <WordChips items={note.examples} />
+          <ExampleCarousel items={note.examples} />
         </div>
       ),
     },
@@ -501,7 +603,7 @@ function grammarPages(note: GrammarNote): DeepDivePage[] {
       body: (
         <div>
           <WhyBox text={note.why} />
-          <WordChips items={note.examples} />
+          <ExampleCarousel items={note.examples} />
         </div>
       ),
     },
@@ -548,7 +650,7 @@ function vocabPages(note: VocabNote): DeepDivePage[] {
       body: (
         <div>
           <WhyBox text={note.usage} />
-          <WordChips items={note.examples} />
+          <ExampleCarousel items={note.examples} />
         </div>
       ),
     },
@@ -841,31 +943,172 @@ function QuizActivity({
   const [selectedShuffled, setSelectedShuffled] = useState<number | null>(null);
   const correctIndex = shuffled.findIndex((o) => o.isCorrect);
 
+  // Rotate the PRESENTATION so practice never feels like the same card twice.
+  // Same question always renders the same way (stable), but different questions
+  // get different looks: A/B/C list, a 2-col card grid, or a ✓/✗ true-false.
+  const h = hashStr(activity.id);
+  const canTrueFalse = Boolean(activity.promptJp) && shuffled.length >= 2;
+  const styleName = canTrueFalse
+    ? (["list", "grid", "truefalse"] as const)[h % 3]
+    : (["list", "grid"] as const)[h % 2];
+
+  // --- True/False: claim the prompt equals one option; is it true? ----------
+  const tfClaim = shuffled[h % shuffled.length];
+  const tfIsTrue = tfClaim?.isCorrect ?? false;
+  const [tfPicked, setTfPicked] = useState<boolean | null>(null);
+
+  const wrongForExplain =
+    styleName === "truefalse"
+      ? verified && tfPicked !== null && tfPicked !== tfIsTrue
+      : verified && selectedShuffled !== null && selectedShuffled !== correctIndex;
+
+  const explanation =
+    verified && wrongForExplain && activity.explanation ? (
+      <ExplanationCard
+        correctAnswer={activity.options[activity.correctIndex]}
+        explanation={activity.explanation}
+        onLearn={onLearn}
+        learnTarget={
+          japaneseToken(activity.promptJp) ??
+          japaneseToken(activity.options[activity.correctIndex])
+        }
+      />
+    ) : null;
+
+  const prompt = (
+    <div className="text-center">
+      {activity.promptJp ? (
+        <p
+          className="font-jp text-3xl leading-tight tracking-tight text-foreground"
+          style={{
+            textShadow:
+              "0 0 24px color-mix(in oklch, var(--color-primary) 35%, transparent)",
+          }}
+        >
+          {activity.promptJp}
+        </p>
+      ) : null}
+      <p
+        className={cn(
+          "text-balance text-base text-foreground/85",
+          activity.promptJp ? "mt-4" : ""
+        )}
+      >
+        {activity.prompt}
+      </p>
+    </div>
+  );
+
+  // ---- TRUE / FALSE ---------------------------------------------------------
+  if (styleName === "truefalse") {
+    const pick = (val: boolean) => {
+      if (verified) return;
+      setTfPicked(val);
+      onAnswer(val === tfIsTrue);
+    };
+    const btn = (val: boolean, label: string, Icon: typeof Check) => {
+      const isPicked = tfPicked === val;
+      const isRightChoice = val === tfIsTrue;
+      return (
+        <motion.button
+          whileHover={!verified ? { y: -3 } : undefined}
+          whileTap={!verified ? { scale: 0.97 } : undefined}
+          disabled={verified}
+          onClick={() => pick(val)}
+          className={cn(
+            "flex flex-1 flex-col items-center gap-2 rounded-2xl border-2 px-6 py-6 text-lg font-semibold transition-all",
+            "border-border/60 bg-card/50 hover:border-neon-amber/60 hover:bg-neon-amber/5",
+            isPicked && !verified && "border-primary bg-primary/10 ring-1 ring-primary/40",
+            verified && isRightChoice && "border-success bg-success/15 text-success",
+            verified && isPicked && !isRightChoice && "border-destructive bg-destructive/15 text-destructive",
+            verified && !isRightChoice && !isPicked && "opacity-40"
+          )}
+        >
+          <Icon className="size-7" />
+          {label}
+        </motion.button>
+      );
+    };
+    return (
+      <ActivityShell eyebrow="¿Verdadero o falso?" jp="正しい?">
+        <HudPanel className="p-10">
+          <p className="text-center text-sm text-muted-foreground">
+            ¿Es correcta esta afirmación?
+          </p>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.96 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.3 }}
+            className="mt-4 rounded-2xl border border-neon-amber/30 bg-neon-amber/5 p-6 text-center"
+          >
+            <p className="font-jp text-3xl leading-tight">{activity.promptJp}</p>
+            <p className="mt-2 text-xl font-semibold">
+              = «{tfClaim.text}»
+            </p>
+          </motion.div>
+          <div className="mt-7 flex gap-3">
+            {btn(true, "Verdadero", Check)}
+            {btn(false, "Falso", X)}
+          </div>
+          {explanation}
+        </HudPanel>
+      </ActivityShell>
+    );
+  }
+
+  // ---- GRID (2-column cards) ------------------------------------------------
+  if (styleName === "grid") {
+    return (
+      <ActivityShell eyebrow="Elige la correcta" jp="選ぶ">
+        <HudPanel className="p-10">
+          {prompt}
+          <div className="mt-7 grid grid-cols-2 gap-3">
+            {shuffled.map((opt, idx) => {
+              const isPicked = selectedShuffled === idx;
+              const romaji = romajiHint(opt.text);
+              return (
+                <motion.button
+                  key={`${activity.id}-g-${idx}`}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.25, delay: idx * 0.05 }}
+                  whileHover={!verified ? { y: -3 } : undefined}
+                  whileTap={!verified ? { scale: 0.97 } : undefined}
+                  disabled={verified}
+                  onClick={() => {
+                    setSelectedShuffled(idx);
+                    onAnswer(opt.isCorrect);
+                  }}
+                  className={cn(
+                    "relative flex min-h-[5.5rem] flex-col items-center justify-center gap-1 rounded-2xl border border-border/60 bg-card/50 p-4 text-center transition-all",
+                    "hover:border-neon-violet/60 hover:bg-neon-violet/5 hover:shadow-[0_0_28px_-10px_color-mix(in_oklch,var(--color-neon-violet)_70%,transparent)]",
+                    isPicked && !verified && "border-primary bg-primary/10 ring-1 ring-primary/40",
+                    verified && opt.isCorrect && "border-success bg-success/15 text-success",
+                    verified && isPicked && !opt.isCorrect && "border-destructive bg-destructive/15 text-destructive",
+                    verified && !opt.isCorrect && !isPicked && "opacity-40"
+                  )}
+                >
+                  <div className="font-jp text-lg">{opt.text}</div>
+                  {romaji ? (
+                    <div className="font-mono text-[11px] text-muted-foreground">
+                      {romaji}
+                    </div>
+                  ) : null}
+                </motion.button>
+              );
+            })}
+          </div>
+          {explanation}
+        </HudPanel>
+      </ActivityShell>
+    );
+  }
+
+  // ---- LIST (A/B/C) — default ----------------------------------------------
   return (
     <ActivityShell eyebrow="Pregunta" jp="質問">
       <HudPanel className="p-10">
-        <div className="text-center">
-          {activity.promptJp ? (
-            <p
-              className="font-jp text-3xl leading-tight tracking-tight text-foreground"
-              style={{
-                textShadow:
-                  "0 0 24px color-mix(in oklch, var(--color-primary) 35%, transparent)",
-              }}
-            >
-              {activity.promptJp}
-            </p>
-          ) : null}
-          <p
-            className={cn(
-              "text-balance text-base text-foreground/85",
-              activity.promptJp ? "mt-4" : ""
-            )}
-          >
-            {activity.prompt}
-          </p>
-        </div>
-
+        {prompt}
         <div className="mt-7 grid gap-3">
           {shuffled.map((opt, idx) => {
             const isPicked = selectedShuffled === idx;
@@ -873,6 +1116,9 @@ function QuizActivity({
             return (
               <motion.button
                 key={`${activity.id}-${idx}`}
+                initial={{ opacity: 0, x: -12 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.25, delay: idx * 0.05 }}
                 whileHover={!verified ? { x: 4 } : undefined}
                 whileTap={!verified ? { scale: 0.99 } : undefined}
                 disabled={verified}
@@ -912,21 +1158,7 @@ function QuizActivity({
             );
           })}
         </div>
-
-        {verified &&
-        selectedShuffled !== null &&
-        selectedShuffled !== correctIndex &&
-        activity.explanation ? (
-          <ExplanationCard
-            correctAnswer={activity.options[activity.correctIndex]}
-            explanation={activity.explanation}
-            onLearn={onLearn}
-            learnTarget={
-              japaneseToken(activity.promptJp) ??
-              japaneseToken(activity.options[activity.correctIndex])
-            }
-          />
-        ) : null}
+        {explanation}
       </HudPanel>
     </ActivityShell>
   );
