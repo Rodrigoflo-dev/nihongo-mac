@@ -251,6 +251,20 @@ export type Activity =
     }
   | {
       id: string;
+      kind: "order_sentence";
+      tokens: string[];
+      meaning: string;
+      reading?: string | null;
+      explanation?: string | null;
+    }
+  | {
+      id: string;
+      kind: "match_pairs";
+      prompt: string;
+      pairs: { jp: string; meaning: string; reading?: string | null }[];
+    }
+  | {
+      id: string;
       kind: "summary";
       learned: string[];
     };

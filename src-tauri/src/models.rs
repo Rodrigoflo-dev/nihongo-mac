@@ -410,10 +410,39 @@ pub enum Activity {
         accepted: Vec<String>,
         explanation: String,
     },
+    /// Build a sentence from shuffled word tiles (tap them in order). A new, more
+    /// active practice format so exercises don't feel repetitive.
+    #[serde(rename_all = "camelCase")]
+    OrderSentence {
+        id: String,
+        /// Tiles in the CORRECT order; the frontend shuffles them.
+        tokens: Vec<String>,
+        meaning: String,
+        #[serde(default)]
+        reading: Option<String>,
+        #[serde(default)]
+        explanation: Option<String>,
+    },
+    /// Match Japanese words to their meanings (tap a pair). Another varied format.
+    #[serde(rename_all = "camelCase")]
+    MatchPairs {
+        id: String,
+        prompt: String,
+        pairs: Vec<MatchPair>,
+    },
     Summary {
         id: String,
         learned: Vec<String>,
     },
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct MatchPair {
+    pub jp: String,
+    pub meaning: String,
+    #[serde(default)]
+    pub reading: Option<String>,
 }
 
 #[derive(Debug, Clone, Deserialize)]

@@ -30,6 +30,10 @@ function questionLabel(a: Activity): string {
       return a.textJp ? `🎧 ${a.textJp}` : a.prompt;
     case "write_sentence":
       return a.prompt;
+    case "order_sentence":
+      return `🧩 Ordena: «${a.meaning}»`;
+    case "match_pairs":
+      return "🔗 Empareja palabras";
     default:
       return "Pregunta";
   }

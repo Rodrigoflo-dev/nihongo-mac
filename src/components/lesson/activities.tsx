@@ -337,6 +337,24 @@ export function ActivityView({
           onAnswer={onAnswer}
         />
       );
+    case "order_sentence":
+      return (
+        <OrderSentenceActivity
+          key={`${activity.id}-${attempt}`}
+          activity={activity}
+          verified={verified}
+          onAnswer={onAnswer}
+        />
+      );
+    case "match_pairs":
+      return (
+        <MatchPairsActivity
+          key={`${activity.id}-${attempt}`}
+          activity={activity}
+          verified={verified}
+          onAnswer={onAnswer}
+        />
+      );
     case "summary":
       return <SummaryActivity activity={activity} />;
   }
@@ -346,7 +364,9 @@ export function isActivityQuiz(activity: Activity): boolean {
   return (
     activity.kind === "quiz" ||
     activity.kind === "listening" ||
-    activity.kind === "write_sentence"
+    activity.kind === "write_sentence" ||
+    activity.kind === "order_sentence" ||
+    activity.kind === "match_pairs"
   );
 }
 
@@ -1831,6 +1851,244 @@ function WriteSentenceActivity({
           </div>
         ) : null}
        </div>
+      </HudPanel>
+    </ActivityShell>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// 8b. Order the sentence (tap tiles into order) — a new, active format.
+// ---------------------------------------------------------------------------
+
+function shuffleArray<T>(arr: T[]): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function OrderSentenceActivity({
+  activity,
+  verified,
+  onAnswer,
+}: {
+  activity: Extract<Activity, { kind: "order_sentence" }>;
+  verified: boolean;
+  onAnswer: (correct: boolean) => void;
+}) {
+  const tiles = useMemo(
+    () => shuffleArray(activity.tokens.map((text, i) => ({ id: i, text }))),
+    [activity]
+  );
+  const target = activity.tokens.join("");
+  const [placed, setPlaced] = useState<number[]>([]);
+  const placedSet = new Set(placed);
+  const built = placed.map((id) => tiles.find((t) => t.id === id)!.text).join("");
+  const isComplete = placed.length === tiles.length;
+  const isCorrect = isComplete && built === target;
+
+  const add = (id: number) => {
+    if (verified) return;
+    const next = [...placed, id];
+    setPlaced(next);
+    if (next.length === tiles.length) {
+      const s = next.map((i) => tiles.find((t) => t.id === i)!.text).join("");
+      onAnswer(s === target);
+    }
+  };
+  const removeAt = (pos: number) => {
+    if (verified) return;
+    setPlaced(placed.filter((_, i) => i !== pos));
+  };
+
+  return (
+    <ActivityShell eyebrow="Ordena la frase" jp="文をならべよう">
+      <HudPanel className="p-8">
+        <p className="text-center text-sm text-muted-foreground">
+          Toca las fichas en orden para formar:
+        </p>
+        <p className="mt-1 text-center text-lg font-semibold">«{activity.meaning}»</p>
+
+        {/* Answer row */}
+        <div
+          className={cn(
+            "mt-5 flex min-h-[3.75rem] flex-wrap items-center gap-2 rounded-2xl border-2 border-dashed p-3 transition-colors",
+            verified && isCorrect && "border-success/50 bg-success/5",
+            verified && !isCorrect && "border-destructive/50 bg-destructive/5",
+            !verified && "border-border/50 bg-card/30"
+          )}
+        >
+          {placed.length === 0 ? (
+            <span className="px-2 text-sm text-muted-foreground/60">
+              Tu frase aparecerá aquí…
+            </span>
+          ) : (
+            placed.map((id, pos) => (
+              <button
+                key={`${id}-${pos}`}
+                onClick={() => removeAt(pos)}
+                disabled={verified}
+                className="rounded-xl border border-primary/40 bg-primary/10 px-3 py-2 font-jp text-lg text-foreground transition-colors hover:border-destructive/50 hover:bg-destructive/10"
+              >
+                {tiles.find((t) => t.id === id)!.text}
+              </button>
+            ))
+          )}
+        </div>
+
+        {/* Available tiles */}
+        <div className="mt-4 flex flex-wrap justify-center gap-2">
+          {tiles.map((t) => (
+            <motion.button
+              key={t.id}
+              layout
+              whileTap={!verified ? { scale: 0.94 } : undefined}
+              onClick={() => add(t.id)}
+              disabled={verified || placedSet.has(t.id)}
+              className={cn(
+                "rounded-xl border border-neon-cyan/40 bg-card/60 px-4 py-2.5 font-jp text-lg transition-all hover:border-neon-cyan hover:bg-neon-cyan/10",
+                placedSet.has(t.id) && "pointer-events-none opacity-25"
+              )}
+            >
+              {t.text}
+            </motion.button>
+          ))}
+        </div>
+
+        {verified ? (
+          <div className="mt-6 space-y-3">
+            <div
+              className={cn(
+                "rounded-xl border p-3 text-sm font-medium",
+                isCorrect
+                  ? "border-success/40 bg-success/10 text-success"
+                  : "border-destructive/30 bg-destructive/10 text-destructive"
+              )}
+            >
+              {isCorrect ? "¡Perfecto! Orden correcto 🎉" : "No es el orden correcto."}
+            </div>
+            <div className="rounded-xl border border-success/30 bg-success/5 p-3 text-center">
+              <p className="text-[10px] uppercase tracking-widest text-success">
+                Versión correcta
+              </p>
+              <div className="mt-1 flex items-center justify-center gap-2">
+                <p className="font-jp text-xl">{target}</p>
+                <JaSpeakButton text={target} aria-label={`Escuchar ${target}`} />
+              </div>
+              {activity.reading ? (
+                <p className="mt-1 font-jp text-xs text-muted-foreground">
+                  {activity.reading}
+                </p>
+              ) : null}
+            </div>
+          </div>
+        ) : null}
+      </HudPanel>
+    </ActivityShell>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// 8c. Match pairs (tap Japanese ↔ meaning) — a new, active format.
+// ---------------------------------------------------------------------------
+
+function MatchPairsActivity({
+  activity,
+  verified,
+  onAnswer,
+}: {
+  activity: Extract<Activity, { kind: "match_pairs" }>;
+  verified: boolean;
+  onAnswer: (correct: boolean) => void;
+}) {
+  const left = useMemo(
+    () => shuffleArray(activity.pairs.map((p, i) => ({ i, text: p.jp }))),
+    [activity]
+  );
+  const right = useMemo(
+    () => shuffleArray(activity.pairs.map((p, i) => ({ i, text: p.meaning }))),
+    [activity]
+  );
+  const [selJp, setSelJp] = useState<number | null>(null);
+  const [matched, setMatched] = useState<Set<number>>(new Set());
+  const [wrongPair, setWrongPair] = useState<[number, number] | null>(null);
+  const [mistakes, setMistakes] = useState(0);
+
+  const pickJp = (i: number) => {
+    if (verified || matched.has(i)) return;
+    setSelJp(i);
+    setWrongPair(null);
+  };
+  const pickMeaning = (i: number) => {
+    if (verified || matched.has(i) || selJp === null) return;
+    if (selJp === i) {
+      const next = new Set(matched).add(i);
+      setMatched(next);
+      setSelJp(null);
+      if (next.size === activity.pairs.length) onAnswer(mistakes === 0);
+    } else {
+      setWrongPair([selJp, i]);
+      setMistakes((m) => m + 1);
+      setSelJp(null);
+    }
+  };
+
+  const cell = (
+    side: "jp" | "meaning",
+    i: number,
+    text: string
+  ) => {
+    const isMatched = matched.has(i);
+    const isSel = side === "jp" && selJp === i;
+    const isWrong = wrongPair !== null && wrongPair[side === "jp" ? 0 : 1] === i;
+    return (
+      <motion.button
+        key={`${side}-${i}`}
+        animate={isWrong ? { x: [0, -6, 6, -4, 4, 0] } : {}}
+        transition={{ duration: 0.35 }}
+        onClick={() => (side === "jp" ? pickJp(i) : pickMeaning(i))}
+        disabled={verified || isMatched}
+        className={cn(
+          "w-full rounded-xl border px-4 py-3 text-center transition-all",
+          side === "jp" ? "font-jp text-lg" : "text-sm",
+          isMatched && "border-success/50 bg-success/10 text-success opacity-70",
+          !isMatched && isSel && "border-primary bg-primary/15 ring-1 ring-primary/40",
+          !isMatched && !isSel && "border-border/60 bg-card/50 hover:border-neon-violet/60 hover:bg-neon-violet/5"
+        )}
+      >
+        {text}
+      </motion.button>
+    );
+  };
+
+  return (
+    <ActivityShell eyebrow="Empareja" jp="えらんでつなぐ">
+      <HudPanel className="p-8">
+        <p className="text-center text-sm text-muted-foreground">{activity.prompt}</p>
+        <div className="mt-5 grid grid-cols-2 gap-3">
+          <div className="space-y-2">
+            {left.map((l) => cell("jp", l.i, l.text))}
+          </div>
+          <div className="space-y-2">
+            {right.map((r) => cell("meaning", r.i, r.text))}
+          </div>
+        </div>
+        {verified ? (
+          <div
+            className={cn(
+              "mt-5 rounded-xl border p-3 text-center text-sm font-medium",
+              mistakes === 0
+                ? "border-success/40 bg-success/10 text-success"
+                : "border-warning/40 bg-warning/10 text-warning"
+            )}
+          >
+            {mistakes === 0
+              ? "¡Todos correctos a la primera! 🎉"
+              : `Emparejados — con ${mistakes} intento${mistakes === 1 ? "" : "s"} fallido${mistakes === 1 ? "" : "s"}.`}
+          </div>
+        ) : null}
       </HudPanel>
     </ActivityShell>
   );

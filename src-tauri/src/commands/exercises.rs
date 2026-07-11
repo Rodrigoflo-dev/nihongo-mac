@@ -22,7 +22,7 @@ use tauri::State;
 
 use crate::db::DbState;
 use crate::error::AppResult;
-use crate::models::{Activity, LessonActivities};
+use crate::models::{Activity, LessonActivities, MatchPair};
 
 /// Real-life situational questions ("en esta situación, ¿qué dices?"). Verified
 /// fixed conversation responses, mixed into every round for practical practice.
@@ -859,6 +859,176 @@ fn build_reading_to_meaning(
     )
 }
 
+/// "Empareja" — pair Japanese words with their meanings. A distinct, active
+/// format (not another multiple-choice) so practice feels varied.
+fn build_match_pairs(rng: &mut StdRng, idx: usize, items: &[Item]) -> Option<Activity> {
+    let mut pool: Vec<&Item> = items
+        .iter()
+        .filter(|it| !it.jp.is_empty() && !it.meaning.is_empty())
+        .collect();
+    if pool.len() < 3 {
+        return None;
+    }
+    pool.shuffle(rng);
+    // Dedupe by meaning AND by jp so every pairing is unambiguous.
+    let mut seen_m = HashSet::new();
+    let mut seen_j = HashSet::new();
+    let pairs: Vec<MatchPair> = pool
+        .into_iter()
+        .filter(|it| seen_m.insert(it.meaning.clone()) && seen_j.insert(it.jp.clone()))
+        .take(4)
+        .map(|it| MatchPair {
+            jp: it.jp.clone(),
+            meaning: it.meaning.clone(),
+            reading: if it.reading.is_empty() || it.reading == it.jp {
+                None
+            } else {
+                Some(it.reading.clone())
+            },
+        })
+        .collect();
+    if pairs.len() < 3 {
+        return None;
+    }
+    Some(Activity::MatchPairs {
+        id: format!("gen-match-{idx}"),
+        prompt: "Une cada palabra con su significado".to_string(),
+        pairs,
+    })
+}
+
+// Boundary tiles for tokenizing an N5 sentence into word tiles. Greedy longest
+// match against these + the taught vocabulary; if any part can't be matched we
+// simply skip the exercise (so tiles are never wrong).
+const ORDER_PARTICLES: &[&str] = &[
+    "から", "まで", "は", "が", "を", "に", "へ", "で", "と", "も", "の", "か", "ね", "よ",
+];
+const ORDER_ENDINGS: &[&str] = &[
+    "ませんでした",
+    "ましょう",
+    "ですか",
+    "ください",
+    "たいです",
+    "ました",
+    "ません",
+    "でした",
+    "です",
+    "ますか",
+    "ます",
+];
+const ORDER_FUNCTION: &[&str] = &[
+    "私", "あなた", "彼女", "彼", "これ", "それ", "あれ", "この", "その", "あの", "ここ",
+    "そこ", "あそこ", "何", "誰", "どこ", "いつ", "今", "毎日", "とても", "少し", "もう",
+];
+
+/// Every intro-vocab surface (word) taught anywhere — the base dictionary for the
+/// sentence-ordering tokenizer.
+fn all_vocab_surfaces(conn: &Connection) -> Vec<String> {
+    let mut out: Vec<String> = Vec::new();
+    if let Ok(mut stmt) = conn.prepare("SELECT activities_json FROM lessons") {
+        if let Ok(rows) = stmt.query_map([], |r| r.get::<_, String>(0)) {
+            for raw in rows.flatten() {
+                if let Ok(parsed) = serde_json::from_str::<LessonActivities>(&raw) {
+                    for a in parsed.activities {
+                        if let Activity::IntroVocab { word, .. } = a {
+                            if !word.is_empty() {
+                                out.push(word);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    out
+}
+
+/// Candidate tiles, sorted longest-first for greedy matching.
+fn order_dictionary(conn: &Connection, catalog: &[Item]) -> Vec<String> {
+    let mut set: HashSet<String> = HashSet::new();
+    for s in all_vocab_surfaces(conn) {
+        set.insert(s);
+    }
+    for it in catalog {
+        if !it.jp.is_empty() {
+            set.insert(it.jp.clone());
+        }
+    }
+    for s in ORDER_PARTICLES
+        .iter()
+        .chain(ORDER_ENDINGS.iter())
+        .chain(ORDER_FUNCTION.iter())
+    {
+        set.insert((*s).to_string());
+    }
+    let mut v: Vec<String> = set.into_iter().collect();
+    v.sort_by(|a, b| b.chars().count().cmp(&a.chars().count()).then(a.cmp(b)));
+    v
+}
+
+/// Split a sentence into word tiles by greedy longest-match against `dict`.
+/// Returns None if any part can't be matched (so we never show broken tiles).
+fn order_tokenize(sentence: &str, dict: &[String]) -> Option<Vec<String>> {
+    let chars: Vec<char> = sentence
+        .chars()
+        .filter(|c| !matches!(c, '。' | '、' | ' ' | '　' | '！' | '？'))
+        .collect();
+    let mut tokens: Vec<String> = Vec::new();
+    let mut i = 0usize;
+    'outer: while i < chars.len() {
+        for cand in dict {
+            let clen = cand.chars().count();
+            if clen == 0 || i + clen > chars.len() {
+                continue;
+            }
+            if chars[i..i + clen].iter().collect::<String>() == *cand {
+                tokens.push(cand.clone());
+                i += clen;
+                continue 'outer;
+            }
+        }
+        return None;
+    }
+    Some(tokens)
+}
+
+/// "Ordena la frase" — arrange shuffled word tiles into the correct sentence.
+fn build_order_sentence(
+    idx: usize,
+    jp: &str,
+    meaning: &str,
+    dict: &[String],
+) -> Option<Activity> {
+    let tokens = order_tokenize(jp, dict)?;
+    // Need enough tiles to be a real puzzle, but not so many it's tedious.
+    if tokens.len() < 3 || tokens.len() > 7 {
+        return None;
+    }
+    // At least two "content" tiles (not just particles/endings).
+    let content = tokens
+        .iter()
+        .filter(|t| {
+            !ORDER_PARTICLES.contains(&t.as_str()) && !ORDER_ENDINGS.contains(&t.as_str())
+        })
+        .count();
+    if content < 2 {
+        return None;
+    }
+    let clean = meaning
+        .split(['(', '（'])
+        .next()
+        .unwrap_or(meaning)
+        .trim()
+        .to_string();
+    Some(Activity::OrderSentence {
+        id: format!("gen-order-{idx}"),
+        tokens,
+        meaning: clean,
+        reading: None,
+        explanation: Some(format!("{jp} — {meaning}")),
+    })
+}
+
 /// Plausible full-phrase distractors for the "understand the sentence" question,
 /// so the wrong options aren't single words.
 const GENERIC_PHRASES: &[&str] = &[
@@ -937,6 +1107,8 @@ fn modality(a: &Activity) -> &'static str {
         Activity::Listening { .. } => "listen",
         Activity::WriteSentence { .. } => "write",
         Activity::WriteKanji { .. } => "draw",
+        Activity::OrderSentence { .. } => "order",
+        Activity::MatchPairs { .. } => "match",
         Activity::Quiz { id, .. } => {
             if id.starts_with("gen-sit") {
                 "sit"
@@ -967,6 +1139,8 @@ fn band_modality_cap(m: &str, count: usize) -> usize {
         "sit" => 1,
         "gram" => 2,
         "comp" => 2,
+        "order" => 2,
+        "match" => 1,
         _ => count,
     }
 }
@@ -1028,7 +1202,7 @@ fn select_band(
 fn arrange(items: Vec<Activity>) -> Vec<Activity> {
     let (special, plain): (Vec<Activity>, Vec<Activity>) = items
         .into_iter()
-        .partition(|a| matches!(modality(a), "listen" | "write" | "draw" | "blank"));
+        .partition(|a| matches!(modality(a), "listen" | "write" | "draw" | "blank" | "order" | "match"));
     let mut out = Vec::with_capacity(special.len() + plain.len());
     let mut pi = 0usize;
     let mut si = 0usize;
@@ -1075,6 +1249,12 @@ fn signature(a: &Activity) -> String {
             prompt, accepted, ..
         } => format!("W|{prompt}|{}", accepted.join("/")),
         Activity::WriteKanji { kanji_char, .. } => format!("D|{kanji_char}"),
+        Activity::OrderSentence { tokens, .. } => format!("O|{}", tokens.join("")),
+        Activity::MatchPairs { pairs, .. } => {
+            let mut jps: Vec<&str> = pairs.iter().map(|p| p.jp.as_str()).collect();
+            jps.sort();
+            format!("M|{}", jps.join(","))
+        }
         _ => "?".to_string(),
     }
 }
@@ -1212,6 +1392,7 @@ pub fn generate(conn: &Connection, lesson_id: i64, seed: u64) -> Vec<GeneratedEx
         }
         idc += 1;
     }
+    let order_dict = order_dictionary(conn, &catalog);
     for (jp, meaning) in &sentences {
         if let Some(a) = build_sentence_comprehension(&mut rng, idc, jp, meaning, &phrase_primary, &phrase_fb) {
             medio.push(a);
@@ -1221,7 +1402,18 @@ pub fn generate(conn: &Connection, lesson_id: i64, seed: u64) -> Vec<GeneratedEx
             dificil.push(a);
         }
         idc += 1;
+        // NEW format: arrange the shuffled word tiles into the sentence.
+        if let Some(a) = build_order_sentence(idc, jp, meaning, &order_dict) {
+            dificil.push(a);
+        }
+        idc += 1;
     }
+
+    // NEW format: match Japanese words to their meanings (varies the practice).
+    if let Some(a) = build_match_pairs(&mut rng, idc, &items) {
+        medio.push(a);
+    }
+    idc += 1;
 
     // Real-life situations (already gated to taught phrases): spread facil/medio.
     for (i, &si) in sit_indices.iter().enumerate() {
@@ -1607,6 +1799,51 @@ mod tests {
     /// must be ON-TOPIC — their answer is taught IN THIS LESSON, never leaking a
     /// greeting scenario into the numbers / これ / はい lessons. Lesson 1 (no
     /// greetings) has none at all. Uses the cumulative helper as a sanity anchor.
+    /// GUARD for the new practice formats (ordenar la frase / emparejar): tiles
+    /// must be well-formed and the formats must actually appear somewhere.
+    #[test]
+    fn new_formats_are_well_formed() {
+        let conn = fresh_db();
+        let mut saw_order = false;
+        let mut saw_match = false;
+        for id in 1..=600 {
+            if taught_items(&conn, id).is_empty() {
+                continue;
+            }
+            for seed in [1u64, 4, 8, 15, 23] {
+                for e in generate(&conn, id, seed) {
+                    match &e.activity {
+                        Activity::OrderSentence { tokens, .. } => {
+                            saw_order = true;
+                            assert!(
+                                (3..=7).contains(&tokens.len()),
+                                "lesson {id}: order tiles out of range: {tokens:?}"
+                            );
+                            assert!(
+                                tokens.iter().all(|t| !t.trim().is_empty()),
+                                "lesson {id}: empty order tile"
+                            );
+                        }
+                        Activity::MatchPairs { pairs, .. } => {
+                            saw_match = true;
+                            assert!(
+                                (3..=4).contains(&pairs.len()),
+                                "lesson {id}: match pairs out of range"
+                            );
+                            let jps: HashSet<_> = pairs.iter().map(|p| &p.jp).collect();
+                            let ms: HashSet<_> = pairs.iter().map(|p| &p.meaning).collect();
+                            assert_eq!(jps.len(), pairs.len(), "match: duplicate jp");
+                            assert_eq!(ms.len(), pairs.len(), "match: duplicate meaning");
+                        }
+                        _ => {}
+                    }
+                }
+            }
+        }
+        assert!(saw_order, "no order-sentence exercises were generated anywhere");
+        assert!(saw_match, "no match-pairs exercises were generated anywhere");
+    }
+
     /// GUARD for Rodrigo's #1 fix: quiz distractors must stay ON-THEME. In a
     /// meaning-recognition question, every wrong option must be another meaning
     /// TAUGHT IN THE SAME LESSON — never a random word from a different topic
