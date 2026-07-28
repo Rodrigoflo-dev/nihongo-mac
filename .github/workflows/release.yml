@@ -47,22 +47,22 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tagName: ${{ github.ref_name }}
-          releaseName: "Nihongo ${{ github.ref_name }} (macOS)"
+          releaseName: "Michi ${{ github.ref_name }} (macOS)"
           releaseBody: |
             ## Descarga (macOS — Intel y Apple Silicon)
 
-            Baja el **`.dmg`**, ábrelo y arrastra **Nihongo** a Aplicaciones.
+            Baja el **`.dmg`**, ábrelo y arrastra **Michi** a Aplicaciones.
 
             ### ⚠️ Primera apertura (importante)
             La app no está firmada con un certificado de Apple (de pago), así que
             macOS la bloquea la primera vez. Para abrirla:
 
-            1. En **Aplicaciones**, haz **clic derecho sobre Nihongo → Abrir**, y
+            1. En **Aplicaciones**, haz **clic derecho sobre Michi → Abrir**, y
                confirma **"Abrir"** en el aviso. (Solo la primera vez.)
-            2. Si sale *"Nihongo está dañada y no se puede abrir"*, abre la app
+            2. Si sale *"Michi está dañada y no se puede abrir"*, abre la app
                **Terminal** y pega esto (luego Enter):
                ```
-               xattr -dr com.apple.quarantine /Applications/Nihongo.app
+               xattr -dr com.apple.quarantine /Applications/Michi.app
                ```
                y vuelve a abrirla.
 
