@@ -11,8 +11,12 @@ import { useGrammarList } from "@/hooks/use-grammar";
 import { useUserProfile } from "@/hooks/use-user-profile";
 import type { GrammarListItem } from "@/lib/api";
 import { cn } from "@/lib/utils";
+import { useT, type TFn } from "@/lib/i18n";
+import { useTc } from "@/lib/content-i18n";
 
 export default function GrammarPage() {
+  const t = useT();
+  const tc = useTc();
   const { data: profile } = useUserProfile();
   const level = profile?.currentLevel ?? "N5";
   const { data: lessons, isLoading } = useGrammarList(level);
@@ -32,14 +36,15 @@ export default function GrammarPage() {
           eyebrow={`文法 — ${level}`}
           title={
             <>
-              Gramática <span className="gradient-text">paso a paso</span>
+              {t("grammar.title.a")}{" "}
+              <span className="gradient-text">{t("grammar.title.b")}</span>
             </>
           }
-          description="Explicaciones cortas, ejemplos reales y un quiz de tres preguntas para confirmar que entendiste. Al dominar una lección ganas XP."
+          description={t("grammar.desc")}
           actions={
             stats ? (
               <Badge variant="outline" className="font-mono">
-                {stats.mastered}/{stats.total} dominadas
+                {t("grammar.masteredCount", { done: stats.mastered, total: stats.total })}
               </Badge>
             ) : null
           }
@@ -57,11 +62,11 @@ export default function GrammarPage() {
       </div>
 
       {isLoading ? (
-        <p className="text-sm text-muted-foreground">Cargando lecciones…</p>
+        <p className="text-sm text-muted-foreground">{t("grammar.loading")}</p>
       ) : (
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
           {lessons?.map((lesson) => (
-            <LessonCard key={lesson.id} lesson={lesson} />
+            <LessonCard key={lesson.id} lesson={lesson} t={t} tc={tc} />
           ))}
         </div>
       )}
@@ -69,11 +74,19 @@ export default function GrammarPage() {
   );
 }
 
-function LessonCard({ lesson }: { lesson: GrammarListItem }) {
+function LessonCard({
+  lesson,
+  t,
+  tc,
+}: {
+  lesson: GrammarListItem;
+  t: TFn;
+  tc: (s: string) => string;
+}) {
   const statusBadge = {
-    new: { label: "Nuevo", tone: "secondary" as const, icon: BookOpen },
-    learning: { label: "Aprendiendo", tone: "warning" as const, icon: Sparkles },
-    mastered: { label: "Dominado", tone: "success" as const, icon: Check },
+    new: { key: "grammar.new", tone: "secondary" as const, icon: BookOpen },
+    learning: { key: "grammar.learning", tone: "warning" as const, icon: Sparkles },
+    mastered: { key: "grammar.mastered", tone: "success" as const, icon: Check },
   }[lesson.status];
 
   const Icon = statusBadge.icon;
@@ -112,10 +125,10 @@ function LessonCard({ lesson }: { lesson: GrammarListItem }) {
                 <span className="font-jp">{lesson.structure ?? "—"}</span>
               </p>
               <p className="font-display text-base font-extrabold leading-tight tracking-tight">
-                {lesson.title}
+                {tc(lesson.title)}
               </p>
               <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                {lesson.category ?? "Gramática"}
+                {lesson.category ? tc(lesson.category) : t("grammar.fallbackCategory")}
               </p>
             </div>
             <ArrowRight className="size-4 shrink-0 text-neon-cyan transition-transform group-hover:translate-x-0.5" />
@@ -123,10 +136,10 @@ function LessonCard({ lesson }: { lesson: GrammarListItem }) {
           <div className="mt-4 space-y-1.5">
             <div className="flex items-center justify-between text-[11px] text-muted-foreground">
               <Badge variant={statusBadge.tone} className="text-[10px]">
-                {statusBadge.label}
+                {t(statusBadge.key)}
               </Badge>
               <span className="font-mono tabular-nums">
-                Confianza {lesson.confidence}%
+                {t("grammar.confidence", { n: lesson.confidence })}
               </span>
             </div>
             <Progress value={lesson.confidence} className="h-1" />

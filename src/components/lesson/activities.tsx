@@ -31,6 +31,10 @@ import {
   type DeepDivePage,
 } from "@/components/lesson/deep-dive";
 import { StrokeTrainer, type StrokeProgress } from "@/components/kanji/stroke-trainer";
+import { JpReading } from "@/components/shared/jp-reading";
+import { useT, type TFn } from "@/lib/i18n";
+import { useTc } from "@/lib/content-i18n";
+import { useLanguage } from "@/stores/language";
 import { usePlayTts } from "@/hooks/use-listening";
 import { useVoiceRecorder } from "@/hooks/use-voice-recorder";
 import { toMixedSegments } from "@/lib/tts";
@@ -242,10 +246,13 @@ function ActivityShell({
   eyebrow,
   jp,
   children,
+  wide = false,
 }: {
   eyebrow: string;
   jp?: string;
   children: React.ReactNode;
+  /** Widen the shell for two-column learning cards (explicación | ejemplos). */
+  wide?: boolean;
 }) {
   return (
     <div className="w-full [perspective:1400px]">
@@ -254,7 +261,10 @@ function ActivityShell({
         animate={{ opacity: 1, y: 0, rotateX: 0 }}
         exit={{ opacity: 0, y: -16, rotateX: -5 }}
         transition={{ duration: 0.4, ease: [0.21, 1.02, 0.73, 1] }}
-        className="mx-auto w-full max-w-3xl space-y-6 [transform-style:preserve-3d]"
+        className={cn(
+          "mx-auto w-full space-y-6 [transform-style:preserve-3d]",
+          wide ? "max-w-5xl" : "max-w-3xl"
+        )}
       >
         <div className="text-center">
           {jp ? (
@@ -377,8 +387,10 @@ export function isActivityQuiz(activity: Activity): boolean {
 /** Build the word/example chips shared by kanji & grammar deep dives. */
 function WordChips({
   items,
+  lang = "es",
 }: {
-  items: { jp: string; reading: string; meaning: string }[];
+  items: { jp: string; reading: string; meaning: string; meaningEn?: string }[];
+  lang?: UiLang;
 }) {
   return (
     <div className="grid gap-2 sm:grid-cols-2">
@@ -392,7 +404,9 @@ function WordChips({
             <JaSpeakButton text={w.jp} aria-label={`Escuchar ${w.jp}`} />
           </div>
           <p className="font-jp text-[11px] text-muted-foreground">{w.reading}</p>
-          <p className="mt-0.5 text-xs text-muted-foreground">{w.meaning}</p>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            {pick(lang, w.meaning, w.meaningEn)}
+          </p>
         </div>
       ))}
     </div>
@@ -417,21 +431,29 @@ function WhyBox({ text }: { text: string }) {
  * a slide animation (Rodrigo asked for a carousel — less cramped, more focused). */
 function ExampleCarousel({
   items,
+  perPage = 1,
+  lang = "es",
 }: {
-  items: { jp: string; reading: string; meaning: string }[];
+  items: ExampleItem[];
+  /** How many examples to show per page (fills the wider two-column layout). */
+  perPage?: number;
+  lang?: UiLang;
 }) {
-  const [idx, setIdx] = useState(0);
+  const [page, setPage] = useState(0);
   const [dir, setDir] = useState(1);
   if (items.length === 0) return null;
-  const clamped = Math.min(idx, items.length - 1);
-  const ex = items[clamped];
+  const pageCount = Math.ceil(items.length / perPage);
+  const clamped = Math.min(page, pageCount - 1);
+  const start = clamped * perPage;
+  const group = items.slice(start, start + perPage);
+  const multi = perPage > 1;
   const go = (d: number) => {
     setDir(d);
-    setIdx((i) => (i + d + items.length) % items.length);
+    setPage((p) => (p + d + pageCount) % pageCount);
   };
   return (
     <div>
-      <div className="relative overflow-hidden rounded-2xl border border-neon-cyan/25 bg-gradient-to-br from-card/70 to-background/40 p-6 min-h-[10rem]">
+      <div className="relative overflow-hidden rounded-2xl border border-neon-cyan/25 bg-gradient-to-br from-card/70 to-background/40 p-5 sm:p-6">
         <span className="hud-corner left-2 top-2 border-l-2 border-t-2 border-neon-cyan/40" />
         <span className="hud-corner bottom-2 right-2 border-b-2 border-r-2 border-neon-cyan/40" />
         <AnimatePresence mode="wait" custom={dir}>
@@ -447,37 +469,62 @@ function ExampleCarousel({
             animate="center"
             exit="exit"
             transition={{ duration: 0.25 }}
-            className="flex flex-col items-center text-center"
+            className={multi ? "space-y-4" : ""}
           >
-            <div className="flex items-center gap-3">
-              <p className="font-jp text-2xl leading-snug sm:text-3xl">{ex.jp}</p>
-              <JaSpeakButton text={ex.jp} aria-label={`Escuchar ${ex.jp}`} />
-            </div>
-            <p className="mt-2 font-jp text-sm text-muted-foreground">{ex.reading}</p>
-            <p className="mt-1 text-sm text-foreground/85">{ex.meaning}</p>
+            {group.map((ex, i) => (
+              <div
+                key={i}
+                className={cn(
+                  "flex flex-col items-center text-center",
+                  multi && i > 0 && "border-t border-border/30 pt-4"
+                )}
+              >
+                <div className="flex items-center gap-3">
+                  <p
+                    className={cn(
+                      "font-jp leading-snug",
+                      multi ? "text-xl sm:text-2xl" : "text-2xl sm:text-3xl"
+                    )}
+                  >
+                    {ex.jp}
+                  </p>
+                  <JaSpeakButton text={ex.jp} aria-label={`Escuchar ${ex.jp}`} />
+                </div>
+                {ex.reading ? (
+                  <p className="mt-2 font-jp text-sm text-muted-foreground">
+                    {ex.reading}
+                  </p>
+                ) : null}
+                {ex.meaning ? (
+                  <p className="mt-1 text-sm text-foreground/85">
+                    {pick(lang, ex.meaning, ex.meaningEn)}
+                  </p>
+                ) : null}
+              </div>
+            ))}
           </motion.div>
         </AnimatePresence>
       </div>
 
-      {items.length > 1 ? (
+      {pageCount > 1 ? (
         <div className="mt-3 flex items-center justify-between">
           <button
             type="button"
             onClick={() => go(-1)}
-            aria-label="Ejemplo anterior"
+            aria-label="Anterior"
             className="grid size-8 place-items-center rounded-full border border-border/50 text-muted-foreground transition-colors hover:border-neon-cyan/60 hover:text-neon-cyan"
           >
             <ChevronLeft className="size-4" />
           </button>
           <div className="flex items-center gap-1.5">
-            {items.map((_, i) => (
+            {Array.from({ length: pageCount }).map((_, i) => (
               <button
                 key={i}
                 type="button"
-                aria-label={`Ejemplo ${i + 1}`}
+                aria-label={`Página ${i + 1}`}
                 onClick={() => {
                   setDir(i > clamped ? 1 : -1);
-                  setIdx(i);
+                  setPage(i);
                 }}
                 className={cn(
                   "h-1.5 rounded-full transition-all",
@@ -489,13 +536,136 @@ function ExampleCarousel({
           <button
             type="button"
             onClick={() => go(1)}
-            aria-label="Ejemplo siguiente"
+            aria-label="Siguiente"
             className="grid size-8 place-items-center rounded-full border border-border/50 text-muted-foreground transition-colors hover:border-neon-cyan/60 hover:text-neon-cyan"
           >
             <ChevronRight className="size-4" />
           </button>
         </div>
       ) : null}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Two-module learning card: Explicación | Ejemplos (Rodrigo: "separarlo en dos
+// módulos, uno la explicación y otro los ejemplos + escucharlos"). Applies to
+// every intro card in the app (kanji, vocabulario, gramática).
+// ---------------------------------------------------------------------------
+
+interface ExampleItem {
+  jp: string;
+  reading: string;
+  meaning: string;
+  meaningEn?: string;
+}
+
+/** Merge headline + note examples, dropping duplicates by Japanese text. */
+function dedupeExamples(items: (ExampleItem | undefined | null)[]): ExampleItem[] {
+  const seen = new Set<string>();
+  const out: ExampleItem[] = [];
+  for (const it of items) {
+    if (!it || !it.jp || seen.has(it.jp)) continue;
+    seen.add(it.jp);
+    out.push(it);
+  }
+  return out;
+}
+
+/** Small header shared by both modules: JP glyph + eyebrow (kana + romaji). */
+function ModuleHeader({
+  jp,
+  kana,
+  romaji,
+  label,
+  accent = "cyan",
+}: {
+  jp: string;
+  kana: string;
+  romaji: string;
+  label: string;
+  accent?: "cyan" | "violet";
+}) {
+  return (
+    <div className="flex items-center gap-3">
+      <span
+        className={cn(
+          "font-jp text-2xl font-bold",
+          accent === "violet" ? "text-neon-violet" : "text-neon-cyan"
+        )}
+      >
+        {jp}
+      </span>
+      <div className="leading-tight">
+        <p
+          className={cn(
+            "font-mono text-[10px] uppercase tracking-[0.25em]",
+            accent === "violet" ? "text-neon-violet" : "text-neon-cyan"
+          )}
+        >
+          {label}
+        </p>
+        <JpReading jp={jp} kana={kana} romaji={romaji} className="mt-0.5 block" />
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Right-hand module: the worked examples, shown one at a time in a carousel,
+ * each with its own 🔊, plus a bilingual "Escuchar todos" to hear them in a row.
+ */
+function ExamplesModule({
+  examples,
+  why,
+}: {
+  examples: ExampleItem[];
+  /** Optional "por qué se usa así" context shown above the examples. */
+  why?: string;
+}) {
+  const t = useT();
+  const lang = useLanguage((s) => s.lang);
+  if (examples.length === 0) return null;
+  return (
+    <div className="relative flex h-full flex-col overflow-hidden rounded-3xl glass-strong p-6 sm:p-7">
+      <span className="hud-corner right-3 top-3 border-r-2 border-t-2 border-neon-cyan/40" />
+      <span className="hud-corner bottom-3 left-3 border-b-2 border-l-2 border-neon-cyan/40" />
+      <ModuleHeader jp="例" kana="れい" romaji="rei" label={t("act.examples")} />
+      <div className="mt-5 flex flex-1 flex-col">
+        {why ? <WhyBox text={why} /> : null}
+        {/* Center the carousel in the leftover height so the column isn't top-heavy.
+            Each example has its own 🔊 (JaSpeakButton) — no "escuchar todos" that
+            would break when you flip the page. */}
+        <div className="flex flex-1 items-center">
+          <div className="w-full">
+            <ExampleCarousel items={examples} perPage={2} lang={lang} />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Left-hand module: the teaching content (headline + explanation + deep dive). */
+function ExplainModule({ children }: { children: React.ReactNode }) {
+  const t = useT();
+  return (
+    <div className="relative flex h-full flex-col overflow-hidden rounded-3xl glass-strong p-6 sm:p-7">
+      <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-[inherit]">
+        <div className="animate-scanline absolute left-0 h-10 w-full bg-gradient-to-b from-transparent via-neon-violet/[0.06] to-transparent" />
+      </div>
+      <span className="hud-corner left-3 top-3 border-l-2 border-t-2 border-neon-violet/40" />
+      <span className="hud-corner bottom-3 right-3 border-b-2 border-r-2 border-neon-violet/40" />
+      <div className="relative flex flex-1 flex-col">
+        <ModuleHeader
+          jp="説明"
+          kana="せつめい"
+          romaji="setsumei"
+          label={t("act.explanation")}
+          accent="violet"
+        />
+        <div className="mt-5 flex flex-1 flex-col">{children}</div>
+      </div>
     </div>
   );
 }
@@ -508,122 +678,144 @@ function wordSegments(items: KanjiWord[], lang: "es" | "en") {
   ]);
 }
 
+// Pick the Spanish or English variant of a note field for display.
+type UiLang = "es" | "en";
+const pick = (lang: UiLang, es: string, en?: string) =>
+  lang === "en" ? en ?? es : es;
+const pickArr = (lang: UiLang, es: string[], en?: string[]) =>
+  lang === "en" ? en ?? es : es;
+
+function BulletList({ items, tone = "cyan" }: { items: string[]; tone?: "cyan" | "warning" }) {
+  return (
+    <ul className="space-y-1.5">
+      {items.map((c, i) => (
+        <li key={i} className="flex gap-2 text-sm text-foreground/90">
+          <span
+            className={cn(
+              "mt-1 size-1.5 shrink-0 rounded-full",
+              tone === "warning" ? "bg-warning" : "bg-neon-cyan"
+            )}
+          />
+          <span>{c}</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+/** An optional "En detalle" page built from a note's nuance field. */
+function detailPage(
+  t: TFn,
+  lang: UiLang,
+  nuance?: string,
+  nuanceEn?: string
+): DeepDivePage[] {
+  if (!nuance) return [];
+  return [
+    {
+      label: t("deepdive.detail"),
+      speech: (l) => toMixedSegments(pick(l, nuance, nuanceEn), l),
+      body: (
+        <p className="text-sm leading-relaxed text-foreground/90">
+          {pick(lang, nuance, nuanceEn)}
+        </p>
+      ),
+    },
+  ];
+}
+
 /** Turn an extended kanji note into paginated "A fondo" pages (bilingual audio). */
-function kanjiPages(note: KanjiNote): DeepDivePage[] {
-  const pages: DeepDivePage[] = [
+function kanjiPages(note: KanjiNote, t: TFn, lang: UiLang): DeepDivePage[] {
+  return [
     {
-      label: "¿Cómo se usa?",
-      speech: (lang) =>
-        toMixedSegments(lang === "en" ? note.usageEn : note.usage, lang),
+      label: t("deepdive.howUsed"),
+      speech: (l) => toMixedSegments(pick(l, note.usage, note.usageEn), l),
       body: (
-        <p className="text-sm leading-relaxed text-foreground/90">{note.usage}</p>
+        <p className="text-sm leading-relaxed text-foreground/90">
+          {pick(lang, note.usage, note.usageEn)}
+        </p>
       ),
     },
     {
-      label: "Cómo combinarlo",
-      speech: (lang) =>
-        (lang === "en" ? note.combosEn : note.combos).flatMap((c) =>
-          toMixedSegments(c, lang)
-        ),
-      body: (
-        <ul className="space-y-1.5">
-          {note.combos.map((c, i) => (
-            <li key={i} className="flex gap-2 text-sm text-foreground/90">
-              <span className="mt-1 size-1.5 shrink-0 rounded-full bg-neon-cyan" />
-              <span>{c}</span>
-            </li>
-          ))}
-        </ul>
-      ),
+      label: t("deepdive.howCombine"),
+      speech: (l) =>
+        pickArr(l, note.combos, note.combosEn).flatMap((c) => toMixedSegments(c, l)),
+      body: <BulletList items={pickArr(lang, note.combos, note.combosEn)} />,
     },
     {
-      label: "Palabras comunes",
-      speech: (lang) => [
-        { text: lang === "en" ? "Common words:" : "Palabras comunes:", lang },
-        ...wordSegments(note.words, lang),
+      label: t("deepdive.commonWords"),
+      speech: (l) => [
+        { text: l === "en" ? "Common words:" : "Palabras comunes:", lang: l },
+        ...wordSegments(note.words, l),
       ],
-      body: <WordChips items={note.words} />,
+      body: <WordChips items={note.words} lang={lang} />,
     },
+    ...detailPage(t, lang, note.nuance, note.nuanceEn),
     {
-      label: "Ejemplos de la vida real",
-      speech: (lang) => [
-        { text: lang === "en" ? "Examples:" : "Ejemplos:", lang },
-        ...wordSegments(note.examples, lang),
+      label: t("deepdive.realExamples"),
+      speech: (l) => [
+        { text: l === "en" ? "Examples:" : "Ejemplos:", lang: l },
+        ...wordSegments(note.examples, l),
       ],
       body: (
         <div>
-          <WhyBox text={note.usage} />
-          <ExampleCarousel items={note.examples} />
+          <WhyBox text={pick(lang, note.usage, note.usageEn)} />
+          <ExampleCarousel items={note.examples} lang={lang} />
         </div>
       ),
     },
   ];
-  return pages;
 }
 
-/** Turn a grammar note into paginated "A fondo" pages (bilingual audio, English
- * falls back to Spanish where a translation isn't authored yet). */
-function grammarPages(note: GrammarNote): DeepDivePage[] {
+/** Turn a grammar note into paginated "A fondo" pages (bilingual audio). */
+function grammarPages(note: GrammarNote, t: TFn, lang: UiLang): DeepDivePage[] {
   return [
     {
-      label: "¿Por qué se usa?",
-      speech: (lang) =>
-        toMixedSegments(lang === "en" ? note.whyEn ?? note.why : note.why, lang),
+      label: t("deepdive.why"),
+      speech: (l) => toMixedSegments(pick(l, note.why, note.whyEn), l),
       body: (
-        <p className="text-sm leading-relaxed text-foreground/90">{note.why}</p>
+        <p className="text-sm leading-relaxed text-foreground/90">
+          {pick(lang, note.why, note.whyEn)}
+        </p>
       ),
     },
     {
-      label: "¿Cuándo usarla?",
-      speech: (lang) =>
-        (lang === "en"
-          ? note.whenToUseEn ?? note.whenToUse
-          : note.whenToUse
-        ).flatMap((c) => toMixedSegments(c, lang)),
-      body: (
-        <ul className="space-y-1.5">
-          {note.whenToUse.map((c, i) => (
-            <li key={i} className="flex gap-2 text-sm text-foreground/90">
-              <span className="mt-1 size-1.5 shrink-0 rounded-full bg-neon-cyan" />
-              <span>{c}</span>
-            </li>
-          ))}
-        </ul>
-      ),
+      label: t("deepdive.when"),
+      speech: (l) =>
+        pickArr(l, note.whenToUse, note.whenToUseEn).flatMap((c) =>
+          toMixedSegments(c, l)
+        ),
+      body: <BulletList items={pickArr(lang, note.whenToUse, note.whenToUseEn)} />,
     },
     {
-      label: "⚠ Errores comunes",
-      speech: (lang) => [
-        { text: lang === "en" ? "Common mistakes:" : "Errores comunes:", lang },
-        ...(lang === "en"
-          ? note.mistakesEn ?? note.mistakes
-          : note.mistakes
-        ).flatMap((m) => toMixedSegments(m, lang)),
+      label: t("deepdive.mistakes"),
+      speech: (l) => [
+        { text: l === "en" ? "Common mistakes:" : "Errores comunes:", lang: l },
+        ...pickArr(l, note.mistakes, note.mistakesEn).flatMap((m) =>
+          toMixedSegments(m, l)
+        ),
       ],
       body: (
-        <ul className="space-y-1.5">
-          {note.mistakes.map((m, i) => (
-            <li key={i} className="flex gap-2 text-sm text-foreground/80">
-              <span className="mt-1 size-1.5 shrink-0 rounded-full bg-warning" />
-              <span>{m}</span>
-            </li>
-          ))}
-        </ul>
+        <BulletList
+          items={pickArr(lang, note.mistakes, note.mistakesEn)}
+          tone="warning"
+        />
       ),
     },
+    ...detailPage(t, lang, note.nuance, note.nuanceEn),
     {
-      label: "Ejemplos",
-      speech: (lang) => [
-        { text: lang === "en" ? "Examples:" : "Ejemplos:", lang },
+      label: t("deepdive.examples"),
+      speech: (l) => [
+        { text: l === "en" ? "Examples:" : "Ejemplos:", lang: l },
         ...note.examples.flatMap((e) => [
           { text: e.jp, lang: "ja" as const },
-          { text: lang === "en" ? e.meaningEn ?? e.meaning : e.meaning, lang },
+          { text: pick(l, e.meaning, e.meaningEn), lang: l },
         ]),
       ],
       body: (
         <div>
-          <WhyBox text={note.why} />
-          <ExampleCarousel items={note.examples} />
+          <WhyBox text={pick(lang, note.why, note.whyEn)} />
+          <ExampleCarousel items={note.examples} lang={lang} />
         </div>
       ),
     },
@@ -631,46 +823,37 @@ function grammarPages(note: GrammarNote): DeepDivePage[] {
 }
 
 /** Turn a vocabulary note into paginated "A fondo" pages (bilingual audio). */
-function vocabPages(note: VocabNote): DeepDivePage[] {
+function vocabPages(note: VocabNote, t: TFn, lang: UiLang): DeepDivePage[] {
   return [
     {
-      label: "¿Cómo se usa?",
-      speech: (lang) =>
-        toMixedSegments(lang === "en" ? note.usageEn : note.usage, lang),
+      label: t("deepdive.howUsed"),
+      speech: (l) => toMixedSegments(pick(l, note.usage, note.usageEn), l),
       body: (
-        <p className="text-sm leading-relaxed text-foreground/90">{note.usage}</p>
+        <p className="text-sm leading-relaxed text-foreground/90">
+          {pick(lang, note.usage, note.usageEn)}
+        </p>
       ),
     },
     {
-      label: "Notas útiles",
-      speech: (lang) =>
-        (lang === "en" ? note.notesEn : note.notes).flatMap((n) =>
-          toMixedSegments(n, lang)
-        ),
-      body: (
-        <ul className="space-y-1.5">
-          {note.notes.map((n, i) => (
-            <li key={i} className="flex gap-2 text-sm text-foreground/90">
-              <span className="mt-1 size-1.5 shrink-0 rounded-full bg-neon-cyan" />
-              <span>{n}</span>
-            </li>
-          ))}
-        </ul>
-      ),
+      label: t("deepdive.usefulNotes"),
+      speech: (l) =>
+        pickArr(l, note.notes, note.notesEn).flatMap((n) => toMixedSegments(n, l)),
+      body: <BulletList items={pickArr(lang, note.notes, note.notesEn)} />,
     },
+    ...detailPage(t, lang, note.nuance, note.nuanceEn),
     {
-      label: "Ejemplos de la vida real",
-      speech: (lang) => [
-        { text: lang === "en" ? "Examples:" : "Ejemplos:", lang },
+      label: t("deepdive.realExamples"),
+      speech: (l) => [
+        { text: l === "en" ? "Examples:" : "Ejemplos:", lang: l },
         ...note.examples.flatMap((e) => [
           { text: e.jp, lang: "ja" as const },
-          { text: lang === "en" ? e.meaningEn : e.meaning, lang },
+          { text: pick(l, e.meaning, e.meaningEn), lang: l },
         ]),
       ],
       body: (
         <div>
-          <WhyBox text={note.usage} />
-          <ExampleCarousel items={note.examples} />
+          <WhyBox text={pick(lang, note.usage, note.usageEn)} />
+          <ExampleCarousel items={note.examples} lang={lang} />
         </div>
       ),
     },
@@ -682,76 +865,74 @@ function IntroKanji({
 }: {
   activity: Extract<Activity, { kind: "intro_kanji" }>;
 }) {
+  const t = useT();
+  const tc = useTc();
+  const lang = useLanguage((s) => s.lang);
   const note = kanjiNoteFor(activity.kanjiChar);
+  const examples = dedupeExamples([
+    activity.example ?? null,
+    ...(note?.examples ?? []),
+  ]);
+  // The examples live in the right-hand module, so drop those pages here.
+  const exLabels = [t("deepdive.examples"), t("deepdive.realExamples")];
+  const explainPages = note
+    ? kanjiPages(note, t, lang).filter((p) => !exLabels.includes(p.label))
+    : [];
+  const hasExamples = examples.length > 0;
   return (
-    <ActivityShell eyebrow="Nuevo kanji" jp="新しい漢字">
-      <div className="hud-frame relative overflow-hidden rounded-3xl glass-strong p-10">
-        {/* HUD scanline + corner brackets */}
-        <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-3xl">
-          <div className="animate-scanline absolute left-0 h-10 w-full bg-gradient-to-b from-transparent via-neon-cyan/8 to-transparent" />
-        </div>
-        <span className="hud-corner left-3 top-3 border-l-2 border-t-2" />
-        <span className="hud-corner right-3 top-3 border-r-2 border-t-2" />
-        <span className="hud-corner bottom-3 left-3 border-b-2 border-l-2" />
-        <span className="hud-corner bottom-3 right-3 border-b-2 border-r-2" />
-
-        <div className="relative text-center">
-          <div className="relative inline-flex items-center justify-center">
-            <div className="absolute inset-0 animate-pulse rounded-full bg-gradient-to-br from-primary via-neon-violet to-neon-cyan opacity-30 blur-2xl" />
-            <span
-              className="animate-holo-float relative font-jp text-[150px] leading-none text-primary"
-              style={{
-                textShadow:
-                  "0 0 22px color-mix(in oklch, var(--color-primary) 75%, transparent), 0 0 48px color-mix(in oklch, var(--color-neon-violet) 50%, transparent)",
-              }}
-            >
-              {activity.kanjiChar}
-            </span>
-          </div>
-          <p className="mt-4 font-display text-2xl font-bold tracking-tight">
-            {activity.meaning}
-          </p>
-          <p className="mt-2 text-xs text-muted-foreground">
-            Toca 🔊 en cada lectura para oírla por separado.
-          </p>
-        </div>
-
-        <div className="mt-8 grid grid-cols-2 gap-4">
-          <ReadingBlock label="On'yomi (lectura china)" readings={activity.onyomi} />
-          <ReadingBlock label="Kun'yomi (lectura japonesa)" readings={activity.kunyomi} />
-        </div>
-
-        {activity.example ? (
-          <div className="mt-6 rounded-xl bg-accent/30 p-4">
-            <div className="flex items-start justify-between gap-2">
-              <p className="font-jp text-xl">{activity.example.jp}</p>
-              <JaSpeakButton
-                text={activity.example.jp}
-                aria-label="Escuchar el ejemplo"
-              />
+    <ActivityShell eyebrow={t("act.newKanji")} jp="新しい漢字" wide={hasExamples}>
+      <div
+        className={cn(
+          "grid items-stretch gap-6",
+          hasExamples && "lg:grid-cols-2"
+        )}
+      >
+        {/* Módulo 1 — Explicación */}
+        <ExplainModule>
+          <div className="text-center">
+            <div className="relative inline-flex items-center justify-center">
+              <div className="absolute inset-0 animate-pulse rounded-full bg-gradient-to-br from-primary via-neon-violet to-neon-cyan opacity-30 blur-2xl" />
+              <span
+                className="animate-holo-float relative font-jp text-[110px] leading-none text-primary"
+                style={{
+                  textShadow:
+                    "0 0 22px color-mix(in oklch, var(--color-primary) 75%, transparent), 0 0 48px color-mix(in oklch, var(--color-neon-violet) 50%, transparent)",
+                }}
+              >
+                {activity.kanjiChar}
+              </span>
             </div>
-            <p className="font-jp text-xs text-muted-foreground">
-              {activity.example.reading}
+            <p className="mt-4 font-display text-2xl font-bold tracking-tight">
+              {tc(activity.meaning)}
             </p>
-            <RomajiLine reading={activity.example.reading} />
-            <p className="mt-1 text-sm text-muted-foreground">
-              {activity.example.meaning}
+            <p className="mt-2 text-xs text-muted-foreground">
+              Toca 🔊 en cada lectura para oírla por separado.
             </p>
           </div>
-        ) : null}
 
-        {activity.note ? (
-          <p className="mt-5 text-sm leading-relaxed text-muted-foreground">
-            {activity.note}
-          </p>
-        ) : null}
+          <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <ReadingBlock label="On'yomi (lectura china)" readings={activity.onyomi} />
+            <ReadingBlock label="Kun'yomi (lectura japonesa)" readings={activity.kunyomi} />
+          </div>
 
-        {note ? (
-          <DeepDive
-            title={`El kanji ${activity.kanjiChar}`}
-            jp={activity.kanjiChar}
-            pages={kanjiPages(note)}
-          />
+          {activity.note ? (
+            <p className="mt-5 text-sm leading-relaxed text-muted-foreground">
+              {activity.note}
+            </p>
+          ) : null}
+
+          {explainPages.length ? (
+            <DeepDive
+              title={`El kanji ${activity.kanjiChar}`}
+              jp={activity.kanjiChar}
+              pages={explainPages}
+            />
+          ) : null}
+        </ExplainModule>
+
+        {/* Módulo 2 — Ejemplos */}
+        {hasExamples ? (
+          <ExamplesModule examples={examples} why={note?.usage} />
         ) : null}
       </div>
     </ActivityShell>
@@ -797,79 +978,90 @@ function IntroVocab({
 }: {
   activity: Extract<Activity, { kind: "intro_vocab" }>;
 }) {
+  const t = useT();
+  const tc = useTc();
+  const lang = useLanguage((s) => s.lang);
   const note = vocabNoteFor(activity.word);
+  // Prefer the rich note examples; fall back to the single bare-string example.
+  const examples = dedupeExamples(
+    note?.examples?.length
+      ? note.examples
+      : activity.example
+        ? [{ jp: activity.example, reading: "", meaning: "" }]
+        : []
+  );
+  const exLabels = [t("deepdive.examples"), t("deepdive.realExamples")];
+  const explainPages = note
+    ? vocabPages(note, t, lang).filter((p) => !exLabels.includes(p.label))
+    : [];
+  const hasExamples = examples.length > 0;
   return (
-    <ActivityShell eyebrow="Nueva palabra" jp="新しい単語">
-      <HudPanel glow className="p-10 text-center">
-        {/* radial holo backdrop */}
-        <div
-          aria-hidden
-          className="pointer-events-none absolute left-1/2 top-16 size-56 -translate-x-1/2 rounded-full bg-gradient-to-br from-primary/25 via-neon-violet/15 to-transparent blur-3xl"
-        />
-        <div className="relative space-y-3 [perspective:900px]">
-          <p className="font-mono text-[10px] tracking-[0.4em] text-neon-cyan/80">
-            {activity.reading}
-          </p>
-          {/* Holographic 3D word — the centerpiece */}
-          <motion.h2
-            initial={{ opacity: 0, rotateX: 25, y: 12 }}
-            animate={{ opacity: 1, rotateX: 0, y: 0 }}
-            transition={{ duration: 0.6, ease: [0.21, 1.02, 0.73, 1] }}
-            className="animate-holo-float font-jp text-6xl font-semibold tracking-tight text-primary [transform-style:preserve-3d]"
-            style={{
-              textShadow:
-                "0 0 24px color-mix(in oklch, var(--color-primary) 70%, transparent), 0 0 56px color-mix(in oklch, var(--color-neon-violet) 45%, transparent)",
-            }}
-          >
-            {activity.word}
-          </motion.h2>
-          <RomajiLine reading={activity.reading} className="text-center" />
-          <p className="font-display text-xl font-bold text-foreground/90">
-            {activity.meaning}
-          </p>
-        </div>
-        <div className="mt-6 flex justify-center">
-          <AudioBar
-            getSegments={(lang) => [
-              { text: activity.word, lang: "ja" as const },
-              ...toMixedSegments(
-                lang === "en"
-                  ? `means ${activity.meaning}`
-                  : `significa ${activity.meaning}`,
-                lang
-              ),
-              ...(activity.example
-                ? [{ text: activity.example, lang: "ja" as const }]
-                : []),
-            ]}
-          />
-        </div>
-        {activity.example ? (
-          <div className="relative mt-7 rounded-xl border border-l-2 border-border/40 border-l-neon-cyan/60 bg-card/40 p-4 text-left">
-            <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-neon-cyan/90">
-              例 · Ejemplo
+    <ActivityShell eyebrow={t("act.newWord")} jp="新しい単語" wide={hasExamples}>
+      <div
+        className={cn(
+          "grid items-stretch gap-6",
+          hasExamples && "lg:grid-cols-2"
+        )}
+      >
+        {/* Módulo 1 — Explicación */}
+        <ExplainModule>
+          <div className="relative space-y-3 text-center [perspective:900px]">
+            {/* radial holo backdrop */}
+            <div
+              aria-hidden
+              className="pointer-events-none absolute left-1/2 top-4 size-48 -translate-x-1/2 rounded-full bg-gradient-to-br from-primary/25 via-neon-violet/15 to-transparent blur-3xl"
+            />
+            <p className="relative font-mono text-[10px] tracking-[0.4em] text-neon-cyan/80">
+              {activity.reading}
             </p>
-            <p className="mt-1.5 font-jp text-lg">{activity.example}</p>
-            {/* Only show romaji for kana-only examples — converting mixed
-                kanji+kana produces junk like "私ha学生desu.". */}
-            {!/[㐀-鿿]/.test(activity.example) ? (
-              <p className="mt-1 font-mono text-xs text-muted-foreground">
-                {toRomaji(activity.example)}
-              </p>
-            ) : null}
+            {/* Holographic 3D word — the centerpiece */}
+            <motion.h2
+              initial={{ opacity: 0, rotateX: 25, y: 12 }}
+              animate={{ opacity: 1, rotateX: 0, y: 0 }}
+              transition={{ duration: 0.6, ease: [0.21, 1.02, 0.73, 1] }}
+              className="animate-holo-float relative font-jp text-6xl font-semibold tracking-tight text-primary [transform-style:preserve-3d]"
+              style={{
+                textShadow:
+                  "0 0 24px color-mix(in oklch, var(--color-primary) 70%, transparent), 0 0 56px color-mix(in oklch, var(--color-neon-violet) 45%, transparent)",
+              }}
+            >
+              {activity.word}
+            </motion.h2>
+            <RomajiLine reading={activity.reading} className="text-center" />
+            <p className="font-display text-xl font-bold text-foreground/90">
+              {tc(activity.meaning)}
+            </p>
           </div>
-        ) : null}
-
-        {note ? (
-          <div className="text-left">
-            <DeepDive
-              title={`«${activity.meaning}»`}
-              jp={activity.word}
-              pages={vocabPages(note)}
+          <div className="mt-6 flex justify-center">
+            <AudioBar
+              getSegments={(lang) => [
+                { text: activity.word, lang: "ja" as const },
+                ...toMixedSegments(
+                  lang === "en"
+                    ? `means ${activity.meaning}`
+                    : `significa ${activity.meaning}`,
+                  lang
+                ),
+              ]}
             />
           </div>
+
+          {explainPages.length ? (
+            <div className="text-left">
+              <DeepDive
+                title={`«${tc(activity.meaning)}»`}
+                jp={activity.word}
+                pages={explainPages}
+              />
+            </div>
+          ) : null}
+        </ExplainModule>
+
+        {/* Módulo 2 — Ejemplos */}
+        {hasExamples ? (
+          <ExamplesModule examples={examples} why={note?.usage} />
         ) : null}
-      </HudPanel>
+      </div>
     </ActivityShell>
   );
 }
@@ -883,50 +1075,57 @@ function IntroGrammar({
 }: {
   activity: Extract<Activity, { kind: "intro_grammar" }>;
 }) {
+  const t = useT();
+  const tc = useTc();
+  const lang = useLanguage((s) => s.lang);
   const note = grammarNoteFor(activity.pattern, activity.title);
+  const examples = dedupeExamples([activity.example, ...(note?.examples ?? [])]);
+  const exLabels = [t("deepdive.examples"), t("deepdive.realExamples")];
+  const explainPages = note
+    ? grammarPages(note, t, lang).filter((p) => !exLabels.includes(p.label))
+    : [];
+  const hasExamples = examples.length > 0;
   return (
-    <ActivityShell eyebrow="Nueva gramática" jp="新しい文法">
-      <HudPanel glow className="p-10">
-        <h2 className="font-display text-balance text-2xl font-extrabold tracking-tight">
-          {activity.title}
-        </h2>
-        <div className="relative mt-5 inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/10 px-4 py-2 font-jp text-base text-primary shadow-[0_0_24px_-8px_color-mix(in_oklch,var(--color-primary)_60%,transparent)]">
-          <span className="size-1.5 animate-pulse rounded-full bg-neon-cyan" />
-          {activity.pattern}
-        </div>
-        <p className="mt-5 text-sm leading-relaxed text-muted-foreground">
-          {activity.explanation}
-        </p>
-        <div className="mt-4">
-          <AudioBar
-            getSegments={(lang) => [
-              ...toMixedSegments(
-                `${activity.title}. ${activity.explanation}`,
-                lang
-              ),
-              { text: activity.example.jp, lang: "ja" as const },
-              ...toMixedSegments(activity.example.meaning, lang),
-            ]}
-          />
-        </div>
-        <div className="mt-6 rounded-xl border border-l-2 border-success/30 border-l-success/70 bg-success/5 p-4">
-          <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-success">
-            例 · Ejemplo
+    <ActivityShell eyebrow={t("act.newGrammar")} jp="新しい文法" wide={hasExamples}>
+      <div
+        className={cn(
+          "grid items-stretch gap-6",
+          hasExamples && "lg:grid-cols-2"
+        )}
+      >
+        {/* Módulo 1 — Explicación */}
+        <ExplainModule>
+          <h2 className="font-display text-balance text-2xl font-extrabold tracking-tight">
+            {tc(activity.title)}
+          </h2>
+          <div className="relative mt-3 inline-flex w-fit items-center gap-2 rounded-full border border-primary/40 bg-primary/10 px-4 py-2 font-jp text-base text-primary shadow-[0_0_24px_-8px_color-mix(in_oklch,var(--color-primary)_60%,transparent)]">
+            <span className="size-1.5 animate-pulse rounded-full bg-neon-cyan" />
+            {activity.pattern}
+          </div>
+          <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
+            {tc(activity.explanation)}
           </p>
-          <p className="mt-1.5 font-jp text-lg">{activity.example.jp}</p>
-          <p className="font-jp text-xs text-muted-foreground">
-            {activity.example.reading}
-          </p>
-          <RomajiLine reading={activity.example.reading} />
-          <p className="mt-1 text-sm text-muted-foreground">
-            {activity.example.meaning}
-          </p>
-        </div>
+          <div className="mt-4">
+            <AudioBar
+              getSegments={(lang) =>
+                toMixedSegments(
+                  `${activity.title}. ${activity.explanation}`,
+                  lang
+                )
+              }
+            />
+          </div>
 
-        {note ? (
-          <DeepDive title={note.title} jp={note.jp} pages={grammarPages(note)} />
+          {explainPages.length ? (
+            <DeepDive title={note!.title} jp={note!.jp} pages={explainPages} />
+          ) : null}
+        </ExplainModule>
+
+        {/* Módulo 2 — Ejemplos */}
+        {hasExamples ? (
+          <ExamplesModule examples={examples} why={note?.why} />
         ) : null}
-      </HudPanel>
+      </div>
     </ActivityShell>
   );
 }
@@ -946,6 +1145,8 @@ function QuizActivity({
   onAnswer: (correct: boolean) => void;
   onLearn?: (target: string) => void;
 }) {
+  const t = useT();
+  const tc = useTc();
   // Shuffle options once per activity mount so the correct answer doesn't
   // always sit in the same slot.
   const shuffled = useMemo(() => {
@@ -986,7 +1187,7 @@ function QuizActivity({
     verified && wrongForExplain && activity.explanation ? (
       <ExplanationCard
         correctAnswer={activity.options[activity.correctIndex]}
-        explanation={activity.explanation}
+        explanation={tc(activity.explanation)}
         onLearn={onLearn}
         learnTarget={
           japaneseToken(activity.promptJp) ??
@@ -1014,7 +1215,7 @@ function QuizActivity({
           activity.promptJp ? "mt-4" : ""
         )}
       >
-        {activity.prompt}
+        {tc(activity.prompt)}
       </p>
     </div>
   );
@@ -1050,10 +1251,10 @@ function QuizActivity({
       );
     };
     return (
-      <ActivityShell eyebrow="¿Verdadero o falso?" jp="正しい?">
+      <ActivityShell eyebrow={t("act.trueFalse")} jp="正しい?">
         <HudPanel className="p-10">
           <p className="text-center text-sm text-muted-foreground">
-            ¿Es correcta esta afirmación?
+            {t("act.isCorrect")}
           </p>
           <motion.div
             initial={{ opacity: 0, scale: 0.96 }}
@@ -1063,12 +1264,12 @@ function QuizActivity({
           >
             <p className="font-jp text-3xl leading-tight">{activity.promptJp}</p>
             <p className="mt-2 text-xl font-semibold">
-              = «{tfClaim.text}»
+              = «{tc(tfClaim.text)}»
             </p>
           </motion.div>
           <div className="mt-7 flex gap-3">
-            {btn(true, "Verdadero", Check)}
-            {btn(false, "Falso", X)}
+            {btn(true, t("act.true"), Check)}
+            {btn(false, t("act.false"), X)}
           </div>
           {explanation}
         </HudPanel>
@@ -1079,7 +1280,7 @@ function QuizActivity({
   // ---- GRID (2-column cards) ------------------------------------------------
   if (styleName === "grid") {
     return (
-      <ActivityShell eyebrow="Elige la correcta" jp="選ぶ">
+      <ActivityShell eyebrow={t("act.choose")} jp="選ぶ">
         <HudPanel className="p-10">
           {prompt}
           <div className="mt-7 grid grid-cols-2 gap-3">
@@ -1108,7 +1309,7 @@ function QuizActivity({
                     verified && !opt.isCorrect && !isPicked && "opacity-40"
                   )}
                 >
-                  <div className="font-jp text-lg">{opt.text}</div>
+                  <div className="font-jp text-lg">{tc(opt.text)}</div>
                   {romaji ? (
                     <div className="font-mono text-[11px] text-muted-foreground">
                       {romaji}
@@ -1126,7 +1327,7 @@ function QuizActivity({
 
   // ---- LIST (A/B/C) — default ----------------------------------------------
   return (
-    <ActivityShell eyebrow="Pregunta" jp="質問">
+    <ActivityShell eyebrow={t("act.question")} jp="質問">
       <HudPanel className="p-10">
         {prompt}
         <div className="mt-7 grid gap-3">
@@ -1167,7 +1368,7 @@ function QuizActivity({
                   {String.fromCharCode(65 + idx)}
                 </span>
                 <div className="min-w-0">
-                  <div className="font-jp text-base">{opt.text}</div>
+                  <div className="font-jp text-base">{tc(opt.text)}</div>
                   {romaji ? (
                     <div className="mt-0.5 font-mono text-[11px] text-muted-foreground">
                       {romaji}
@@ -1199,6 +1400,8 @@ function ListeningActivity({
   onAnswer: (correct: boolean) => void;
   onLearn?: (target: string) => void;
 }) {
+  const t = useT();
+  const tc = useTc();
   const play = usePlayTts();
   const [rate, setRate] = useState(160);
   const shuffled = useMemo(() => {
@@ -1216,7 +1419,7 @@ function ListeningActivity({
   const correctIndex = shuffled.findIndex((o) => o.isCorrect);
 
   return (
-    <ActivityShell eyebrow="Listening" jp="聴解">
+    <ActivityShell eyebrow={t("act.listening")} jp="聴解">
       <HudPanel glow className="p-10 text-center">
         <div className="relative mx-auto flex size-24 items-center justify-center">
           {/* Pulsing concentric rings — alive while playing */}
@@ -1273,7 +1476,7 @@ function ListeningActivity({
       </HudPanel>
 
       <div className="rounded-3xl glass p-6">
-        <p className="text-base font-semibold">{activity.prompt}</p>
+        <p className="text-base font-semibold">{tc(activity.prompt)}</p>
         <div className="mt-4 grid gap-3">
           {shuffled.map((opt, idx) => {
             const isPicked = selectedShuffled === idx;
@@ -1309,7 +1512,7 @@ function ListeningActivity({
                   {String.fromCharCode(65 + idx)}
                 </span>
                 <div className="min-w-0">
-                  <div className="text-sm">{opt.text}</div>
+                  <div className="text-sm">{tc(opt.text)}</div>
                   {romaji ? (
                     <div className="mt-0.5 font-mono text-[10px] text-muted-foreground">
                       {romaji}
@@ -1334,7 +1537,7 @@ function ListeningActivity({
         activity.explanation ? (
           <ExplanationCard
             correctAnswer={activity.options[activity.correctIndex]}
-            explanation={activity.explanation}
+            explanation={tc(activity.explanation)}
             onLearn={onLearn}
             learnTarget={
               japaneseToken(activity.textJp) ??
@@ -1356,11 +1559,13 @@ function SpeakingActivity({
 }: {
   activity: Extract<Activity, { kind: "speaking" }>;
 }) {
+  const t = useT();
+  const tc = useTc();
   const play = usePlayTts();
   const rec = useVoiceRecorder();
 
   return (
-    <ActivityShell eyebrow="Practica tu voz" jp="話してみよう">
+    <ActivityShell eyebrow={t("act.speaking")} jp="話してみよう">
       <HudPanel glow className="p-10 text-center">
         <p className="font-mono text-[10px] tracking-[0.4em] text-neon-cyan/80">
           {activity.reading}
@@ -1375,7 +1580,7 @@ function SpeakingActivity({
           {activity.textJp}
         </p>
         <RomajiLine reading={activity.reading} className="mt-1 text-center" />
-        <p className="mt-2 text-sm text-muted-foreground">{activity.meaning}</p>
+        <p className="mt-2 text-sm text-muted-foreground">{tc(activity.meaning)}</p>
         <Button
           className="mt-5"
           variant="outline"
@@ -1522,13 +1727,15 @@ function WriteKanjiActivity({
   activity: Extract<Activity, { kind: "write_kanji" }>;
   onComplete: () => void;
 }) {
+  const t = useT();
+  const tc = useTc();
   const [progress, setProgress] = useState<StrokeProgress>({
     hasData: true,
     passed: false,
     mistakes: 0,
   });
   return (
-    <ActivityShell eyebrow="Escribe el kanji" jp="書いてみよう">
+    <ActivityShell eyebrow={t("act.writeKanji")} jp="書いてみよう">
       <HudPanel glow className="p-8">
         <div className="text-center">
           <p
@@ -1540,7 +1747,7 @@ function WriteKanjiActivity({
           >
             {activity.kanjiChar}
           </p>
-          <p className="mt-3 font-display text-sm font-bold">{activity.meaning}</p>
+          <p className="mt-3 font-display text-sm font-bold">{tc(activity.meaning)}</p>
           <p className="font-jp text-xs text-muted-foreground">
             {activity.reading}
           </p>
@@ -1597,6 +1804,8 @@ function WriteSentenceActivity({
   verified: boolean;
   onAnswer: (correct: boolean) => void;
 }) {
+  const t = useT();
+  const tc = useTc();
   const [value, setValue] = useState("");
   // Keyboard visible by default; remember user preference across activities
   const [showKeyboard, setShowKeyboard] = useState(() => {
@@ -1705,15 +1914,15 @@ function WriteSentenceActivity({
   };
 
   return (
-    <ActivityShell eyebrow="Escribe la oración" jp="文を書いてみよう">
+    <ActivityShell eyebrow={t("act.writeSentence")} jp="文を書いてみよう">
       <HudPanel className="p-8">
        <div className="space-y-5">
         <div>
-          <p className="text-base text-foreground">{activity.prompt}</p>
+          <p className="text-base text-foreground">{tc(activity.prompt)}</p>
           {activity.hint ? (
             <p className="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground">
               <Info className="size-3" />
-              Pista: {activity.hint}
+              {t("act.hint")}: {tc(activity.hint)}
             </p>
           ) : null}
         </div>
@@ -1878,22 +2087,36 @@ function OrderSentenceActivity({
   verified: boolean;
   onAnswer: (correct: boolean) => void;
 }) {
+  const t = useT();
+  const tc = useTc();
+  // The bank includes the correct tiles PLUS any decoys (harder variant). The
+  // puzzle is "done" once you've placed as many tiles as the correct sentence
+  // has — so placing a decoy just makes the answer wrong.
+  const correctCount = activity.tokens.length;
+  const hasDecoys = (activity.decoys?.length ?? 0) > 0;
   const tiles = useMemo(
-    () => shuffleArray(activity.tokens.map((text, i) => ({ id: i, text }))),
+    () =>
+      shuffleArray([
+        ...activity.tokens.map((text, i) => ({ id: i, text })),
+        ...(activity.decoys ?? []).map((text, i) => ({
+          id: activity.tokens.length + i,
+          text,
+        })),
+      ]),
     [activity]
   );
   const target = activity.tokens.join("");
   const [placed, setPlaced] = useState<number[]>([]);
   const placedSet = new Set(placed);
   const built = placed.map((id) => tiles.find((t) => t.id === id)!.text).join("");
-  const isComplete = placed.length === tiles.length;
+  const isComplete = placed.length === correctCount;
   const isCorrect = isComplete && built === target;
 
   const add = (id: number) => {
     if (verified) return;
     const next = [...placed, id];
     setPlaced(next);
-    if (next.length === tiles.length) {
+    if (next.length === correctCount) {
       const s = next.map((i) => tiles.find((t) => t.id === i)!.text).join("");
       onAnswer(s === target);
     }
@@ -1904,12 +2127,17 @@ function OrderSentenceActivity({
   };
 
   return (
-    <ActivityShell eyebrow="Ordena la frase" jp="文をならべよう">
+    <ActivityShell eyebrow={t("act.orderSentence")} jp="文をならべよう">
       <HudPanel className="p-8">
         <p className="text-center text-sm text-muted-foreground">
-          Toca las fichas en orden para formar:
+          {t("act.orderPrompt")}
         </p>
-        <p className="mt-1 text-center text-lg font-semibold">«{activity.meaning}»</p>
+        <p className="mt-1 text-center text-lg font-semibold">«{tc(activity.meaning)}»</p>
+        {hasDecoys ? (
+          <p className="mt-1 text-center text-[11px] text-neon-amber/80">
+            {t("act.orderDecoys")}
+          </p>
+        ) : null}
 
         {/* Answer row */}
         <div
@@ -1922,7 +2150,7 @@ function OrderSentenceActivity({
         >
           {placed.length === 0 ? (
             <span className="px-2 text-sm text-muted-foreground/60">
-              Tu frase aparecerá aquí…
+              {t("act.orderYours")}
             </span>
           ) : (
             placed.map((id, pos) => (
@@ -1967,11 +2195,11 @@ function OrderSentenceActivity({
                   : "border-destructive/30 bg-destructive/10 text-destructive"
               )}
             >
-              {isCorrect ? "¡Perfecto! Orden correcto 🎉" : "No es el orden correcto."}
+              {isCorrect ? t("act.orderCorrect") : t("act.orderWrong")}
             </div>
             <div className="rounded-xl border border-success/30 bg-success/5 p-3 text-center">
               <p className="text-[10px] uppercase tracking-widest text-success">
-                Versión correcta
+                {t("act.correctVersion")}
               </p>
               <div className="mt-1 flex items-center justify-center gap-2">
                 <p className="font-jp text-xl">{target}</p>
@@ -2003,13 +2231,15 @@ function MatchPairsActivity({
   verified: boolean;
   onAnswer: (correct: boolean) => void;
 }) {
+  const t = useT();
+  const tc = useTc();
   const left = useMemo(
     () => shuffleArray(activity.pairs.map((p, i) => ({ i, text: p.jp }))),
     [activity]
   );
   const right = useMemo(
-    () => shuffleArray(activity.pairs.map((p, i) => ({ i, text: p.meaning }))),
-    [activity]
+    () => shuffleArray(activity.pairs.map((p, i) => ({ i, text: tc(p.meaning) }))),
+    [activity, tc]
   );
   const [selJp, setSelJp] = useState<number | null>(null);
   const [matched, setMatched] = useState<Set<number>>(new Set());
@@ -2064,7 +2294,7 @@ function MatchPairsActivity({
   };
 
   return (
-    <ActivityShell eyebrow="Empareja" jp="えらんでつなぐ">
+    <ActivityShell eyebrow={t("act.matchPairs")} jp="えらんでつなぐ">
       <HudPanel className="p-8">
         <p className="text-center text-sm text-muted-foreground">{activity.prompt}</p>
         <div className="mt-5 grid grid-cols-2 gap-3">
@@ -2103,8 +2333,10 @@ function SummaryActivity({
 }: {
   activity: Extract<Activity, { kind: "summary" }>;
 }) {
+  const t = useT();
+  const tc = useTc();
   return (
-    <ActivityShell eyebrow="Lección completada" jp="お疲れさま">
+    <ActivityShell eyebrow={t("act.complete")} jp="お疲れさま">
       <HudPanel glow className="p-10">
         <div className="flex items-center justify-center">
           <motion.div
@@ -2132,7 +2364,7 @@ function SummaryActivity({
               className="flex items-start gap-3 rounded-xl border border-success/30 bg-success/5 px-4 py-3 text-sm"
             >
               <Check className="size-4 shrink-0 text-success" />
-              <span>{item}</span>
+              <span>{tc(item)}</span>
             </li>
           ))}
         </ul>

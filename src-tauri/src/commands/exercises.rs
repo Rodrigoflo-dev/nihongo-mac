@@ -405,13 +405,33 @@ fn catalog_kanji(conn: &Connection, level: &str) -> Vec<Item> {
     rows
 }
 
+fn is_kana_char(c: char) -> bool {
+    ('\u{3040}'..='\u{30FF}').contains(&c) || ('\u{31F0}'..='\u{31FF}').contains(&c)
+}
+
+/// Coarse "shape" of an answer: which script dominates (2 kanji, 1 kana, 0
+/// latin/Spanish) and how many characters it has. Distractors that share the
+/// shape look plausible, so the learner can't guess from length or script alone.
+fn answer_shape(s: &str) -> (u8, usize) {
+    let script = if s.chars().any(is_kanji_char) {
+        2
+    } else if s.chars().any(is_kana_char) {
+        1
+    } else {
+        0
+    };
+    (script, s.chars().count())
+}
+
 /// Pull `n` distinct distractors, PREFERRING the same-theme `primary` pool (other
 /// items taught in THIS lesson) and only topping up from the broad `fallback`
-/// pool when the lesson doesn't have enough items of its own. This is what keeps
-/// the wrong options ON-TOPIC: in the colors lesson the distractors are other
-/// colors (rojo/azul/negro), not random words like "mes" or "estudiante", so the
-/// learner really has to know the answer instead of picking the only word that
-/// fits the theme. (Rodrigo's #1 request.)
+/// pool when the lesson doesn't have enough items of its own. Within each pool,
+/// candidates are ranked so the wrong options stay plausible in TWO ways
+/// (Rodrigo's request — options were too easy to tell apart):
+///   1. ON-TOPIC — same-theme lesson items first (colors → other colors).
+///   2. SAME SHAPE — same script + similar length, so a 4-char ます-verb never
+///      sits next to a single kanji like 校, and short/long options don't give
+///      the answer away.
 fn pick_distractors(
     rng: &mut StdRng,
     primary: &[String],
@@ -420,6 +440,7 @@ fn pick_distractors(
     n: usize,
 ) -> Vec<String> {
     let ex = exclude.trim().to_string();
+    let (target_script, target_len) = answer_shape(&ex);
     let mut chosen: Vec<String> = Vec::new();
     let mut seen: HashSet<String> = HashSet::new();
     seen.insert(ex);
@@ -431,11 +452,19 @@ fn pick_distractors(
         let mut candidates: Vec<String> = pool
             .iter()
             .map(|s| s.trim().to_string())
-            .filter(|s| !s.is_empty())
+            .filter(|s| !s.is_empty() && !seen.contains(s))
             .collect();
         candidates.sort();
         candidates.dedup();
+        // Shuffle first so ties (same score) come out varied across quizzes; the
+        // stable sort below then ranks by shape closeness without losing that.
         candidates.shuffle(rng);
+        candidates.sort_by_key(|c| {
+            let (script, len) = answer_shape(c);
+            let script_penalty = if script == target_script { 0 } else { 50 };
+            let len_penalty = (len as i32 - target_len as i32).abs();
+            script_penalty + len_penalty
+        });
         for c in candidates {
             if chosen.len() >= n {
                 break;
@@ -994,6 +1023,7 @@ fn order_tokenize(sentence: &str, dict: &[String]) -> Option<Vec<String>> {
 
 /// "Ordena la frase" — arrange shuffled word tiles into the correct sentence.
 fn build_order_sentence(
+    rng: &mut StdRng,
     idx: usize,
     jp: &str,
     meaning: &str,
@@ -1020,10 +1050,25 @@ fn build_order_sentence(
         .unwrap_or(meaning)
         .trim()
         .to_string();
+    // Harder variant: add 1-2 DECOY particle tiles that don't belong in this
+    // sentence, so the learner must choose the RIGHT particle instead of just
+    // permuting the given tiles. More decoys for longer sentences.
+    let used: HashSet<&str> = tokens.iter().map(|s| s.as_str()).collect();
+    let mut decoy_pool: Vec<String> = ORDER_PARTICLES
+        .iter()
+        .filter(|p| !used.contains(**p))
+        .map(|p| p.to_string())
+        .collect();
+    decoy_pool.shuffle(rng);
+    let decoys: Vec<String> = decoy_pool
+        .into_iter()
+        .take(if tokens.len() >= 5 { 2 } else { 1 })
+        .collect();
     Some(Activity::OrderSentence {
         id: format!("gen-order-{idx}"),
         tokens,
         meaning: clean,
+        decoys,
         reading: None,
         explanation: Some(format!("{jp} — {meaning}")),
     })
@@ -1403,7 +1448,7 @@ pub fn generate(conn: &Connection, lesson_id: i64, seed: u64) -> Vec<GeneratedEx
         }
         idc += 1;
         // NEW format: arrange the shuffled word tiles into the sentence.
-        if let Some(a) = build_order_sentence(idc, jp, meaning, &order_dict) {
+        if let Some(a) = build_order_sentence(&mut rng, idc, jp, meaning, &order_dict) {
             dificil.push(a);
         }
         idc += 1;
@@ -1478,6 +1523,45 @@ mod tests {
         crate::db::migrations::run(&conn).expect("migrations run clean");
         crate::seed::run_if_empty(&conn).expect("seed runs clean");
         conn
+    }
+
+    #[test]
+    fn distractors_prefer_same_shape_over_random() {
+        // 食べます is a 4-char kanji+kana verb. Given a fallback mixing 4-char
+        // ます-verbs with single kanji, the picker must choose the plausible
+        // same-shape verbs — never 校/火 — so the option isn't obvious.
+        let mut rng = StdRng::seed_from_u64(7);
+        let primary: Vec<String> = Vec::new();
+        let fallback: Vec<String> = ["飲みます", "行きます", "校", "火", "水"]
+            .iter()
+            .map(|s| s.to_string())
+            .collect();
+        let picked = pick_distractors(&mut rng, &primary, &fallback, "食べます", 2);
+        assert_eq!(picked.len(), 2);
+        for p in &picked {
+            assert_eq!(
+                p.chars().count(),
+                4,
+                "distractor '{p}' should match the 4-char shape of 食べます"
+            );
+        }
+    }
+
+    #[test]
+    fn distractors_prefer_same_theme_primary_pool_first() {
+        // Same-lesson items (primary) win even if a fallback item is closer in
+        // length: on-topic beats shape.
+        let mut rng = StdRng::seed_from_u64(3);
+        let primary = vec!["venir".to_string(), "volver".to_string()];
+        let fallback = vec!["gato".to_string(), "agua".to_string()];
+        let picked = pick_distractors(&mut rng, &primary, &fallback, "ir", 2);
+        assert_eq!(picked.len(), 2);
+        for p in &picked {
+            assert!(
+                p == "venir" || p == "volver",
+                "expected same-theme verbs, got '{p}'"
+            );
+        }
     }
 
     #[test]
@@ -1813,7 +1897,7 @@ mod tests {
             for seed in [1u64, 4, 8, 15, 23] {
                 for e in generate(&conn, id, seed) {
                     match &e.activity {
-                        Activity::OrderSentence { tokens, .. } => {
+                        Activity::OrderSentence { tokens, decoys, .. } => {
                             saw_order = true;
                             assert!(
                                 (3..=7).contains(&tokens.len()),
@@ -1823,6 +1907,15 @@ mod tests {
                                 tokens.iter().all(|t| !t.trim().is_empty()),
                                 "lesson {id}: empty order tile"
                             );
+                            // Decoy tiles (harder variant) must be real, non-empty,
+                            // and must NOT belong to the sentence (else no puzzle).
+                            for d in decoys {
+                                assert!(!d.trim().is_empty(), "lesson {id}: empty decoy");
+                                assert!(
+                                    !tokens.contains(d),
+                                    "lesson {id}: decoy '{d}' is actually part of the sentence"
+                                );
+                            }
                         }
                         Activity::MatchPairs { pairs, .. } => {
                             saw_match = true;

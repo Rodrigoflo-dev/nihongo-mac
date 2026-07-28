@@ -16,8 +16,12 @@ import {
 import { useUserProfile } from "@/hooks/use-user-profile";
 import type { ReadingListItem } from "@/lib/api";
 import { cn } from "@/lib/utils";
+import { useT, type TFn } from "@/lib/i18n";
+import { useTc } from "@/lib/content-i18n";
 
 export default function ReadingPage() {
+  const t = useT();
+  const tc = useTc();
   const { data: profile } = useUserProfile();
   const level = profile?.currentLevel ?? "N5";
   const [activeId, setActiveId] = useState<number | undefined>(undefined);
@@ -34,10 +38,11 @@ export default function ReadingPage() {
           eyebrow={`読解 — ${level}`}
           title={
             <>
-              Lectura <span className="gradient-text">por situaciones</span>
+              {t("reading.title.a")}{" "}
+              <span className="gradient-text">{t("reading.title.b")}</span>
             </>
           }
-          description="Diálogos y textos cortos basados en situaciones reales. Lee, marca traducción si necesitas, y resuelve un mini quiz."
+          description={t("reading.desc")}
         />
         <HoloKanji
           size={200}
@@ -51,11 +56,11 @@ export default function ReadingPage() {
       </div>
 
       {isLoading ? (
-        <p className="text-sm text-muted-foreground">Cargando…</p>
+        <p className="text-sm text-muted-foreground">{t("common.loading")}</p>
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           {list?.map((p, i) => (
-            <PassageCard key={p.id} item={p} index={i} onOpen={() => setActiveId(p.id)} />
+            <PassageCard key={p.id} item={p} index={i} onOpen={() => setActiveId(p.id)} t={t} tc={tc} />
           ))}
         </div>
       )}
@@ -67,10 +72,14 @@ function PassageCard({
   item,
   index,
   onOpen,
+  t,
+  tc,
 }: {
   item: ReadingListItem;
   index: number;
   onOpen: () => void;
+  t: TFn;
+  tc: (s: string) => string;
 }) {
   return (
     <motion.button
@@ -110,14 +119,14 @@ function PassageCard({
             {item.jlptLevel}
           </p>
           <p className="font-display text-base font-extrabold tracking-tight leading-tight">
-            {item.title}
+            {tc(item.title)}
           </p>
           {item.summary ? (
-            <p className="mt-0.5 text-xs text-muted-foreground">{item.summary}</p>
+            <p className="mt-0.5 text-xs text-muted-foreground">{tc(item.summary)}</p>
           ) : null}
           {item.lastScore !== null ? (
             <Badge variant="outline" className="mt-2 border-neon-violet/40 text-[10px] text-neon-violet">
-              Última: {Math.round(item.lastScore)}%
+              {t("reading.lastScore", { n: Math.round(item.lastScore) })}
             </Badge>
           ) : null}
         </div>
@@ -133,6 +142,8 @@ function PassageView({
   passageId: number;
   onBack: () => void;
 }) {
+  const t = useT();
+  const tc = useTc();
   const { data: passage } = useReadingPassage(passageId);
   const complete = useCompleteReading();
   const [showTranslation, setShowTranslation] = useState(false);
@@ -146,7 +157,7 @@ function PassageView({
   if (!passage) {
     return (
       <div className="grid h-full place-items-center">
-        <p className="text-sm text-muted-foreground">Cargando…</p>
+        <p className="text-sm text-muted-foreground">{t("common.loading")}</p>
       </div>
     );
   }
@@ -185,7 +196,7 @@ function PassageView({
     >
       <div className="flex items-center justify-between">
         <Button variant="ghost" size="sm" onClick={onBack}>
-          <ArrowLeft className="size-3.5" /> Volver
+          <ArrowLeft className="size-3.5" /> {t("reading.back")}
         </Button>
         <Button
           variant="outline"
@@ -193,7 +204,7 @@ function PassageView({
           onClick={() => setShowTranslation((v) => !v)}
         >
           {showTranslation ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
-          {showTranslation ? "Ocultar traducción" : "Mostrar traducción"}
+          {showTranslation ? t("reading.hideTranslation") : t("reading.showTranslationBtn")}
         </Button>
       </div>
 
@@ -201,9 +212,9 @@ function PassageView({
         <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-neon-cyan">
           {passage.jlptLevel}
         </p>
-        <h1 className="font-display text-3xl font-extrabold tracking-tight">{passage.title}</h1>
+        <h1 className="font-display text-3xl font-extrabold tracking-tight">{tc(passage.title)}</h1>
         {passage.summary ? (
-          <p className="text-sm text-muted-foreground">{passage.summary}</p>
+          <p className="text-sm text-muted-foreground">{tc(passage.summary)}</p>
         ) : null}
       </div>
 
@@ -211,20 +222,20 @@ function PassageView({
         <p className="font-jp text-xl leading-relaxed">{passage.textJp}</p>
         {showTranslation && passage.textTranslation ? (
           <p className="mt-4 border-t border-border/60 pt-4 text-sm text-muted-foreground">
-            {passage.textTranslation}
+            {tc(passage.textTranslation)}
           </p>
         ) : null}
       </HudPanel>
 
       <div className="space-y-4">
         <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-neon-cyan">
-          Comprensión
+          {t("reading.comprehension")}
         </p>
         {passage.questions.map((q, qi) => (
           <HudPanel key={q.id} scanline={false} className="p-5">
             <div className="space-y-3">
             <p className="text-sm font-semibold">
-              <span className="font-mono text-neon-cyan">{qi + 1}.</span> {q.prompt}
+              <span className="font-mono text-neon-cyan">{qi + 1}.</span> {tc(q.prompt)}
             </p>
             <div className="grid gap-2">
               {q.options.map((opt, idx) => {
@@ -244,7 +255,7 @@ function PassageView({
                       reveal && !isCorrect && selected && "border-destructive bg-destructive/10 text-destructive"
                     )}
                   >
-                    {opt.text}
+                    {tc(opt.text)}
                   </button>
                 );
               })}
@@ -258,13 +269,13 @@ function PassageView({
         <HudPanel glow className="p-6 text-center">
           <p className="font-jp text-xs tracking-[0.3em] text-primary">完了</p>
           <h2 className="mt-2 font-display text-2xl font-extrabold tracking-tight">
-            {submitted.correct} / {submitted.total} correctas
+            {t("reading.correct", { done: submitted.correct, total: submitted.total })}
           </h2>
           <p className="mt-3 inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/10 px-3 py-1.5 text-sm font-medium text-primary">
             +{submitted.xp} XP
           </p>
           <Button onClick={onBack} className="mt-5 w-full">
-            <BookOpenCheck className="size-4" /> Volver a textos
+            <BookOpenCheck className="size-4" /> {t("reading.backToTexts")}
           </Button>
         </HudPanel>
       ) : (
@@ -274,7 +285,7 @@ function PassageView({
           disabled={!allAnswered || complete.isPending}
           onClick={handleSubmit}
         >
-          {complete.isPending ? "Calificando…" : "Confirmar respuestas"}
+          {complete.isPending ? t("reading.grading") : t("reading.confirm")}
         </Button>
       )}
     </motion.div>

@@ -23,8 +23,10 @@ import {
   useJournalEntries,
 } from "@/hooks/use-journal";
 import type { JournalEntry } from "@/lib/api";
+import { useT } from "@/lib/i18n";
 
 export default function JournalPage() {
+  const t = useT();
   const { data: entries } = useJournalEntries();
   const create = useCreateJournalEntry();
   const remove = useDeleteJournalEntry();
@@ -41,13 +43,14 @@ export default function JournalPage() {
   return (
     <div className="mx-auto max-w-3xl space-y-10">
       <PageHeader
-        eyebrow="日記 — Diario"
+        eyebrow={t("journal.eyebrow")}
         title={
           <>
-            Escribe tu día <span className="gradient-text">en japonés</span>
+            {t("journal.title.a")}{" "}
+            <span className="gradient-text">{t("journal.title.b")}</span>
           </>
         }
-        description="Una sola frase basta. Escribe en japonés cada día y recibe consejos para mejorar tu constancia y estilo."
+        description={t("journal.desc")}
       />
 
       {/* Editor */}
@@ -65,7 +68,7 @@ export default function JournalPage() {
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.25em] text-neon-cyan">
                 <Feather className="size-3.5" />
-                Nueva entrada
+                {t("journal.newEntry")}
               </div>
               <textarea
                 value={text}
@@ -78,7 +81,7 @@ export default function JournalPage() {
               <Separator className="my-4" />
               <div className="flex items-center justify-between">
                 <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
-                  {text.length} caracteres
+                  {t("journal.chars", { n: text.length })}
                 </p>
                 <Button
                   disabled={!text.trim() || create.isPending}
@@ -88,12 +91,12 @@ export default function JournalPage() {
                   {create.isPending ? (
                     <>
                       <Sparkles className="size-4 animate-pulse" />
-                      Guardando…
+                      {t("journal.saving")}
                     </>
                   ) : (
                     <>
                       <Send className="size-4" />
-                      Guardar entrada
+                      {t("journal.save")}
                     </>
                   )}
                 </Button>
@@ -117,24 +120,24 @@ export default function JournalPage() {
         <div className="flex items-center justify-between">
           <div>
             <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-neon-cyan">
-              履歴
+              {t("journal.history.jp")}
             </p>
             <h2 className="font-display text-lg font-extrabold tracking-tight">
-              Historial
+              {t("journal.history")}
             </h2>
           </div>
           <Badge variant="outline" className="text-[10px]">
-            {entries?.length ?? 0} entradas
+            {t("journal.entries", { n: entries?.length ?? 0 })}
           </Badge>
         </div>
         {entries?.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            Aún no has escrito nada. Empieza con una frase corta.
+            {t("journal.empty")}
           </p>
         ) : (
           <div className="space-y-3">
             {entries?.map((e) => (
-              <EntryCard key={e.id} entry={e} onDelete={() => remove.mutate(e.id)} />
+              <EntryCard key={e.id} entry={e} onDelete={() => remove.mutate(e.id)} t={t} />
             ))}
           </div>
         )}
@@ -146,9 +149,11 @@ export default function JournalPage() {
 function EntryCard({
   entry,
   onDelete,
+  t,
 }: {
   entry: JournalEntry;
   onDelete: () => void;
+  t: (k: string) => string;
 }) {
   const play = usePlayTts();
   return (
@@ -188,7 +193,7 @@ function EntryCard({
           {entry.corrections.length > 0 ? (
             <div className="space-y-2">
               <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-neon-amber">
-                Correcciones
+                {t("journal.corrections")}
               </p>
               {entry.corrections.map((c, idx) => (
                 <div

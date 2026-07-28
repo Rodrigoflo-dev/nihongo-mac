@@ -20,6 +20,9 @@ import { HoloKanji } from "@/components/visual/holo-kanji";
 import { burstLevelUp, burstXp } from "@/components/visual/confetti";
 import { useCompleteUnitExam, useUnitExam } from "@/hooks/use-exams";
 import type { Activity, UnitExamResult } from "@/lib/api";
+import { TitleBarDrag } from "@/components/layout/titlebar-drag";
+import { useT } from "@/lib/i18n";
+import { useTc } from "@/lib/content-i18n";
 
 /** A short human label for an exam question, for the results breakdown. */
 function questionLabel(a: Activity): string {
@@ -40,6 +43,7 @@ function questionLabel(a: Activity): string {
 }
 
 export default function ExamPage() {
+  const t = useT();
   const { unitId: unitParam } = useParams<{ unitId: string }>();
   const unitId = unitParam ? parseInt(unitParam, 10) : undefined;
   const navigate = useNavigate();
@@ -202,19 +206,19 @@ export default function ExamPage() {
   let disabled = false;
   if (isQuiz) {
     if (!verified) {
-      label = "Verificar";
+      label = t("exam.verify");
       disabled = answered === null;
     } else {
-      label = step === total - 1 ? "Terminar examen" : "Siguiente";
+      label = step === total - 1 ? t("exam.finish") : t("common.next");
     }
   } else {
-    label = step === total - 1 ? "Terminar examen" : "Siguiente";
+    label = step === total - 1 ? t("exam.finish") : t("common.next");
   }
 
   return (
     <div className="relative flex h-screen w-screen flex-col overflow-hidden bg-background text-foreground">
       <MeshBackground />
-      <div className="absolute left-20 right-0 top-0 z-10 h-7" data-tauri-drag-region />
+      <TitleBarDrag className="absolute left-20 right-0 top-0 z-30 h-9" />
 
       <header className="relative z-10 flex items-center gap-4 px-8 pt-10">
         <Button variant="ghost" size="sm" onClick={handleExit}>
@@ -265,8 +269,8 @@ export default function ExamPage() {
               }`}
             >
               {answered.correct
-                ? "¡Correcto!"
-                : "Incorrecto — lee la explicación, sigamos."}
+                ? t("exam.correct")
+                : t("exam.incorrect")}
             </div>
           ) : null}
           <Button
@@ -337,6 +341,8 @@ function CompletionScreen({
   onReviewLesson: (lessonId: number) => void;
   onNextUnit?: () => void;
 }) {
+  const t = useT();
+  const tc = useTc();
   const correctTotal = results.filter((r) => r.correct).length;
   return (
     <div className="relative grid h-screen w-screen place-items-center overflow-y-auto bg-background text-foreground">
@@ -360,24 +366,24 @@ function CompletionScreen({
             }
           />
           <p className="mt-6 font-mono text-[11px] uppercase tracking-[0.35em] text-neon-amber">
-            試験 · Resultado
+            {t("exam.result.jp")}
           </p>
           <h1 className="mt-1 font-display text-3xl font-extrabold tracking-tight">
-            {completion.passed ? "¡Examen aprobado!" : "No aprobado"}
+            {completion.passed ? t("exam.passedTitle") : t("exam.notPassed")}
           </h1>
           <p className="mt-2 text-sm text-muted-foreground">{unitTitle}</p>
 
           <div className="mt-6 grid grid-cols-2 gap-3">
             <Metric
-              label="Puntuación"
+              label={t("exam.score")}
               value={`${completion.score}%`}
               tone={completion.passed ? "success" : "warning"}
             />
             <Metric
-              label="Mejor histórica"
+              label={t("exam.bestHistoric")}
               value={
                 completion.newBest
-                  ? `${completion.score}% (¡nueva!)`
+                  ? t("exam.newBest", { n: completion.score })
                   : `${Math.max(completion.score, completion.previousBest ?? 0)}%`
               }
             />
@@ -390,7 +396,7 @@ function CompletionScreen({
               icon={<Sparkles className="size-4 text-primary" />}
             />
             <Metric
-              label="Estrellas"
+              label={t("exam.stars")}
               value={`+${completion.award.starAmount}`}
               icon={<Star className="size-4 fill-warning text-warning" />}
             />
@@ -398,7 +404,7 @@ function CompletionScreen({
 
           {completion.award.leveledUp ? (
             <p className="mt-3 inline-block rounded-full bg-primary/15 px-3 py-1 text-sm font-semibold text-primary">
-              ¡Subiste al nivel {completion.award.newLevel}!
+              {t("exam.leveledUp", { n: completion.award.newLevel })}
             </p>
           ) : null}
 
@@ -408,7 +414,7 @@ function CompletionScreen({
             <div className="mt-6 rounded-2xl border border-border/40 bg-card/40 p-4 text-left">
               <div className="flex items-center justify-between">
                 <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-neon-cyan">
-                  結果 · Tus respuestas
+                  {t("exam.yourAnswers")}
                 </p>
                 <p className="font-mono text-[11px] tabular-nums text-muted-foreground">
                   {correctTotal}/{results.length}
@@ -456,12 +462,12 @@ function CompletionScreen({
           {reviewLessons.length > 0 ? (
             <div className="mt-6 rounded-2xl border border-warning/30 bg-warning/5 p-4 text-left">
               <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-warning">
-                復習 · Te recomendamos repasar
+                {t("exam.reviewRec.jp")}
               </p>
               <p className="mt-1 text-xs text-muted-foreground">
-                Las preguntas que fallaste se enseñan en{" "}
-                {reviewLessons.length === 1 ? "esta lección" : "estas lecciones"}.
-                Toca para repasar y ver cuál fue el error.
+                {reviewLessons.length === 1
+                  ? t("exam.reviewRec.desc.one")
+                  : t("exam.reviewRec.desc.many")}
               </p>
               <div className="mt-3 space-y-2">
                 {reviewLessons.map((l) => (
@@ -470,7 +476,7 @@ function CompletionScreen({
                     onClick={() => onReviewLesson(l.lessonId)}
                     className="flex w-full items-center justify-between rounded-xl border border-border/40 bg-card/50 px-4 py-2.5 text-left text-sm font-medium transition-colors hover:border-warning/50 hover:bg-warning/10"
                   >
-                    <span>{l.lessonTitle}</span>
+                    <span>{tc(l.lessonTitle)}</span>
                     <ArrowRight className="size-4 text-warning" />
                   </button>
                 ))}
@@ -478,7 +484,7 @@ function CompletionScreen({
             </div>
           ) : completion.passed ? (
             <p className="mt-6 rounded-2xl border border-success/30 bg-success/5 p-4 text-sm text-success">
-              ¡Perfecto! No fallaste ninguna lección. 🎌
+              {t("exam.perfect")}
             </p>
           ) : null}
 
@@ -488,14 +494,14 @@ function CompletionScreen({
               className="mt-5 w-full bg-gradient-to-br from-primary via-primary to-neon-violet"
               onClick={onNextUnit}
             >
-              Continuar con {completion.nextUnitTitle}
+              {t("exam.continueWith", { unit: tc(completion.nextUnitTitle) })}
               <ArrowRight className="size-4" />
             </Button>
           ) : null}
 
           <div className="mt-4 grid grid-cols-2 gap-2">
             <Button variant="outline" onClick={onRetry}>
-              <RotateCcw className="size-3.5" /> Volver a intentar
+              <RotateCcw className="size-3.5" /> {t("exam.tryAgain")}
             </Button>
             <Button
               className={

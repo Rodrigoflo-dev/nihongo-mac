@@ -23,6 +23,8 @@ import { useCourses } from "@/hooks/use-lessons";
 import { useUnlockedLevel } from "@/hooks/use-exams";
 import type { Course, LessonSummary, Unit } from "@/lib/api";
 import { cn } from "@/lib/utils";
+import { useT, type TFn } from "@/lib/i18n";
+import { useTc } from "@/lib/content-i18n";
 
 const LEVEL_ORDER = ["N5", "N4", "N3", "N2", "N1"];
 const levelRank = (l: string) => {
@@ -31,6 +33,8 @@ const levelRank = (l: string) => {
 };
 
 export default function LearnPage() {
+  const t = useT();
+  const tc = useTc();
   const { data: courses, isLoading } = useCourses();
   const { data: unlockedLevel } = useUnlockedLevel();
   const current = unlockedLevel ?? "N5";
@@ -45,13 +49,14 @@ export default function LearnPage() {
     <div className="mx-auto max-w-5xl space-y-10">
       <div className="relative">
         <PageHeader
-          eyebrow="授業 — Tu curso"
+          eyebrow={t("learn.eyebrow")}
           title={
             <>
-              Aprende paso a paso, <span className="gradient-text">como una clase real</span>
+              {t("learn.title.a")}{" "}
+              <span className="gradient-text">{t("learn.title.b")}</span>
             </>
           }
-          description="Cada lección combina nuevos kanji, gramática, escucha y voz. Avanzas en orden — el siguiente paso siempre está marcado."
+          description={t("learn.desc")}
         />
         <div className="pointer-events-none absolute -right-6 -top-16 hidden lg:block">
           <HoloKanji
@@ -66,7 +71,7 @@ export default function LearnPage() {
       </div>
 
       {isLoading ? (
-        <p className="text-sm text-muted-foreground">Cargando…</p>
+        <p className="text-sm text-muted-foreground">{t("common.loading")}</p>
       ) : (
         <>
           {visible.map((course) => (
@@ -79,18 +84,18 @@ export default function LearnPage() {
                   <span className="font-jp">{course.jpTitle}</span>
                 </p>
                 <h2 className="font-display text-lg font-extrabold tracking-tight">
-                  {course.title}
+                  {tc(course.title)}
                 </h2>
               </div>
               <div className="space-y-8">
                 {course.units.map((unit) => (
-                  <UnitBlock key={unit.id} unit={unit} />
+                  <UnitBlock key={unit.id} unit={unit} t={t} tc={tc} />
                 ))}
               </div>
             </section>
           ))}
 
-          <LevelFinalExamCard level={current} courses={visible} />
+          <LevelFinalExamCard level={current} courses={visible} t={t} />
         </>
       )}
     </div>
@@ -105,9 +110,11 @@ export default function LearnPage() {
 function LevelFinalExamCard({
   level,
   courses,
+  t,
 }: {
   level: string;
   courses: Course[];
+  t: TFn;
 }) {
   const lessons = courses
     .filter((c) => c.jlptLevel === level)
@@ -127,11 +134,19 @@ function LevelFinalExamCard({
             <GraduationCap className="size-5" />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-bold">Examen final — {level}</p>
+            <p className="text-sm font-bold">
+              {t("learn.finalExam", { level })}
+            </p>
             <p className="text-xs text-muted-foreground">
               {ready
-                ? `Apruébalo con 60% o más para desbloquear ${nextLevel ?? "el siguiente nivel"}.`
-                : `Apruébalo con 60% para desbloquear ${nextLevel ?? "el siguiente nivel"}. Te conviene terminar las lecciones primero (${done}/${total}).`}
+                ? t("learn.finalExam.ready", {
+                    next: nextLevel ?? t("learn.nextLevel"),
+                  })
+                : t("learn.finalExam.notReady", {
+                    next: nextLevel ?? t("learn.nextLevel"),
+                    done,
+                    total,
+                  })}
             </p>
           </div>
           <ArrowRight className="size-4 shrink-0 text-neon-cyan transition-transform group-hover:translate-x-0.5" />
@@ -141,7 +156,7 @@ function LevelFinalExamCard({
   );
 }
 
-function UnitBlock({ unit }: { unit: Unit }) {
+function UnitBlock({ unit, t, tc }: { unit: Unit; t: TFn; tc: (s: string) => string }) {
   const navigate = useNavigate();
   const [confirmRetake, setConfirmRetake] = useState(false);
   const completedCount = unit.lessons.filter((l) => l.status === "completed")
@@ -164,11 +179,11 @@ function UnitBlock({ unit }: { unit: Unit }) {
             <span className="font-jp">{unit.jpTitle ?? "ユニット"}</span>
           </p>
           <h3 className="mt-1 font-display text-xl font-extrabold tracking-tight">
-            {unit.title}
+            {tc(unit.title)}
           </h3>
           {unit.description ? (
             <p className="mt-1 max-w-prose text-sm text-muted-foreground">
-              {unit.description}
+              {tc(unit.description)}
             </p>
           ) : null}
         </div>
@@ -193,6 +208,8 @@ function UnitBlock({ unit }: { unit: Unit }) {
               lesson={lesson}
               index={idx + 1}
               locked={locked}
+              t={t}
+              tc={tc}
             />
           );
         })}
@@ -214,10 +231,10 @@ function UnitBlock({ unit }: { unit: Unit }) {
           </div>
           <div className="min-w-0 flex-1">
             <p className="text-sm font-semibold text-success">
-              Examen de unidad — Aprobado ✓
+              {t("learn.unitExam.passed")}
             </p>
             <p className="text-xs text-muted-foreground">
-              Mejor nota: {unit.examBestScore}%. Toca para repetirlo y mejorar.
+              {t("learn.unitExam.bestScore", { score: unit.examBestScore ?? 0 })}
             </p>
           </div>
           <RotateCcw className="size-4 shrink-0 text-success transition-transform group-hover:rotate-[-30deg]" />
@@ -238,10 +255,10 @@ function UnitBlock({ unit }: { unit: Unit }) {
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-sm font-semibold">
-                Examen de unidad — {unit.title}
+                {t("learn.unitExam", { unit: tc(unit.title) })}
               </p>
               <p className="text-xs text-muted-foreground">
-                10 preguntas mezcladas. Pasas con 70% o más.
+                {t("learn.unitExam.mixed")}
               </p>
             </div>
             <ArrowRight className="size-4 shrink-0 text-warning transition-transform group-hover:translate-x-0.5" />
@@ -254,10 +271,13 @@ function UnitBlock({ unit }: { unit: Unit }) {
           </div>
           <div className="min-w-0 flex-1">
             <p className="text-sm font-semibold">
-              Examen de unidad — {unit.title}
+              {t("learn.unitExam", { unit: tc(unit.title) })}
             </p>
             <p className="text-xs text-muted-foreground">
-              Termina las {totalCount} lecciones para desbloquear ({completedCount}/{totalCount})
+              {t("learn.unitExam.finishFirst", {
+                total: totalCount,
+                done: completedCount,
+              })}
             </p>
           </div>
           <div className="shrink-0 font-mono text-xs tabular-nums text-neon-cyan">{pct}%</div>
@@ -273,14 +293,13 @@ function UnitBlock({ unit }: { unit: Unit }) {
                 <Trophy className="size-6" />
               </div>
               <p className="mt-3 font-mono text-[10px] uppercase tracking-[0.3em] text-success">
-                合格 · Aprobado
+                {t("learn.retake.eyebrow")}
               </p>
               <h2 className="mt-1 font-display text-xl font-extrabold tracking-tight">
-                Ya aprobaste este examen
+                {t("learn.retake.title")}
               </h2>
               <p className="mt-2 text-sm text-muted-foreground">
-                Tu mejor nota es {unit.examBestScore}%. ¿Quieres repetirlo para
-                practicar o mejorar tu nota?
+                {t("learn.retake.body", { score: unit.examBestScore ?? 0 })}
               </p>
               <div className="mt-6 flex gap-2">
                 <Button
@@ -288,13 +307,13 @@ function UnitBlock({ unit }: { unit: Unit }) {
                   className="flex-1"
                   onClick={() => setConfirmRetake(false)}
                 >
-                  No, gracias
+                  {t("learn.retake.no")}
                 </Button>
                 <Button
                   className="flex-1 bg-gradient-to-br from-primary via-primary to-neon-violet"
                   onClick={() => navigate(`/exam/${unit.id}`)}
                 >
-                  <RotateCcw className="size-3.5" /> Sí, repetir
+                  <RotateCcw className="size-3.5" /> {t("learn.retake.yes")}
                 </Button>
               </div>
             </div>
@@ -309,10 +328,14 @@ function LessonRow({
   lesson,
   index,
   locked,
+  t,
+  tc,
 }: {
   lesson: LessonSummary;
   index: number;
   locked: boolean;
+  t: TFn;
+  tc: (s: string) => string;
 }) {
   const tone = locked
     ? "opacity-50"
@@ -337,18 +360,18 @@ function LessonRow({
         <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-neon-cyan/80">
           <span className="font-jp">{lesson.jpTitle ?? "授業"}</span>
         </p>
-        <p className="text-sm font-semibold leading-tight">{lesson.title}</p>
+        <p className="text-sm font-semibold leading-tight">{tc(lesson.title)}</p>
         {lesson.summary ? (
           <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">
-            {lesson.summary}
+            {tc(lesson.summary)}
           </p>
         ) : null}
         <div className="mt-1.5 flex flex-wrap items-center gap-3 text-[10px] text-muted-foreground">
           <span className="inline-flex items-center gap-1">
             <Clock className="size-3" />
-            {lesson.durationMinutes} min
+            {lesson.durationMinutes} {t("home.min")}
           </span>
-          <span>{lesson.activityCount} actividades</span>
+          <span>{lesson.activityCount} {t("learn.activities")}</span>
           {lesson.bestScore != null ? (
             <span className="text-neon-amber">★ {lesson.bestScore}%</span>
           ) : null}

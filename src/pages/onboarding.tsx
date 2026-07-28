@@ -17,9 +17,12 @@ import {
   useUserProfile,
 } from "@/hooks/use-user-profile";
 import { api, type JlptLevel } from "@/lib/api";
+import { useLanguage, type LangMode } from "@/stores/language";
+import { useT } from "@/lib/i18n";
 
 type Step =
   | "welcome"
+  | "language"
   | "kana"
   | "current-level"
   | "target-level"
@@ -31,6 +34,7 @@ type Step =
 // at the lock screen, so we greet them with that instead of asking twice.
 const STEP_ORDER: Step[] = [
   "welcome",
+  "language",
   "kana",
   "current-level",
   "target-level",
@@ -39,22 +43,32 @@ const STEP_ORDER: Step[] = [
   "ready",
 ];
 
-const LEVELS: { value: JlptLevel; jp: string; description: string }[] = [
-  { value: "N5", jp: "ごじゅう", description: "Lo más básico" },
-  { value: "N4", jp: "よんきゅう", description: "Conversaciones simples" },
-  { value: "N3", jp: "さんきゅう", description: "Intermedio" },
-  { value: "N2", jp: "にきゅう", description: "Avanzado" },
-  { value: "N1", jp: "いっきゅう", description: "Maestría" },
+const LANGUAGE_CHOICES: {
+  value: LangMode;
+  jp: string;
+  descKey: string;
+}[] = [
+  { value: "es", jp: "スペイン語", descKey: "onb.lang.es.desc" },
+  { value: "en", jp: "英語", descKey: "onb.lang.en.desc" },
+  { value: "system", jp: "自動", descKey: "onb.lang.system.desc" },
 ];
 
-const MINUTE_OPTIONS: { value: string; label: string; description: string }[] =
+const LEVELS: { value: JlptLevel; jp: string; descKey: string }[] = [
+  { value: "N5", jp: "ごじゅう", descKey: "onb.level.basic" },
+  { value: "N4", jp: "よんきゅう", descKey: "onb.level.simple" },
+  { value: "N3", jp: "さんきゅう", descKey: "onb.level.intermediate" },
+  { value: "N2", jp: "にきゅう", descKey: "onb.level.advanced" },
+  { value: "N1", jp: "いっきゅう", descKey: "onb.level.mastery" },
+];
+
+const MINUTE_OPTIONS: { value: string; label: string; descKey: string }[] =
   [
-    { value: "10", label: "10 min", description: "Para mantener la racha" },
-    { value: "15", label: "15 min", description: "Hábito diario" },
-    { value: "20", label: "20 min", description: "Equilibrado (recomendado)" },
-    { value: "30", label: "30 min", description: "Ritmo serio" },
-    { value: "45", label: "45 min", description: "Inmersión" },
-    { value: "60", label: "60 min", description: "Acelerador" },
+    { value: "10", label: "10 min", descKey: "onb.min.streak" },
+    { value: "15", label: "15 min", descKey: "onb.min.habit" },
+    { value: "20", label: "20 min", descKey: "onb.min.balanced" },
+    { value: "30", label: "30 min", descKey: "onb.min.serious" },
+    { value: "45", label: "45 min", descKey: "onb.min.immersion" },
+    { value: "60", label: "60 min", descKey: "onb.min.accelerator" },
   ];
 
 export default function OnboardingPage() {
@@ -66,6 +80,7 @@ export default function OnboardingPage() {
     staleTime: Infinity,
   });
   const completeOnboarding = useCompleteOnboarding();
+  const t = useT();
 
   const [stepIndex, setStepIndex] = useState(0);
   const [knowsHiragana, setKnowsHiragana] = useState(false);
@@ -75,12 +90,14 @@ export default function OnboardingPage() {
   const [minutes, setMinutes] = useState<string>("20");
   const [reminder, setReminder] = useState<string>("");
   const [takingExam, setTakingExam] = useState(false);
+  const langMode = useLanguage((s) => s.mode);
+  const setLangMode = useLanguage((s) => s.setMode);
 
   // The learner already picked a username at the lock screen — reuse it as the
   // display name instead of asking again.
   const name = useMemo(
-    () => auth?.username?.trim() || "Estudiante",
-    [auth?.username]
+    () => auth?.username?.trim() || t("dash.learner"),
+    [auth?.username, t]
   );
   // "Ninguno" is simply neither silabario selected.
   const knowsNone = !knowsHiragana && !knowsKatakana;
@@ -133,12 +150,12 @@ export default function OnboardingPage() {
           eyebrow="ようこそ"
           title={
             <>
-              Hola {name}, bienvenido a{" "}
-              <span className="text-primary">Nihongo</span>
+              {t("onb.welcome.title.a", { name })}{" "}
+              <span className="text-primary">Michi</span>
             </>
           }
-          description="Tu compañero personal para aprender japonés con constancia. Vamos a configurar tu plan en menos de un minuto."
-          primaryLabel="Comenzar"
+          description={t("onb.welcome.desc")}
+          primaryLabel={t("onb.start")}
           onPrimary={next}
         >
           <div className="space-y-6">
@@ -165,11 +182,38 @@ export default function OnboardingPage() {
               transition={{ delay: 0.15 }}
               className="grid grid-cols-3 gap-3"
             >
-              <FeaturePill icon={<Target className="size-4" />} label="Misiones diarias" />
-              <FeaturePill icon={<Star className="size-4" />} label="Sube de nivel" />
-              <FeaturePill icon={<Sparkles className="size-4" />} label="Aprende por situaciones" />
+              <FeaturePill icon={<Target className="size-4" />} label={t("onb.welcome.feat1")} />
+              <FeaturePill icon={<Star className="size-4" />} label={t("onb.welcome.feat2")} />
+              <FeaturePill icon={<Sparkles className="size-4" />} label={t("onb.welcome.feat3")} />
             </motion.div>
           </div>
+        </StepShell>
+      );
+
+    case "language":
+      return (
+        <StepShell
+          step={stepIndex}
+          total={total}
+          eyebrow="言語"
+          title={t("onb.lang.title")}
+          description={t("onb.lang.desc")}
+          canGoBack
+          onBack={back}
+          primaryLabel={t("common.continue")}
+          onPrimary={next}
+        >
+          <ChoiceGrid
+            value={langMode}
+            onChange={(v) => setLangMode(v)}
+            options={LANGUAGE_CHOICES.map((o) => ({
+              value: o.value,
+              jp: o.jp,
+              label: t(`lang.${o.value}`),
+              description: t(o.descKey),
+            }))}
+            columns={3}
+          />
         </StepShell>
       );
 
@@ -179,11 +223,11 @@ export default function OnboardingPage() {
           step={stepIndex}
           total={total}
           eyebrow="仮名"
-          title="¿Qué silabarios ya conoces?"
-          description="Si no los conoces, los integraré en tu plan diario antes que cualquier kanji."
+          title={t("onb.kana.title")}
+          description={t("onb.kana.desc")}
           canGoBack
           onBack={back}
-          primaryLabel="Continuar"
+          primaryLabel={t("common.continue")}
           onPrimary={next}
         >
           <div className="space-y-3">
@@ -192,7 +236,7 @@ export default function OnboardingPage() {
               onChange={setKnowsHiragana}
               title="Hiragana"
               jp="ひらがな"
-              description="El silabario base del japonés"
+              description={t("onb.kana.hiragana")}
               sample="あ"
             />
             <ToggleCard
@@ -200,7 +244,7 @@ export default function OnboardingPage() {
               onChange={setKnowsKatakana}
               title="Katakana"
               jp="カタカナ"
-              description="Para préstamos del extranjero"
+              description={t("onb.kana.katakana")}
               sample="ア"
             />
             <ToggleCard
@@ -211,9 +255,9 @@ export default function OnboardingPage() {
                   setKnowsKatakana(false);
                 }
               }}
-              title="Ninguno"
+              title={t("onb.kana.none")}
               jp="まだ"
-              description="Empiezo desde cero — enséñame los silabarios primero"
+              description={t("onb.kana.noneDesc")}
               sample="◎"
             />
           </div>
@@ -226,11 +270,11 @@ export default function OnboardingPage() {
           step={stepIndex}
           total={total}
           eyebrow="今のレベル"
-          title="¿En qué punto estás?"
-          description="Sé honesto. Empezar bajo es mucho mejor que aburrirse o frustrarse."
+          title={t("onb.curLevel.title")}
+          description={t("onb.curLevel.desc")}
           canGoBack
           onBack={back}
-          primaryLabel="Continuar"
+          primaryLabel={t("common.continue")}
           onPrimary={next}
         >
           <ChoiceGrid
@@ -240,7 +284,7 @@ export default function OnboardingPage() {
               value: l.value,
               label: l.value,
               jp: l.jp,
-              description: l.description,
+              description: t(l.descKey),
             }))}
             columns={5}
           />
@@ -255,10 +299,10 @@ export default function OnboardingPage() {
             </span>
             <span className="min-w-0">
               <span className="block text-sm font-semibold">
-                ¿No sabes tu nivel? Haz una evaluación
+                {t("onb.curLevel.exam")}
               </span>
               <span className="block text-xs text-muted-foreground">
-                Preguntas de N5 a N1 para ubicarte. Cambia cada día.
+                {t("onb.curLevel.examDesc")}
               </span>
             </span>
           </button>
@@ -271,11 +315,11 @@ export default function OnboardingPage() {
           step={stepIndex}
           total={total}
           eyebrow="目標"
-          title="¿Cuál es tu meta?"
-          description="Esto define hacia dónde escala el contenido. Puedes cambiarlo cuando quieras."
+          title={t("onb.targetLevel.title")}
+          description={t("onb.targetLevel.desc")}
           canGoBack
           onBack={back}
-          primaryLabel="Continuar"
+          primaryLabel={t("common.continue")}
           onPrimary={next}
         >
           <ChoiceGrid
@@ -285,7 +329,7 @@ export default function OnboardingPage() {
               value: l.value,
               label: l.value,
               jp: l.jp,
-              description: l.description,
+              description: t(l.descKey),
             }))}
             columns={5}
           />
@@ -298,11 +342,11 @@ export default function OnboardingPage() {
           step={stepIndex}
           total={total}
           eyebrow="毎日"
-          title="¿Cuánto tiempo al día?"
-          description="La constancia gana al volumen. Elige algo realista que puedas mantener."
+          title={t("onb.minutes.title")}
+          description={t("onb.minutes.desc")}
           canGoBack
           onBack={back}
-          primaryLabel="Continuar"
+          primaryLabel={t("common.continue")}
           onPrimary={next}
         >
           <ChoiceGrid
@@ -311,7 +355,7 @@ export default function OnboardingPage() {
             options={MINUTE_OPTIONS.map((m) => ({
               value: m.value,
               label: m.label,
-              description: m.description,
+              description: t(m.descKey),
             }))}
             columns={3}
           />
@@ -324,20 +368,20 @@ export default function OnboardingPage() {
           step={stepIndex}
           total={total}
           eyebrow="通知"
-          title="¿A qué hora te aviso?"
-          description="Notificación nativa de macOS para mantener tu racha. Puedes saltarlo si prefieres."
+          title={t("onb.reminder.title")}
+          description={t("onb.reminder.desc")}
           canGoBack
           onBack={back}
-          primaryLabel="Continuar"
+          primaryLabel={t("common.continue")}
           onPrimary={next}
-          secondaryLabel="Saltar"
+          secondaryLabel={t("onb.reminder.skip")}
           onSecondary={() => {
             setReminder("");
             next();
           }}
         >
           <div className="grid gap-2">
-            <Label htmlFor="reminder">Hora del recordatorio</Label>
+            <Label htmlFor="reminder">{t("onb.reminder.label")}</Label>
             <Input
               id="reminder"
               type="time"
@@ -355,12 +399,14 @@ export default function OnboardingPage() {
           step={stepIndex}
           total={total}
           eyebrow="準備完了"
-          title="Todo listo, がんばって"
-          description="Tu plan diario se generará al abrir el dashboard. Empezamos pulsando crear."
+          title={t("onb.ready.title")}
+          description={t("onb.ready.desc")}
           canGoBack
           onBack={back}
           primaryLabel={
-            completeOnboarding.isPending ? "Creando…" : "Crear mi plan"
+            completeOnboarding.isPending
+              ? t("onb.ready.creating")
+              : t("onb.ready.create")
           }
           primaryLoading={completeOnboarding.isPending}
           onPrimary={handleComplete}
@@ -371,28 +417,28 @@ export default function OnboardingPage() {
                 <span className="font-jp">あなたのプラン</span>
               </p>
               <h3 className="mt-1 font-display text-lg font-extrabold tracking-tight">
-                Tu plan
+                {t("onb.ready.yourPlan")}
               </h3>
               <dl className="mt-4 grid grid-cols-2 gap-y-3 text-sm">
-                <dt className="text-muted-foreground">Nombre</dt>
+                <dt className="text-muted-foreground">{t("onb.ready.name")}</dt>
                 <dd className="font-medium">{name || "—"}</dd>
-                <dt className="text-muted-foreground">Nivel actual</dt>
+                <dt className="text-muted-foreground">{t("onb.ready.curLevel")}</dt>
                 <dd className="font-medium text-neon-cyan">{currentLevel}</dd>
-                <dt className="text-muted-foreground">Objetivo</dt>
+                <dt className="text-muted-foreground">{t("onb.ready.goal")}</dt>
                 <dd className="font-medium text-neon-violet">{targetLevel}</dd>
                 <dt className="text-muted-foreground">Hiragana</dt>
                 <dd className="font-medium">
-                  {knowsHiragana ? "Conocido" : "Empezar desde cero"}
+                  {knowsHiragana ? t("onb.ready.known") : t("onb.ready.fromZero")}
                 </dd>
                 <dt className="text-muted-foreground">Katakana</dt>
                 <dd className="font-medium">
-                  {knowsKatakana ? "Conocido" : "Empezar desde cero"}
+                  {knowsKatakana ? t("onb.ready.known") : t("onb.ready.fromZero")}
                 </dd>
-                <dt className="text-muted-foreground">Meta diaria</dt>
+                <dt className="text-muted-foreground">{t("onb.ready.dailyGoal")}</dt>
                 <dd className="font-medium">{minutes} min</dd>
-                <dt className="text-muted-foreground">Recordatorio</dt>
+                <dt className="text-muted-foreground">{t("onb.ready.reminder")}</dt>
                 <dd className="font-medium">
-                  {reminder ? reminder : "Sin recordatorio"}
+                  {reminder ? reminder : t("onb.ready.noReminder")}
                 </dd>
               </dl>
             </div>

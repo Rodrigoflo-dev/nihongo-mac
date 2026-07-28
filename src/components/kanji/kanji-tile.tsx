@@ -4,6 +4,8 @@ import { Badge } from "@/components/ui/badge";
 import { RomajiLine } from "@/components/lesson/romaji-line";
 import type { KanjiListItem } from "@/lib/api";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n";
+import { useLanguage } from "@/stores/language";
 
 interface KanjiTileProps {
   item: KanjiListItem;
@@ -11,16 +13,20 @@ interface KanjiTileProps {
   active?: boolean;
 }
 
-const STATUS_LABEL: Record<string, { label: string; tone: string }> = {
-  new: { label: "Nuevo", tone: "secondary" },
-  learning: { label: "Aprendiendo", tone: "warning" },
-  mastered: { label: "Dominado", tone: "success" },
-  leech: { label: "Difícil", tone: "destructive" },
+const STATUS_LABEL: Record<string, { key: string; tone: string }> = {
+  new: { key: "kanjiTile.new", tone: "secondary" },
+  learning: { key: "kanjiTile.learning", tone: "warning" },
+  mastered: { key: "kanjiTile.mastered", tone: "success" },
+  leech: { key: "kanjiTile.hard", tone: "destructive" },
 };
 
 export function KanjiTile({ item, onClick, active }: KanjiTileProps) {
+  const t = useT();
+  const lang = useLanguage((s) => s.lang);
   const status = STATUS_LABEL[item.status] ?? STATUS_LABEL.new;
   const { kanji } = item;
+  const meaning =
+    lang === "en" && kanji.meaningEn ? kanji.meaningEn : kanji.meaningEs;
 
   return (
     <motion.button
@@ -36,11 +42,11 @@ export function KanjiTile({ item, onClick, active }: KanjiTileProps) {
       <div className="flex w-full items-start justify-between">
         <span className="font-jp text-4xl leading-none">{kanji.character}</span>
         <Badge variant={status.tone as never} className="text-[10px]">
-          {status.label}
+          {t(status.key)}
         </Badge>
       </div>
       <div className="space-y-0.5">
-        <p className="text-sm font-medium">{kanji.meaningEs}</p>
+        <p className="text-sm font-medium">{meaning}</p>
         <p className="font-jp text-xs text-muted-foreground">
           {[...kanji.onyomi, ...kanji.kunyomi].slice(0, 2).join(" · ") || "—"}
         </p>

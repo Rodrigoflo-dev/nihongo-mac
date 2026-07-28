@@ -8,8 +8,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { MeshBackground } from "@/components/visual/mesh-background";
+import { AetherParticles } from "@/components/visual/aether-particles";
 import { LoadingScreen } from "@/components/visual/loading-screen";
 import { HoloKanji } from "@/components/visual/holo-kanji";
+import { TitleBarDrag } from "@/components/layout/titlebar-drag";
+import { useT } from "@/lib/i18n";
 import { api } from "@/lib/api";
 import { useSession } from "@/stores/session";
 
@@ -22,6 +25,15 @@ import { useSession } from "@/stores/session";
  * The unlocked state is session-only (kept in React state), so it resets every
  * time the app launches. Fully offline — see src-tauri/src/commands/auth.rs.
  */
+// Cyberpunk styling for the login form controls (neon focus + gradient CTA),
+// applied only to these instances so the shared UI components stay untouched.
+const CYBER_INPUT =
+  "h-12 border-neon-cyan/25 bg-background/60 text-base transition-colors focus-visible:border-neon-cyan/60 focus-visible:ring-neon-cyan/40";
+const CYBER_BUTTON =
+  "mt-1 w-full border border-neon-cyan/40 bg-gradient-to-r from-neon-violet via-primary to-neon-cyan font-semibold tracking-wide text-primary-foreground shadow-[0_0_30px_-6px_color-mix(in_oklch,var(--color-primary)_85%,transparent)] transition-all hover:brightness-110 hover:shadow-[0_0_42px_-4px_color-mix(in_oklch,var(--color-neon-cyan)_65%,transparent)]";
+const CYBER_LABEL =
+  "font-mono text-[11px] uppercase tracking-[0.2em] text-neon-cyan/80";
+
 export function LockGate({ children }: { children: React.ReactNode }) {
   const { data: status, isLoading, refetch } = useQuery({
     queryKey: ["auth-status"],
@@ -32,7 +44,7 @@ export function LockGate({ children }: { children: React.ReactNode }) {
   const setUnlocked = useSession((s) => s.unlock);
 
   if (isLoading || !status) {
-    return <LoadingScreen label="にほんご" />;
+    return <LoadingScreen label="道" />;
   }
 
   if (unlocked) return <>{children}</>;
@@ -69,23 +81,25 @@ function AuthShell({
   subtitle: string;
   children: React.ReactNode;
 }) {
+  const t = useT();
   return (
     <div className="relative h-screen w-screen overflow-y-auto bg-background text-foreground">
       <MeshBackground />
+      <AetherParticles />
       {/* radial hero glow */}
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 [background:radial-gradient(circle_at_50%_-10%,color-mix(in_oklch,var(--color-primary)_18%,transparent)_0%,transparent_60%)]"
       />
-      <div className="absolute left-20 right-0 top-0 z-20 h-7" data-tauri-drag-region />
+      <TitleBarDrag className="absolute left-20 right-0 top-0 z-20 h-9" />
 
       {/* Brand */}
       <div className="absolute left-8 top-8 z-20 hidden md:block">
         <p className="font-jp text-display-lg-mobile text-xl font-extrabold tracking-tighter text-primary">
-          にほんご
+          みち
         </p>
         <p className="-mt-1 font-mono text-[10px] uppercase tracking-[0.3em] text-neon-cyan">
-          Nihongo · Aether
+          Michi · {t("brand.tagline")}
         </p>
       </div>
 
@@ -110,11 +124,21 @@ function AuthShell({
             {subtitle}
           </p>
 
-          <div className="mt-7 rounded-3xl glass-strong border border-white/10 p-6">
-            <div className="mb-4 flex size-11 items-center justify-center rounded-2xl bg-primary/15 text-primary primary-glow">
-              {icon}
+          <div className="relative mt-7 overflow-hidden rounded-3xl glass-strong border border-neon-cyan/20 p-6 shadow-[0_0_50px_-16px_color-mix(in_oklch,var(--color-primary)_60%,transparent)]">
+            {/* HUD scanline + neon corner brackets — matches the app aesthetic */}
+            <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-[inherit]">
+              <div className="animate-scanline absolute left-0 h-10 w-full bg-gradient-to-b from-transparent via-neon-cyan/[0.06] to-transparent" />
             </div>
-            {children}
+            <span className="hud-corner left-3 top-3 border-l-2 border-t-2 border-neon-cyan/50" />
+            <span className="hud-corner right-3 top-3 border-r-2 border-t-2 border-neon-cyan/50" />
+            <span className="hud-corner bottom-3 left-3 border-b-2 border-l-2 border-neon-cyan/50" />
+            <span className="hud-corner bottom-3 right-3 border-b-2 border-r-2 border-neon-cyan/50" />
+            <div className="relative">
+              <div className="mb-4 flex size-11 items-center justify-center rounded-2xl border border-neon-cyan/40 bg-primary/15 text-primary primary-glow">
+                {icon}
+              </div>
+              {children}
+            </div>
           </div>
         </motion.div>
 
@@ -132,10 +156,10 @@ function AuthShell({
       {/* footer status line */}
       <div className="pointer-events-none absolute bottom-5 left-0 z-10 hidden w-full justify-between px-8 md:flex">
         <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
-          © Nihongo · 夢を追え
+          © Michi · 夢を追え
         </p>
         <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
-          System Status: <span className="text-neon-cyan">Online</span>
+          {t("login.systemStatus")} <span className="text-neon-cyan">{t("login.online")}</span>
         </p>
       </div>
     </div>
@@ -143,6 +167,7 @@ function AuthShell({
 }
 
 function CreateCredential({ onDone }: { onDone: () => void }) {
+  const t = useT();
   const [username, setUsername] = useState("");
   const [pin, setPin] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -151,9 +176,9 @@ function CreateCredential({ onDone }: { onDone: () => void }) {
 
   const submit = async () => {
     setError(null);
-    if (!username.trim()) return setError("Escribe un nombre de usuario.");
-    if (pin.length < 4) return setError("El PIN debe tener al menos 4 dígitos.");
-    if (pin !== confirm) return setError("Los PIN no coinciden.");
+    if (!username.trim()) return setError(t("login.err.username"));
+    if (pin.length < 4) return setError(t("login.err.pinShort"));
+    if (pin !== confirm) return setError(t("login.err.pinMatch"));
     setSaving(true);
     try {
       await api.setCredentials(username.trim(), pin);
@@ -168,23 +193,27 @@ function CreateCredential({ onDone }: { onDone: () => void }) {
     <AuthShell
       eyebrow="ようこそ"
       icon={<ShieldCheck className="size-6" />}
-      title="Crea tu acceso"
-      subtitle="Protege tu progreso con un usuario y un PIN local. Se guarda solo en este dispositivo."
+      title={t("login.create.title")}
+      subtitle={t("login.create.subtitle")}
     >
       <div className="grid gap-3">
         <div className="grid gap-1.5">
-          <Label htmlFor="username">Usuario</Label>
+          <Label htmlFor="username" className={CYBER_LABEL}>
+            {t("login.username")}
+          </Label>
           <Input
             id="username"
             autoFocus
             value={username}
             onChange={(e) => setUsername(e.target.value)}
-            placeholder="Rodrigo"
-            className="h-11"
+            placeholder={t("login.usernamePh")}
+            className={CYBER_INPUT}
           />
         </div>
         <div className="grid gap-1.5">
-          <Label htmlFor="pin">PIN (mín. 4 dígitos)</Label>
+          <Label htmlFor="pin" className={CYBER_LABEL}>
+            {t("login.pinMin")}
+          </Label>
           <Input
             id="pin"
             type="password"
@@ -192,11 +221,13 @@ function CreateCredential({ onDone }: { onDone: () => void }) {
             value={pin}
             onChange={(e) => setPin(e.target.value)}
             placeholder="••••"
-            className="h-11"
+            className={CYBER_INPUT}
           />
         </div>
         <div className="grid gap-1.5">
-          <Label htmlFor="confirm">Confirma el PIN</Label>
+          <Label htmlFor="confirm" className={CYBER_LABEL}>
+            {t("login.confirmPin")}
+          </Label>
           <Input
             id="confirm"
             type="password"
@@ -207,12 +238,12 @@ function CreateCredential({ onDone }: { onDone: () => void }) {
               if (e.key === "Enter") submit();
             }}
             placeholder="••••"
-            className="h-11"
+            className={CYBER_INPUT}
           />
         </div>
         {error ? <p className="text-xs text-destructive">{error}</p> : null}
-        <Button size="lg" className="mt-1 w-full" disabled={saving} onClick={submit}>
-          {saving ? "Creando…" : "Crear y entrar"}
+        <Button size="lg" className={CYBER_BUTTON} disabled={saving} onClick={submit}>
+          {saving ? t("login.creating") : t("login.createEnter")}
         </Button>
       </div>
     </AuthShell>
@@ -226,6 +257,7 @@ function UnlockScreen({
   username: string;
   onDone: () => void;
 }) {
+  const t = useT();
   const [pin, setPin] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [checking, setChecking] = useState(false);
@@ -238,7 +270,7 @@ function UnlockScreen({
       if (ok) {
         onDone();
       } else {
-        setError("PIN incorrecto.");
+        setError(t("login.err.pinWrong"));
         setPin("");
         setChecking(false);
       }
@@ -252,12 +284,14 @@ function UnlockScreen({
     <AuthShell
       eyebrow="おかえり"
       icon={<Lock className="size-6" />}
-      title={username ? `Hola, ${username}` : "Bienvenido de vuelta"}
-      subtitle="Introduce tu PIN para continuar."
+      title={username ? t("login.hi", { name: username }) : t("login.welcomeBack")}
+      subtitle={t("login.enterPin")}
     >
       <div className="grid gap-3">
         <div className="grid gap-1.5">
-          <Label htmlFor="pin">PIN</Label>
+          <Label htmlFor="pin" className={CYBER_LABEL}>
+            PIN
+          </Label>
           <Input
             id="pin"
             type="password"
@@ -269,17 +303,17 @@ function UnlockScreen({
               if (e.key === "Enter" && pin) submit();
             }}
             placeholder="••••"
-            className="h-11"
+            className={`${CYBER_INPUT} tracking-[0.4em]`}
           />
         </div>
         {error ? <p className="text-xs text-destructive">{error}</p> : null}
         <Button
           size="lg"
-          className="mt-1 w-full"
+          className={CYBER_BUTTON}
           disabled={checking || !pin}
           onClick={submit}
         >
-          {checking ? "Comprobando…" : "Entrar"}
+          {checking ? t("login.checking") : t("login.enter")}
         </Button>
       </div>
     </AuthShell>

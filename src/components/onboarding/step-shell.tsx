@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { MeshBackground } from "@/components/visual/mesh-background";
 import { cn } from "@/lib/utils";
+import { TitleBarDrag } from "@/components/layout/titlebar-drag";
 
 interface StepShellProps {
   step: number;
@@ -44,7 +45,7 @@ export function StepShell({
   return (
     <div className="relative h-screen w-screen overflow-y-auto bg-background text-foreground">
       <MeshBackground />
-      <div className="absolute left-20 right-0 top-0 z-10 h-7" data-tauri-drag-region />
+      <TitleBarDrag className="absolute left-20 right-0 top-0 z-30 h-9" />
 
       <div className="relative z-10 flex min-h-full items-center justify-center py-16">
       <div className="w-full max-w-xl px-8">

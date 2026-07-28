@@ -5,6 +5,7 @@ import { MeshBackground } from "@/components/visual/mesh-background";
 import { useReminderCheck } from "@/hooks/use-reminder-check";
 import { useAchievementWatch } from "@/hooks/use-achievement-watch";
 import { Sidebar } from "./sidebar";
+import { TitleBarDrag } from "./titlebar-drag";
 
 export function AppLayout() {
   useReminderCheck();
@@ -20,14 +21,16 @@ export function AppLayout() {
       />
       {/* per-theme animated ambient effects (sits behind content, z-0) */}
       <AccentFX />
+
+      {/* Draggable title strip across the FULL window width (over sidebar + main)
+          so you can grab the window anywhere up top and move it — including to
+          another monitor. Starts AFTER the macOS traffic lights (~80px) so the
+          red/yellow/green buttons still receive clicks. Height stays under the
+          top padding (sidebar pt-12 / main pt-14) so it never covers controls. */}
+      <TitleBarDrag className="absolute left-20 right-0 top-0 z-30 h-9" />
+
       <Sidebar />
       <main className="relative z-10 flex-1 overflow-hidden">
-        {/* Drag region starts AFTER the macOS traffic lights (~80px from left) so
-            the red/yellow/green buttons still receive clicks. */}
-        <div
-          className="absolute left-20 right-0 top-0 z-10 h-7"
-          data-tauri-drag-region
-        />
         <div className="h-full overflow-y-auto px-12 pt-14 pb-12">
           <Outlet />
         </div>

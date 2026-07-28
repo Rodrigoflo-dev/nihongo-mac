@@ -27,6 +27,9 @@ import {
 import { api } from "@/lib/api";
 import type { Activity, ExerciseDifficulty, LessonCompletionResponse } from "@/lib/api";
 import { cn } from "@/lib/utils";
+import { TitleBarDrag } from "@/components/layout/titlebar-drag";
+import { useT } from "@/lib/i18n";
+import { useTc } from "@/lib/content-i18n";
 
 /** A single screen in the lesson flow. */
 type Step =
@@ -43,6 +46,8 @@ const EXPLANATION_KINDS = [
 ];
 
 export default function LessonPlayer() {
+  const t = useT();
+  const tc = useTc();
   const { id } = useParams<{ id: string }>();
   const lessonId = id ? parseInt(id, 10) : undefined;
   const navigate = useNavigate();
@@ -333,32 +338,34 @@ export default function LessonPlayer() {
   let buttonDisabled = false;
   let buttonIcon: React.ReactNode = <ArrowRight className="size-5" />;
   if (isSummary) {
-    buttonLabel = complete.isPending ? "Guardando…" : "Terminar lección";
+    buttonLabel = complete.isPending
+      ? t("lesson.btn.saving")
+      : t("lesson.btn.endLesson");
     buttonJp = "完了";
     buttonDisabled = complete.isPending;
     buttonIcon = <Trophy className="size-5" />;
   } else if (isQuiz) {
     if (!verified) {
-      buttonLabel = "Comprobar";
+      buttonLabel = t("lesson.btn.check");
       buttonJp = "確認";
       buttonDisabled = answered === null;
       buttonIcon = <Check className="size-5" />;
     } else if (answered && !answered.correct) {
-      buttonLabel = "Intentar de nuevo";
+      buttonLabel = t("lesson.btn.retry");
       buttonJp = "再挑戦";
       buttonIcon = <RotateCcw className="size-5" />;
     } else {
-      buttonLabel = isLast ? "Finalizar" : "Continuar";
+      buttonLabel = isLast ? t("lesson.btn.finish") : t("lesson.btn.continue");
       buttonJp = isLast ? "完了" : "次へ";
     }
   } else if (currentStep.kind === "dudas") {
-    buttonLabel = "Empezar ejercicios";
+    buttonLabel = t("lesson.btn.startExercises");
     buttonJp = "始める";
   } else if (currentStep.kind === "band") {
-    buttonLabel = "¡Vamos!";
+    buttonLabel = t("lesson.btn.letsGo");
     buttonJp = "よし";
   } else {
-    buttonLabel = isLast ? "Finalizar" : "Continuar";
+    buttonLabel = isLast ? t("lesson.btn.finish") : t("lesson.btn.continue");
     buttonJp = isLast ? "完了" : "次へ";
   }
 
@@ -370,34 +377,34 @@ export default function LessonPlayer() {
         aria-hidden
         className="pointer-events-none absolute inset-0 z-0 [background:radial-gradient(circle_at_50%_-10%,color-mix(in_oklch,var(--color-primary)_12%,transparent)_0%,transparent_55%)]"
       />
-      <div className="absolute left-20 right-0 top-0 z-10 h-7" data-tauri-drag-region />
+      <TitleBarDrag className="absolute left-20 right-0 top-0 z-30 h-9" />
 
       <header className="relative z-10 flex items-center gap-2 px-8 pt-10">
         <Button variant="ghost" size="sm" onClick={handleExit}>
-          <X className="size-3.5" /> Salir
+          <X className="size-3.5" /> {t("common.exit")}
         </Button>
         <Button
           variant="ghost"
           size="sm"
           disabled={step === 0}
           onClick={handleBack}
-          title="Volver a la actividad anterior"
+          title={t("common.back")}
         >
-          <ArrowLeft className="size-3.5" /> Atrás
+          <ArrowLeft className="size-3.5" /> {t("common.back")}
         </Button>
         <div className="ml-2 flex-1">
           <p className="font-jp text-[10px] tracking-[0.3em] text-muted-foreground">
             {lesson.jpTitle ?? "授業"}
           </p>
-          <p className="font-display text-sm font-bold leading-tight">{lesson.title}</p>
+          <p className="font-display text-sm font-bold leading-tight">{tc(lesson.title)}</p>
         </div>
         {exerciseNumber > 0 ? (
           <p className="font-mono text-xs tabular-nums text-neon-cyan/80">
-            Ejercicio {exerciseNumber} / {totalExercises}
+            {t("lesson.exercise", { n: exerciseNumber, total: totalExercises })}
           </p>
         ) : (
           <p className="font-mono text-xs uppercase tracking-[0.2em] text-neon-cyan/70">
-            Aprende
+            {t("lesson.learn")}
           </p>
         )}
       </header>

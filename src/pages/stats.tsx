@@ -10,8 +10,13 @@ import { HoloKanji } from "@/components/visual/holo-kanji";
 import { api } from "@/lib/api";
 import { useDashboardStats } from "@/hooks/use-dashboard-stats";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n";
+import { useTc } from "@/lib/content-i18n";
+import { useLanguage } from "@/stores/language";
 
 export default function StatsPage() {
+  const t = useT();
+  const tc = useTc();
   const { data: stats } = useDashboardStats();
   const { data: heatmap } = useQuery({
     queryKey: ["heatmap"],
@@ -28,13 +33,14 @@ export default function StatsPage() {
     <div className="mx-auto max-w-5xl space-y-10">
       <div className="flex items-start justify-between gap-8">
         <PageHeader
-          eyebrow="進捗 — Progreso"
+          eyebrow={t("stats.eyebrow")}
           title={
             <>
-              Tu evolución <span className="gradient-text">completa</span>
+              {t("stats.title.a")}{" "}
+              <span className="gradient-text">{t("stats.title.b")}</span>
             </>
           }
-          description="Cuánto has invertido, días activos, kanjis dominados y los logros desbloqueados."
+          description={t("stats.desc")}
         />
         <HoloKanji
           size={170}
@@ -52,7 +58,7 @@ export default function StatsPage() {
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <Tile
             icon={Clock}
-            label="Tiempo aprendido"
+            label={t("stats.time")}
             value={`${Math.floor(stats.lifetime.totalHours)}h ${(
               stats.lifetime.totalMinutes % 60
             )
@@ -62,19 +68,19 @@ export default function StatsPage() {
           />
           <Tile
             icon={Calendar}
-            label="Días activos"
+            label={t("stats.days")}
             value={stats.lifetime.activeDays}
             tone="cyan"
           />
           <Tile
             icon={Sparkles}
-            label="XP total"
+            label={t("stats.xp")}
             value={stats.player.totalXp}
             tone="violet"
           />
           <Tile
             icon={Award}
-            label="Logros"
+            label={t("stats.ach")}
             value={
               achievements
                 ? `${achievements.filter((a) => a.unlocked).length}/${achievements.length}`
@@ -89,10 +95,10 @@ export default function StatsPage() {
       <section className="space-y-4">
         <div>
           <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-neon-cyan">
-            活動 — Actividad
+            {t("stats.activity.jp")}
           </p>
           <h2 className="mt-1 font-display text-lg font-extrabold tracking-tight">
-            Tu actividad de los últimos meses
+            {t("stats.activity.title")}
           </h2>
         </div>
         <Heatmap data={heatmap ?? []} />
@@ -102,14 +108,14 @@ export default function StatsPage() {
       <section className="space-y-4">
         <div>
           <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-neon-cyan">
-            実績 — Logros
+            {t("stats.ach.jp")}
           </p>
           <h2 className="mt-1 font-display text-lg font-extrabold tracking-tight">
-            Logros
+            {t("stats.ach.title")}
           </h2>
         </div>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          {achievements?.map((a) => <AchievementCard key={a.id} a={a} />)}
+          {achievements?.map((a) => <AchievementCard key={a.id} a={a} t={t} tc={tc} />)}
         </div>
       </section>
     </div>
@@ -166,10 +172,10 @@ function Tile({
   );
 }
 
-const HEATMAP_MONTHS = [
-  "ene", "feb", "mar", "abr", "may", "jun",
-  "jul", "ago", "sep", "oct", "nov", "dic",
-];
+const HEATMAP_MONTHS: Record<"es" | "en", string[]> = {
+  es: ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"],
+  en: ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"],
+};
 type HeatCell = { date: string; minutes: number };
 
 /**
@@ -177,6 +183,8 @@ type HeatCell = { date: string; minutes: number };
  * last ~4 months, height = minutes studied that week. Clearer than a dot grid.
  */
 function Heatmap({ data }: { data: HeatCell[] }) {
+  const t = useT();
+  const lang = useLanguage((s) => s.lang);
   const days = 112;
   const today = new Date();
 
@@ -211,7 +219,7 @@ function Heatmap({ data }: { data: HeatCell[] }) {
     const m = new Date(w.start + "T00:00:00").getMonth();
     if (m !== lastMonth) {
       lastMonth = m;
-      return HEATMAP_MONTHS[m];
+      return HEATMAP_MONTHS[lang][m];
     }
     return "";
   });
@@ -225,8 +233,7 @@ function Heatmap({ data }: { data: HeatCell[] }) {
   return (
     <HudPanel glow className="p-5">
       <p className="mb-4 text-xs text-muted-foreground">
-        Minutos que estudiaste por semana en los últimos ~4 meses. Cada barra es
-        una semana.
+        {t("stats.heatmap.caption")}
       </p>
 
       {/* Bar chart */}
@@ -268,14 +275,9 @@ function Heatmap({ data }: { data: HeatCell[] }) {
 
       {/* Summary */}
       <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-border/40 pt-3 text-[11px] text-muted-foreground">
+        <p>{t("stats.heatmap.summary", { days: activeDays, mins: totalMinutes })}</p>
         <p>
-          <span className="font-semibold text-foreground">{activeDays}</span> días
-          activos ·{" "}
-          <span className="font-semibold text-foreground">{totalMinutes}</span> min
-          en total
-        </p>
-        <p>
-          Mejor semana:{" "}
+          {t("stats.heatmap.bestWeek")}{" "}
           <span className="font-semibold text-neon-cyan">{bestWeek} min</span>
         </p>
       </div>
@@ -285,6 +287,8 @@ function Heatmap({ data }: { data: HeatCell[] }) {
 
 function AchievementCard({
   a,
+  t,
+  tc,
 }: {
   a: {
     title: string;
@@ -294,6 +298,8 @@ function AchievementCard({
     progress: number;
     target: number;
   };
+  t: (k: string) => string;
+  tc: (s: string) => string;
 }) {
   const pct = Math.min(100, Math.round((a.progress / a.target) * 100));
   const tone =
@@ -332,16 +338,16 @@ function AchievementCard({
         <div className="flex-1">
           <div className="flex items-center gap-2">
             <p className="font-display text-sm font-extrabold tracking-tight">
-              {a.title}
+              {tc(a.title)}
             </p>
             {a.unlocked ? (
               <Badge variant="warning" className="text-[9px]">
-                Desbloqueado
+                {t("stats.unlocked")}
               </Badge>
             ) : null}
           </div>
           {a.description ? (
-            <p className="mt-0.5 text-xs text-muted-foreground">{a.description}</p>
+            <p className="mt-0.5 text-xs text-muted-foreground">{tc(a.description)}</p>
           ) : null}
           <div className="mt-2 flex items-center gap-2">
             <Progress value={pct} className="h-1 flex-1" />

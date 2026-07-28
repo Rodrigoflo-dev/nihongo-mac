@@ -11,14 +11,15 @@ import { useDashboardStats } from "@/hooks/use-dashboard-stats";
 import { useNextAction } from "@/hooks/use-next-action";
 import { useUserProfile } from "@/hooks/use-user-profile";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n";
 
-const GREETINGS = {
-  morning: { es: "Buenos días", jp: "おはよう" },
-  afternoon: { es: "Buenas tardes", jp: "こんにちは" },
-  evening: { es: "Buenas noches", jp: "こんばんは" },
+const GREETING_JP = {
+  morning: "おはよう",
+  afternoon: "こんにちは",
+  evening: "こんばんは",
 };
 
-function timeOfDay(): keyof typeof GREETINGS {
+function timeOfDay(): keyof typeof GREETING_JP {
   const h = new Date().getHours();
   if (h < 12) return "morning";
   if (h < 19) return "afternoon";
@@ -26,12 +27,13 @@ function timeOfDay(): keyof typeof GREETINGS {
 }
 
 export default function DashboardPage() {
+  const t = useT();
   const { data: profile } = useUserProfile();
   const { data: stats, isLoading } = useDashboardStats();
   const { data: action } = useNextAction();
 
-  const greeting = GREETINGS[timeOfDay()];
-  const name = profile?.name?.trim() || "estudiante";
+  const tod = timeOfDay();
+  const name = profile?.name?.trim() || t("dash.learner");
 
   if (isLoading || !stats || !profile) {
     return (
@@ -51,10 +53,10 @@ export default function DashboardPage() {
         className="space-y-1.5"
       >
         <p className="font-jp text-xs tracking-[0.4em] text-muted-foreground">
-          {greeting.jp}
+          {GREETING_JP[tod]}
         </p>
         <h1 className="text-2xl font-semibold tracking-tight">
-          {greeting.es},{" "}
+          {t(`dash.greeting.${tod}`)},{" "}
           <span className="gradient-text">{name}</span>
         </h1>
       </motion.div>
@@ -74,7 +76,7 @@ export default function DashboardPage() {
       >
         <StatTile
           icon={<Clock className="size-3.5 text-neon-cyan" />}
-          label="Tiempo aprendido"
+          label={t("dash.stat.time")}
           value={`${Math.floor(stats.lifetime.totalHours)}h ${
             (stats.lifetime.totalMinutes % 60).toString().padStart(2, "0")
           }m`}
@@ -82,17 +84,17 @@ export default function DashboardPage() {
         />
         <StatTile
           icon={<Calendar className="size-3.5 text-neon-violet" />}
-          label="Días activos"
+          label={t("dash.stat.days")}
           value={stats.lifetime.activeDays}
         />
         <StatTile
           icon={<Trophy className="size-3.5 text-neon-amber" />}
-          label="Kanjis dominados"
+          label={t("dash.stat.kanji")}
           value={stats.lifetime.totalKanjiMastered}
         />
         <StatTile
           icon={<CurrencyIcon className="size-3.5" />}
-          label="Monedas"
+          label={t("dash.stat.coins")}
           value={stats.player.stars}
         />
       </motion.div>
@@ -111,15 +113,15 @@ export default function DashboardPage() {
       {/* Missions */}
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
         <MissionList
-          title="Misiones de hoy"
+          title={t("dash.missions.daily")}
           jp="今日のミッション"
-          description="Pequeñas victorias diarias para tu XP"
+          description={t("dash.missions.dailyDesc")}
           missions={stats.dailyMissions}
         />
         <MissionList
-          title="Misiones semanales"
+          title={t("dash.missions.weekly")}
           jp="今週のミッション"
-          description="Objetivos más grandes, mayores recompensas"
+          description={t("dash.missions.weeklyDesc")}
           missions={stats.weeklyMissions}
         />
       </div>

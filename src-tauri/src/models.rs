@@ -418,6 +418,10 @@ pub enum Activity {
         /// Tiles in the CORRECT order; the frontend shuffles them.
         tokens: Vec<String>,
         meaning: String,
+        /// Decoy tiles that DON'T belong — a harder variant where the learner
+        /// must reject wrong tiles (e.g. the wrong particle), not just permute.
+        #[serde(default)]
+        decoys: Vec<String>,
         #[serde(default)]
         reading: Option<String>,
         #[serde(default)]

@@ -16,6 +16,8 @@ import {
 } from "@/hooks/use-grammar";
 import type { GrammarLesson, GrammarQuizResult } from "@/lib/api";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n";
+import { useTc } from "@/lib/content-i18n";
 import { burstLevelUp, burstXp } from "@/components/visual/confetti";
 
 type Phase = "lesson" | "quiz" | "result";
@@ -42,7 +44,7 @@ export default function GrammarLessonPage() {
   if (!lesson) {
     return (
       <div className="grid h-full place-items-center">
-        <p className="text-sm text-muted-foreground">Cargando…</p>
+        <p className="text-sm text-muted-foreground">読み込み中…</p>
       </div>
     );
   }
@@ -114,6 +116,8 @@ function LessonView({
   onStartQuiz: () => void;
   onExit: () => void;
 }) {
+  const t = useT();
+  const tc = useTc();
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
@@ -135,11 +139,11 @@ function LessonView({
           <div className="min-w-0 space-y-3">
             <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-neon-cyan">
               <span className="font-jp">
-                {lesson.structure ?? lesson.category ?? "Gramática"}
+                {lesson.structure ?? (lesson.category ? tc(lesson.category) : t("grammar.fallbackCategory"))}
               </span>
             </p>
             <h1 className="text-balance font-display text-3xl font-extrabold leading-tight tracking-tight">
-              {lesson.title}
+              {tc(lesson.title)}
             </h1>
           </div>
           <HoloKanji
@@ -193,7 +197,7 @@ function LessonView({
 
       <section className="space-y-3">
         <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-neon-cyan">
-          Ejemplos
+          {t("glesson.examples")}
         </p>
         <div className="space-y-2">
           {lesson.examples.map((ex) => (
@@ -207,7 +211,7 @@ function LessonView({
                 {ex.reading}
               </p>
               <RomajiLine reading={ex.reading} />
-              <p className="mt-1 text-sm text-muted-foreground">{ex.meaning}</p>
+              <p className="mt-1 text-sm text-muted-foreground">{tc(ex.meaning)}</p>
             </motion.div>
           ))}
         </div>
@@ -218,7 +222,7 @@ function LessonView({
         className="w-full bg-gradient-to-br from-primary via-primary to-neon-violet shadow-[0_0_40px_-12px_color-mix(in_oklch,var(--color-primary)_70%,transparent)]"
         onClick={onStartQuiz}
       >
-        <Sparkles className="size-4" /> Empezar quiz ({lesson.quiz.length} preguntas)
+        <Sparkles className="size-4" /> {t("glesson.startQuiz", { n: lesson.quiz.length })}
       </Button>
     </motion.div>
   );
@@ -275,6 +279,8 @@ function QuizView({
   onSubmit: () => void;
   submitting: boolean;
 }) {
+  const t = useT();
+  const tc = useTc();
   const q = lesson.quiz[questionIdx];
   const total = lesson.quiz.length;
   const isLast = questionIdx === total - 1;
@@ -291,10 +297,10 @@ function QuizView({
       <div className="space-y-3">
         <div className="flex items-center justify-between gap-3">
           <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-neon-cyan">
-            Quiz · pregunta {questionIdx + 1} de {total}
+            {t("glesson.quizProgress", { n: questionIdx + 1, total })}
           </p>
           <Badge variant="outline" className="shrink-0 font-mono text-[10px]">
-            {lesson.title}
+            {tc(lesson.title)}
           </Badge>
         </div>
         <Progress
@@ -319,7 +325,7 @@ function QuizView({
               </p>
             ) : null}
             <p className="text-balance text-lg font-semibold leading-snug">
-              {q.prompt}
+              {tc(q.prompt)}
             </p>
           </div>
 
@@ -337,7 +343,7 @@ function QuizView({
                     "border-neon-cyan bg-primary/5 ring-2 ring-neon-cyan/30 shadow-[0_0_28px_-10px_color-mix(in_oklch,var(--color-neon-cyan)_65%,transparent)]"
                 )}
               >
-                <span className="font-jp text-base">{opt.text}</span>
+                <span className="font-jp text-base">{tc(opt.text)}</span>
               </motion.button>
             ))}
           </div>
@@ -353,7 +359,7 @@ function QuizView({
           else onNext();
         }}
       >
-        {isLast ? (submitting ? "Calificando…" : "Enviar quiz") : "Siguiente"}
+        {isLast ? (submitting ? t("glesson.grading") : t("glesson.submit")) : t("common.next")}
       </Button>
     </motion.div>
   );
@@ -372,6 +378,8 @@ function ResultView({
   onRetry: () => void;
   onDone: () => void;
 }) {
+  const t = useT();
+  const tc = useTc();
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
@@ -385,23 +393,23 @@ function ResultView({
         </p>
         <h2 className="mt-2 font-display text-3xl font-extrabold tracking-tight">
           {result.passed ? (
-            <span className="gradient-text">¡Lección dominada!</span>
+            <span className="gradient-text">{t("glesson.mastered")}</span>
           ) : (
-            "Casi"
+            t("glesson.almost")
           )}
         </h2>
         <p className="mt-2 text-sm text-muted-foreground">
-          {lesson.title}
+          {tc(lesson.title)}
         </p>
 
         <div className="mt-6 grid grid-cols-2 gap-3">
           <Metric
-            label="Puntaje"
+            label={t("glesson.score")}
             value={`${Math.round(result.score)}%`}
             tone={result.passed ? "success" : "warning"}
           />
           <Metric
-            label="Correctas"
+            label={t("glesson.correct")}
             value={`${result.correct} / ${result.total}`}
           />
         </div>
@@ -413,16 +421,16 @@ function ResultView({
 
         {result.award.leveledUp ? (
           <p className="mt-2 text-sm font-semibold gradient-text">
-            ¡Subiste al nivel {result.award.newLevel}!
+            {t("glesson.leveledUp", { n: result.award.newLevel })}
           </p>
         ) : null}
 
         <div className="mt-7 flex gap-2">
           <Button variant="outline" className="flex-1" onClick={onRetry}>
-            Repetir
+            {t("glesson.retry")}
           </Button>
           <Button className="flex-1" onClick={onDone}>
-            <Check className="size-4" /> Listo
+            <Check className="size-4" /> {t("glesson.done")}
           </Button>
         </div>
       </HudPanel>

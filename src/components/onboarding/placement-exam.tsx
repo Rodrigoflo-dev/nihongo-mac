@@ -13,6 +13,7 @@ import {
   type ExamItem,
 } from "@/lib/placement-exam";
 import { cn } from "@/lib/utils";
+import { TitleBarDrag } from "@/components/layout/titlebar-drag";
 
 /**
  * Placement test shown when the learner picks "no sé mi nivel" during onboarding.
@@ -55,7 +56,7 @@ export function PlacementExam({
   return (
     <div className="relative h-screen w-screen overflow-y-auto bg-background text-foreground">
       <MeshBackground />
-      <div className="absolute left-20 right-0 top-0 z-10 h-7" data-tauri-drag-region />
+      <TitleBarDrag className="absolute left-20 right-0 top-0 z-30 h-9" />
 
       <div className="relative z-10 flex min-h-full items-center justify-center py-16">
         <div className="w-full max-w-xl px-8">

@@ -1,217 +1,204 @@
-import { NavLink } from "react-router-dom";
+import { Link, NavLink } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
-  BookOpen,
+  ChevronRight,
   Gamepad2,
-  Gift,
-  GraduationCap,
-  Headphones,
   Home,
-  LogOut,
+  LayoutGrid,
+  LineChart,
   type LucideIcon,
-  Mic,
+  MessagesSquare,
   PenTool,
   RotateCcw,
-  ScrollText,
-  Settings as SettingsIcon,
-  TrendingUp,
+  Route,
+  ShoppingBag,
+  SlidersHorizontal,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import { useSession } from "@/stores/session";
-import { SidebarPlayer } from "./sidebar-player";
+import { PlayerAvatar } from "@/components/profile/player-avatar";
+import { usePlayer } from "@/hooks/use-player";
+import { useUserProfile } from "@/hooks/use-user-profile";
+import { useT, type TFn } from "@/lib/i18n";
 
 interface NavItem {
   to: string;
-  label: string;
+  labelKey: string;
   icon: LucideIcon;
-  jp?: string;
 }
 
+// APRENDER — todo lo que es estudiar. «Práctica» agrupa Lectura, Listening y
+// Speaking en un solo hub (/practica) para que el sidebar respire.
 const PRIMARY_NAV: NavItem[] = [
-  { to: "/", label: "Inicio", icon: Home, jp: "ホーム" },
-  { to: "/learn", label: "Curso", icon: GraduationCap, jp: "授業" },
-  { to: "/repaso", label: "Repaso", icon: RotateCcw, jp: "復習" },
-  { to: "/kanji", label: "Kanji", icon: PenTool, jp: "漢字" },
-  { to: "/grammar", label: "Gramática", icon: BookOpen, jp: "文法" },
-  { to: "/reading", label: "Lectura", icon: ScrollText, jp: "読解" },
-  { to: "/listening", label: "Listening", icon: Headphones, jp: "聴解" },
-  { to: "/speaking", label: "Speaking", icon: Mic, jp: "会話" },
+  { to: "/", labelKey: "nav.home", icon: Home },
+  { to: "/learn", labelKey: "nav.course", icon: Route },
+  { to: "/repaso", labelKey: "nav.review", icon: RotateCcw },
+  { to: "/kanji", labelKey: "nav.kanji", icon: PenTool },
+  { to: "/grammar", labelKey: "nav.grammar", icon: LayoutGrid },
+  { to: "/practica", labelKey: "nav.practice", icon: MessagesSquare },
 ];
 
+// TU ESPACIO — lo que rodea al aprendizaje. La Tienda y el Perfil quedan
+// separados a propósito: el Perfil vive en la tarjeta de abajo.
 const SECONDARY_NAV: NavItem[] = [
-  { to: "/play", label: "Jugar", icon: Gamepad2, jp: "遊ぶ" },
-  { to: "/rewards", label: "Tienda", icon: Gift, jp: "店" },
-  { to: "/stats", label: "Progreso", icon: TrendingUp, jp: "進捗" },
-  { to: "/settings", label: "Ajustes", icon: SettingsIcon },
+  { to: "/play", labelKey: "nav.play", icon: Gamepad2 },
+  { to: "/rewards", labelKey: "nav.store", icon: ShoppingBag },
+  { to: "/stats", labelKey: "nav.progress", icon: LineChart },
+  { to: "/settings", labelKey: "nav.settings", icon: SlidersHorizontal },
 ];
 
 const SPRING = { type: "spring", stiffness: 380, damping: 32 } as const;
 
-function NavItemLink({ to, label, icon: Icon, jp }: NavItem) {
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="mb-2 px-3 font-mono text-[10px] font-medium uppercase tracking-[0.28em] text-sidebar-foreground/35">
+      {children}
+    </p>
+  );
+}
+
+function NavItemLink({ to, labelKey, icon: Icon, t }: NavItem & { t: TFn }) {
   return (
     <NavLink
       to={to}
       end={to === "/"}
+      data-tauri-no-drag
       className={({ isActive }) =>
         cn(
-          "group relative flex items-center gap-3 overflow-hidden rounded-lg px-2.5 py-2.5 text-sm transition-colors duration-200",
+          "group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors duration-200",
           isActive
-            ? "text-sidebar-foreground"
-            : "text-sidebar-foreground/70 hover:text-sidebar-foreground"
+            ? "text-primary-foreground"
+            : "text-sidebar-foreground/65 hover:text-sidebar-foreground"
         )
       }
     >
       {({ isActive }) => (
         <>
-          {/* Active panel — slides between items */}
+          {/* Active pill — solid, slides between items */}
           {isActive ? (
             <motion.span
-              layoutId="nav-active-bg"
+              layoutId="nav-active-pill"
               aria-hidden
-              className="absolute inset-0 rounded-lg bg-gradient-to-r from-sidebar-primary/20 via-neon-violet/10 to-transparent ring-1 ring-inset ring-neon-cyan/25"
-              transition={SPRING}
-            >
-              <span className="absolute inset-0 overflow-hidden rounded-lg">
-                <span className="animate-scanline absolute left-0 h-6 w-full bg-gradient-to-b from-transparent via-neon-cyan/10 to-transparent" />
-              </span>
-            </motion.span>
-          ) : null}
-
-          {/* Hover sheen sweep */}
-          <span
-            aria-hidden
-            className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/[0.06] to-transparent transition-transform duration-500 ease-out group-hover:translate-x-full"
-          />
-
-          {/* Active left rail — glowing, slides between items */}
-          {isActive ? (
-            <motion.span
-              layoutId="nav-active-rail"
-              aria-hidden
-              className="absolute left-0 top-1/2 h-7 w-[3px] -translate-y-1/2 rounded-r-full bg-gradient-to-b from-neon-violet to-neon-cyan shadow-[0_0_12px_color-mix(in_oklch,var(--color-neon-cyan)_85%,transparent)]"
+              className="absolute inset-0 rounded-xl bg-gradient-to-r from-neon-violet to-primary shadow-[0_10px_30px_-10px_color-mix(in_oklch,var(--color-primary)_80%,transparent)]"
               transition={SPRING}
             />
-          ) : null}
-
-          {/* Icon in a HUD bracket frame */}
-          <span
-            className={cn(
-              "relative grid size-7 shrink-0 place-items-center rounded-md border transition-all duration-200",
-              isActive
-                ? "border-neon-cyan/40 bg-background/40 text-sidebar-primary shadow-[0_0_16px_-4px_color-mix(in_oklch,var(--color-neon-cyan)_80%,transparent)]"
-                : "border-transparent text-sidebar-foreground/55 group-hover:border-border/70 group-hover:bg-background/20"
-            )}
-          >
-            <Icon className="size-4 transition-transform duration-200 group-hover:scale-110" />
-          </span>
-
-          <span className="relative flex-1 truncate font-medium tracking-tight">
-            {label}
-          </span>
-
-          {jp ? (
+          ) : (
             <span
-              className={cn(
-                "relative rounded px-1 font-mono text-[10px] tracking-wider transition-all duration-200",
-                isActive
-                  ? "text-neon-cyan opacity-100"
-                  : "text-sidebar-foreground/35 opacity-0 group-hover:opacity-100"
-              )}
-            >
-              {jp}
-            </span>
-          ) : null}
+              aria-hidden
+              className="absolute inset-0 rounded-xl bg-transparent transition-colors duration-200 group-hover:bg-sidebar-foreground/[0.05]"
+            />
+          )}
+
+          <Icon className="relative size-[18px] shrink-0" />
+          <span className="relative flex-1 truncate">{t(labelKey)}</span>
         </>
       )}
     </NavLink>
   );
 }
 
+/** Brand — 道 Michi · el camino. Tapping it goes home. */
+function Brand({ t }: { t: TFn }) {
+  return (
+    <Link
+      to="/"
+      data-tauri-no-drag
+      className="relative flex shrink-0 items-center gap-3 px-2"
+    >
+      <span className="grid size-11 place-items-center rounded-2xl bg-gradient-to-br from-neon-violet via-primary to-neon-cyan text-primary-foreground shadow-[0_10px_28px_-8px_color-mix(in_oklch,var(--color-primary)_75%,transparent)]">
+        <span className="font-jp text-[22px] font-bold leading-none">道</span>
+      </span>
+      <div className="leading-tight">
+        <h1 className="font-display text-lg font-extrabold tracking-tight gradient-text">
+          Michi
+        </h1>
+        <p className="flex items-center gap-1.5 font-mono text-[9px] uppercase tracking-[0.3em] text-sidebar-foreground/45">
+          <span className="inline-block size-1 animate-pulse rounded-full bg-neon-cyan" />
+          {t("brand.tagline")}
+        </p>
+      </div>
+    </Link>
+  );
+}
+
+/** Profile card at the very bottom → opens /profile (separado de la Tienda). */
+function SidebarProfile() {
+  const { data: player } = usePlayer();
+  const { data: profile } = useUserProfile();
+
+  if (!player) {
+    return <div className="h-[68px]" data-tauri-no-drag />;
+  }
+
+  return (
+    <Link
+      to="/profile"
+      data-tauri-no-drag
+      className="group relative flex items-center gap-3 rounded-2xl border border-sidebar-border/60 bg-sidebar-accent/30 px-3 py-2.5 transition-colors hover:border-primary/40 hover:bg-sidebar-accent/50"
+    >
+      <PlayerAvatar level={player.level} size={40} />
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-sm font-semibold text-sidebar-foreground">
+          {profile?.name ?? player.title}
+        </p>
+        <p className="truncate text-[11px] text-sidebar-foreground/55">
+          Nivel {player.level} ·{" "}
+          <span className="tabular-nums">{player.currentLevelXp} XP</span>
+        </p>
+      </div>
+      <ChevronRight className="size-4 shrink-0 text-sidebar-foreground/40 transition-transform group-hover:translate-x-0.5 group-hover:text-sidebar-foreground/70" />
+    </Link>
+  );
+}
+
 export function Sidebar() {
-  const lock = useSession((s) => s.lock);
+  const t = useT();
   return (
     <motion.aside
       initial={{ opacity: 0, x: -10 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.45, ease: [0.21, 1.02, 0.73, 1] }}
-      className="relative z-10 flex h-full w-64 shrink-0 flex-col gap-5 overflow-y-auto border-r border-sidebar-border/60 bg-sidebar/40 px-3 pt-12 pb-4 backdrop-blur-xl"
+      className="relative z-10 flex h-full w-64 shrink-0 flex-col gap-6 overflow-y-auto border-r border-sidebar-border/60 bg-sidebar/40 px-3 pt-12 pb-4 backdrop-blur-xl"
     >
-      {/* Ambient cyberpunk grid + glow inside the rail */}
+      {/* Ambient glow inside the rail */}
       <div
         aria-hidden
-        className="holo-grid pointer-events-none absolute inset-0 opacity-50"
+        className="holo-grid pointer-events-none absolute inset-0 opacity-40"
       />
       <div
         aria-hidden
-        className="pointer-events-none absolute -left-10 top-24 size-40 rounded-full bg-neon-violet/15 blur-3xl"
+        className="pointer-events-none absolute -left-10 top-20 size-40 rounded-full bg-neon-violet/12 blur-3xl"
       />
-      {/* Glowing right edge */}
       <div
         aria-hidden
-        className="pointer-events-none absolute right-0 top-0 h-full w-px bg-gradient-to-b from-transparent via-neon-cyan/30 to-transparent"
+        className="pointer-events-none absolute right-0 top-0 h-full w-px bg-gradient-to-b from-transparent via-neon-cyan/25 to-transparent"
       />
 
-      {/* Brand */}
-      <div className="relative shrink-0 px-3" data-tauri-no-drag>
-        <p className="font-jp text-xs tracking-[0.4em] text-sidebar-foreground/45">
-          にほんご
-        </p>
-        <h1 className="font-display text-lg font-extrabold tracking-tighter gradient-text">
-          Nihongo
-        </h1>
-        <p className="-mt-0.5 flex items-center gap-1.5 font-mono text-[9px] uppercase tracking-[0.3em] text-neon-cyan/70">
-          <span className="inline-block size-1 animate-pulse rounded-full bg-neon-cyan" />
-          Aether System
-        </p>
-      </div>
+      <Brand t={t} />
 
-      {/* Primary nav */}
+      {/* Aprender */}
       <nav className="relative flex shrink-0 flex-col gap-1 px-1" data-tauri-no-drag>
-        <p className="mb-1 px-2 font-mono text-[9px] uppercase tracking-[0.3em] text-sidebar-foreground/30">
-          Aprender
-        </p>
+        <SectionLabel>{t("nav.section.learn")}</SectionLabel>
         {PRIMARY_NAV.map((item) => (
-          <NavItemLink key={item.to} {...item} />
+          <NavItemLink key={item.to} {...item} t={t} />
         ))}
       </nav>
 
-      {/* Spacer — collapses to 0 when content overflows so the list scrolls */}
-      <div className="min-h-2 flex-1" />
-
-      {/* Player badge */}
-      <div className="relative shrink-0">
-        <SidebarPlayer />
-      </div>
-
-      {/* Secondary nav */}
+      {/* Tu espacio */}
       <nav className="relative flex shrink-0 flex-col gap-1 px-1" data-tauri-no-drag>
-        <p className="mb-1 px-2 font-mono text-[9px] uppercase tracking-[0.3em] text-sidebar-foreground/30">
-          Sistema
-        </p>
+        <SectionLabel>{t("nav.section.space")}</SectionLabel>
         {SECONDARY_NAV.map((item) => (
-          <NavItemLink key={item.to} {...item} />
+          <NavItemLink key={item.to} {...item} t={t} />
         ))}
-        <button
-          onClick={lock}
-          data-tauri-no-drag
-          className={cn(
-            "group relative flex items-center gap-3 overflow-hidden rounded-lg px-2.5 py-2.5 text-sm transition-colors duration-200",
-            "text-sidebar-foreground/60 hover:text-sidebar-foreground"
-          )}
-        >
-          <span
-            aria-hidden
-            className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/[0.06] to-transparent transition-transform duration-500 ease-out group-hover:translate-x-full"
-          />
-          <span className="relative grid size-7 shrink-0 place-items-center rounded-md border border-transparent text-sidebar-foreground/55 transition-all duration-200 group-hover:border-destructive/40 group-hover:bg-destructive/10 group-hover:text-destructive">
-            <LogOut className="size-4" />
-          </span>
-          <span className="relative flex-1 truncate text-left font-medium">
-            Cerrar sesión
-          </span>
-        </button>
       </nav>
+
+      {/* Spacer — collapses to 0 when the list overflows so it can scroll */}
+      <div className="min-h-4 flex-1" />
+
+      {/* Perfil */}
+      <div className="relative shrink-0 px-1">
+        <SidebarProfile />
+      </div>
     </motion.aside>
   );
 }

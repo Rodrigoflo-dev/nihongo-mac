@@ -11,6 +11,8 @@ import { useCourses } from "@/hooks/use-lessons";
 import { useUnlockedLevel } from "@/hooks/use-exams";
 import type { LessonSummary, Unit } from "@/lib/api";
 import { cn } from "@/lib/utils";
+import { useT, type TFn } from "@/lib/i18n";
+import { useTc } from "@/lib/content-i18n";
 
 const LEVEL_ORDER = ["N5", "N4", "N3", "N2", "N1"];
 const levelRank = (l: string) => {
@@ -31,6 +33,7 @@ interface LevelGroup {
  * completed ones. Replaying a lesson reinforces it.
  */
 export default function ReviewLessonsPage() {
+  const t = useT();
   const { data: courses, isLoading } = useCourses();
   const { data: unlockedLevel } = useUnlockedLevel();
 
@@ -65,13 +68,14 @@ export default function ReviewLessonsPage() {
     <div className="mx-auto max-w-4xl space-y-8">
       <div className="relative">
         <PageHeader
-          eyebrow="復習 — Repaso"
+          eyebrow={t("review.eyebrow")}
           title={
             <>
-              Repasa por <span className="gradient-text">nivel</span>
+              {t("review.title.a")}{" "}
+              <span className="gradient-text">{t("review.title.b")}</span>
             </>
           }
-          description="Abre un nivel y repite cualquier lección para reforzar — repasar es lo que fija el aprendizaje."
+          description={t("review.desc")}
         />
         <div className="pointer-events-none absolute -right-4 -top-14 hidden lg:block">
           <HoloKanji
@@ -86,13 +90,14 @@ export default function ReviewLessonsPage() {
       </div>
 
       {isLoading ? (
-        <p className="text-sm text-muted-foreground">Cargando…</p>
+        <p className="text-sm text-muted-foreground">{t("common.loading")}</p>
       ) : (
         <div className="space-y-4">
           {groups.map((g) => (
             <LevelSection
               key={g.level}
               group={g}
+              t={t}
               open={activeLevel === g.level}
               onToggle={() =>
                 setOpen((cur) => (cur === g.level ? "__none__" : g.level))
@@ -109,11 +114,14 @@ function LevelSection({
   group,
   open,
   onToggle,
+  t,
 }: {
   group: LevelGroup;
   open: boolean;
   onToggle: () => void;
+  t: TFn;
 }) {
+  const tc = useTc();
   return (
     <HudPanel className="overflow-hidden p-0">
       <button
@@ -126,10 +134,10 @@ function LevelSection({
         </Badge>
         <div className="min-w-0 flex-1">
           <h2 className="font-display text-lg font-extrabold tracking-tight">
-            Nivel {group.level}
+            {t("review.level", { level: group.level })}
           </h2>
           <p className="text-xs text-muted-foreground">
-            {group.total} lecciones · {group.completed} completadas
+            {t("review.counts", { total: group.total, done: group.completed })}
           </p>
         </div>
         <ChevronDown
@@ -154,11 +162,11 @@ function LevelSection({
                 <div key={unit.id}>
                   <p className="mb-2 font-mono text-[10px] uppercase tracking-[0.25em] text-neon-cyan/80">
                     <span className="font-jp">{unit.jpTitle ?? ""}</span>{" "}
-                    {unit.title}
+                    {tc(unit.title)}
                   </p>
                   <div className="space-y-2">
                     {unit.lessons.map((lesson) => (
-                      <ReviewLessonRow key={lesson.id} lesson={lesson} />
+                      <ReviewLessonRow key={lesson.id} lesson={lesson} t={t} tc={tc} />
                     ))}
                   </div>
                 </div>
@@ -171,7 +179,15 @@ function LevelSection({
   );
 }
 
-function ReviewLessonRow({ lesson }: { lesson: LessonSummary }) {
+function ReviewLessonRow({
+  lesson,
+  t,
+  tc,
+}: {
+  lesson: LessonSummary;
+  t: TFn;
+  tc: (s: string) => string;
+}) {
   const done = lesson.status === "completed";
   return (
     <Link to={`/learn/${lesson.id}`}>
@@ -192,23 +208,23 @@ function ReviewLessonRow({ lesson }: { lesson: LessonSummary }) {
         </div>
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-semibold leading-tight">
-            {lesson.title}
+            {tc(lesson.title)}
           </p>
           <div className="mt-0.5 flex items-center gap-3 text-[10px] text-muted-foreground">
             <span className="inline-flex items-center gap-1">
               <Clock className="size-3" />
-              {lesson.durationMinutes} min
+              {lesson.durationMinutes} {t("home.min")}
             </span>
             {lesson.bestScore != null ? (
               <span className="text-warning">★ {lesson.bestScore}%</span>
             ) : (
-              <span>sin empezar</span>
+              <span>{t("review.notStarted")}</span>
             )}
           </div>
         </div>
         <Badge variant="outline" className="shrink-0 gap-1.5 text-[10px]">
           <RotateCcw className="size-3" />
-          {done ? "Repetir" : "Ver"}
+          {done ? t("review.replay") : t("review.view")}
         </Badge>
       </div>
     </Link>

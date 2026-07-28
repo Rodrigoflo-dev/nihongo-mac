@@ -21,6 +21,8 @@ import ReviewLessonsPage from "@/pages/review-lessons";
 import PlayPage from "@/pages/play";
 import ListeningPage from "@/pages/listening";
 import OnboardingPage from "@/pages/onboarding";
+import PracticaPage from "@/pages/practica";
+import ProfilePage from "@/pages/profile";
 import ReadingPage from "@/pages/reading";
 import RewardsPage from "@/pages/rewards";
 import SettingsPage from "@/pages/settings";
@@ -45,6 +47,7 @@ function App() {
             <Route path="/kanji/review" element={<KanjiReviewPage />} />
             <Route path="/grammar" element={<GrammarPage />} />
             <Route path="/grammar/:id" element={<GrammarLessonPage />} />
+            <Route path="/practica" element={<PracticaPage />} />
             <Route path="/reading" element={<ReadingPage />} />
             <Route path="/listening" element={<ListeningPage />} />
             <Route path="/speaking" element={<SpeakingPage />} />
@@ -57,6 +60,7 @@ function App() {
             <Route path="/play/kanji-quiz" element={<KanjiQuizGame />} />
             <Route path="/rewards" element={<RewardsPage />} />
             <Route path="/stats" element={<StatsPage />} />
+            <Route path="/profile" element={<ProfilePage />} />
             <Route path="/settings" element={<SettingsPage />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />

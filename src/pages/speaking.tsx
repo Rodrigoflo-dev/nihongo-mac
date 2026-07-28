@@ -10,12 +10,15 @@ import { HoloKanji } from "@/components/visual/holo-kanji";
 import { usePlayTts } from "@/hooks/use-listening";
 import { useVoiceRecorder } from "@/hooks/use-voice-recorder";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n";
+import { useLanguage } from "@/stores/language";
 
 interface SpeakingPhrase {
   id: string;
   jp: string;
   reading: string;
   meaning: string;
+  meaningEn: string;
   voice: string;
 }
 
@@ -25,6 +28,7 @@ const PHRASES: SpeakingPhrase[] = [
     jp: "おはようございます。",
     reading: "ohayou gozaimasu",
     meaning: "Buenos días (formal).",
+    meaningEn: "Good morning (formal).",
     voice: "Kyoko",
   },
   {
@@ -32,6 +36,7 @@ const PHRASES: SpeakingPhrase[] = [
     jp: "はじめまして、ロドリゴです。",
     reading: "hajimemashite, Rodorigo desu",
     meaning: "Mucho gusto, soy Rodrigo.",
+    meaningEn: "Nice to meet you, I'm Rodrigo.",
     voice: "Otoya",
   },
   {
@@ -39,6 +44,7 @@ const PHRASES: SpeakingPhrase[] = [
     jp: "コーヒーをひとつください。",
     reading: "koohii wo hitotsu kudasai",
     meaning: "Un café, por favor.",
+    meaningEn: "One coffee, please.",
     voice: "Kyoko",
   },
   {
@@ -46,6 +52,7 @@ const PHRASES: SpeakingPhrase[] = [
     jp: "ありがとうございました。",
     reading: "arigatou gozaimashita",
     meaning: "Muchas gracias (al despedirse).",
+    meaningEn: "Thank you very much (on leaving).",
     voice: "Kyoko",
   },
   {
@@ -53,6 +60,7 @@ const PHRASES: SpeakingPhrase[] = [
     jp: "すみません、トイレはどこですか。",
     reading: "sumimasen, toire wa doko desu ka",
     meaning: "Disculpe, ¿dónde está el baño?",
+    meaningEn: "Excuse me, where's the restroom?",
     voice: "Otoya",
   },
   {
@@ -60,6 +68,7 @@ const PHRASES: SpeakingPhrase[] = [
     jp: "これはいくらですか。",
     reading: "kore wa ikura desu ka",
     meaning: "¿Cuánto cuesta esto?",
+    meaningEn: "How much is this?",
     voice: "Kyoko",
   },
   {
@@ -67,6 +76,7 @@ const PHRASES: SpeakingPhrase[] = [
     jp: "もう一度お願いします。",
     reading: "mou ichido onegai shimasu",
     meaning: "Una vez más, por favor.",
+    meaningEn: "One more time, please.",
     voice: "Otoya",
   },
   {
@@ -74,6 +84,7 @@ const PHRASES: SpeakingPhrase[] = [
     jp: "日本語が少し分かります。",
     reading: "nihongo ga sukoshi wakarimasu",
     meaning: "Entiendo un poco de japonés.",
+    meaningEn: "I understand a little Japanese.",
     voice: "Kyoko",
   },
   {
@@ -81,6 +92,7 @@ const PHRASES: SpeakingPhrase[] = [
     jp: "駅はどこですか。",
     reading: "eki wa doko desu ka",
     meaning: "¿Dónde está la estación?",
+    meaningEn: "Where's the station?",
     voice: "Otoya",
   },
   {
@@ -88,11 +100,14 @@ const PHRASES: SpeakingPhrase[] = [
     jp: "お会計をお願いします。",
     reading: "okaikei wo onegai shimasu",
     meaning: "La cuenta, por favor.",
+    meaningEn: "The bill, please.",
     voice: "Kyoko",
   },
 ];
 
 export default function SpeakingPage() {
+  const t = useT();
+  const lang = useLanguage((s) => s.lang);
   const play = usePlayTts();
   const [idx, setIdx] = useState(0);
   const phrase = PHRASES[idx];
@@ -111,16 +126,17 @@ export default function SpeakingPage() {
     <div className="mx-auto max-w-3xl space-y-10">
       <div className="flex items-start justify-between gap-8">
         <PageHeader
-          eyebrow="会話 — Speaking"
+          eyebrow={t("speaking.eyebrow")}
           title={
             <>
-              Practica tu <span className="gradient-text">pronunciación</span>
+              {t("speaking.title.a")}{" "}
+              <span className="gradient-text">{t("speaking.title.b")}</span>
             </>
           }
-          description="Escucha la frase, grábate y compara. Usa el micrófono de tu Mac — la grabación nunca sale de tu equipo."
+          description={t("speaking.desc")}
           actions={
             <Badge variant="outline" className="border-neon-cyan/40 font-mono text-[10px] text-neon-cyan">
-              Frase {idx + 1} / {PHRASES.length}
+              {t("speaking.phraseCount", { n: idx + 1, total: PHRASES.length })}
             </Badge>
           }
         />
@@ -169,7 +185,9 @@ export default function SpeakingPage() {
             <p className="mt-3 font-jp text-sm tracking-wider text-muted-foreground">
               {phrase.reading}
             </p>
-            <p className="mt-2 text-sm text-muted-foreground">{phrase.meaning}</p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              {lang === "en" ? phrase.meaningEn : phrase.meaning}
+            </p>
             <Button
               className="relative mt-5"
               variant="outline"
@@ -182,7 +200,7 @@ export default function SpeakingPage() {
                 <span className="absolute inset-0 animate-pulse rounded-md ring-1 ring-neon-cyan/40" />
               ) : null}
               <Volume2 className={cn("size-4", play.isPending && "animate-pulse")} />
-              {play.isPending ? "Reproduciendo…" : "Escuchar nativa"}
+              {play.isPending ? t("speaking.playing") : t("speaking.playNative")}
             </Button>
             {play.ttsError ? (
               <p className="mx-auto mt-3 max-w-sm rounded-lg bg-warning/10 px-3 py-2 text-xs leading-relaxed text-warning">
@@ -193,19 +211,19 @@ export default function SpeakingPage() {
             {/* Pronunciation drill: replay at different speeds + syllable guide */}
             <div className="mt-6 border-t border-border/40 pt-5">
               <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-neon-cyan">
-                発音 · Ejercicio de pronunciación
+                {t("speaking.drill.jp")}
               </p>
               <p className="mt-1 text-xs text-muted-foreground">
-                Escúchala lento y repite parte por parte.
+                {t("speaking.drill.desc")}
               </p>
               <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
                 {[
-                  { label: "Lento", rate: 95 },
-                  { label: "Normal", rate: 160 },
-                  { label: "Rápido", rate: 210 },
+                  { key: "common.slow", rate: 95 },
+                  { key: "common.normal", rate: 160 },
+                  { key: "common.fast", rate: 210 },
                 ].map((s) => (
                   <Button
-                    key={s.label}
+                    key={s.key}
                     size="sm"
                     variant="outline"
                     disabled={play.isPending}
@@ -214,7 +232,7 @@ export default function SpeakingPage() {
                     }
                   >
                     <Volume2 className="size-3.5" />
-                    {s.label}
+                    {t(s.key)}
                   </Button>
                 ))}
               </div>
@@ -250,7 +268,7 @@ export default function SpeakingPage() {
                 className="flex-1"
               >
                 <ArrowLeft className="size-4" />
-                Atrás
+                {t("common.back")}
               </Button>
               <Button
                 size="lg"
@@ -258,7 +276,7 @@ export default function SpeakingPage() {
                 onClick={next}
                 className="flex-1"
               >
-                Siguiente
+                {t("common.next")}
                 <CheckCircle2 className="size-4" />
               </Button>
             </div>
@@ -266,8 +284,7 @@ export default function SpeakingPage() {
 
           {rec.recording && rec.silent ? (
             <p className="rounded-lg bg-warning/10 px-3 py-2 text-center text-xs text-warning">
-              No detecto sonido. Verifica que tu mic esté seleccionado en Ajustes
-              de macOS → Sonido → Entrada.
+              {t("speaking.noSound")}
             </p>
           ) : null}
         </motion.div>
@@ -289,11 +306,12 @@ function RecordPanel({
   onStart: () => void;
   onStop: () => void;
 }) {
+  const t = useT();
   return (
     <HudPanel scanline={false} className="p-5 text-center">
       <div className="space-y-3">
       <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-neon-cyan">
-        Tu grabación
+        {t("speaking.yourRecording")}
       </p>
       <button
         onClick={recording ? onStop : onStart}
@@ -330,7 +348,7 @@ function RecordPanel({
         </div>
       ) : null}
       <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
-        {recording ? "Grabando…" : recordedUrl ? "Listo" : "Pulsa para grabar"}
+        {recording ? t("speaking.recording") : recordedUrl ? t("speaking.ready") : t("speaking.tapToRecord")}
       </p>
       </div>
     </HudPanel>
@@ -338,11 +356,12 @@ function RecordPanel({
 }
 
 function PlaybackPanel({ recordedUrl }: { recordedUrl: string | null }) {
+  const t = useT();
   return (
     <HudPanel scanline={false} className="p-5 text-center">
       <div className="space-y-3">
       <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-neon-cyan">
-        Reproducir
+        {t("speaking.playback")}
       </p>
       {recordedUrl ? (
         <audio
@@ -353,7 +372,7 @@ function PlaybackPanel({ recordedUrl }: { recordedUrl: string | null }) {
           className="w-full"
         />
       ) : (
-        <p className="py-6 text-xs text-muted-foreground">Aún sin grabación</p>
+        <p className="py-6 text-xs text-muted-foreground">{t("speaking.noRecording")}</p>
       )}
       </div>
     </HudPanel>

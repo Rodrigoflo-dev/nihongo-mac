@@ -4,6 +4,7 @@ import { ArrowRight, HelpCircle, Search, Sparkles } from "lucide-react";
 
 import { HudPanel } from "@/components/visual/hud-panel";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n";
 
 export interface DudaTopic {
   /** What kind of thing this topic is (drives how we answer). */
@@ -118,23 +119,23 @@ export function answerDuda(
 
 const BANDS = {
   facil: {
-    label: "Fácil",
+    labelKey: "inter.easy",
     jp: "やさしい",
-    desc: "Reconoce lo que acabas de aprender.",
+    descKey: "inter.easyDesc",
     tone: "from-success to-neon-cyan",
     dots: 1,
   },
   medio: {
-    label: "Medio",
+    labelKey: "inter.medium",
     jp: "ふつう",
-    desc: "Ahora prodúcelo tú — sin mirar.",
+    descKey: "inter.mediumDesc",
     tone: "from-primary to-neon-violet",
     dots: 2,
   },
   dificil: {
-    label: "Difícil",
+    labelKey: "inter.hard",
     jp: "実践",
-    desc: "Úsalo en frases reales — completa el contexto.",
+    descKey: "inter.hardDesc",
     tone: "from-warning to-neon-pink",
     dots: 3,
   },
@@ -147,6 +148,7 @@ export type BandKey = keyof typeof BANDS;
  * band, so the progression (fácil → medio → difícil) is felt, game-style.
  */
 export function BandIntro({ band }: { band: BandKey }) {
+  const t = useT();
   const b = BANDS[band];
   return (
     <motion.div
@@ -157,7 +159,7 @@ export function BandIntro({ band }: { band: BandKey }) {
       className="mx-auto w-full max-w-2xl text-center [perspective:1000px]"
     >
       <p className="font-mono text-[11px] uppercase tracking-[0.35em] text-neon-cyan">
-        Nuevo nivel
+        {t("inter.newLevel")}
       </p>
       <div className="mt-3 flex items-center justify-center gap-1.5">
         {[1, 2, 3].map((d) => (
@@ -178,10 +180,10 @@ export function BandIntro({ band }: { band: BandKey }) {
           b.tone
         )}
       >
-        {b.label}
+        {t(b.labelKey)}
       </h2>
       <p className="mt-1 font-jp text-lg text-foreground/70">{b.jp}</p>
-      <p className="mt-4 text-balance text-muted-foreground">{b.desc}</p>
+      <p className="mt-4 text-balance text-muted-foreground">{t(b.descKey)}</p>
     </motion.div>
   );
 }
@@ -200,6 +202,7 @@ export function DudasInterstitial({
   topics: DudaTopic[];
   onJump: (stepIndex: number) => void;
 }) {
+  const tr = useT();
   const [q, setQ] = useState("");
 
   const result = useMemo(() => answerDuda(q, topics), [q, topics]);
@@ -218,14 +221,13 @@ export function DudasInterstitial({
             <HelpCircle className="size-7" />
           </div>
           <p className="mt-4 font-mono text-[11px] uppercase tracking-[0.3em] text-neon-cyan">
-            質問タイム · ¿Dudas?
+            {tr("inter.dudas.jp")}
           </p>
           <h2 className="mt-1 font-display text-2xl font-extrabold tracking-tight">
-            ¿Listo para practicar?
+            {tr("inter.dudas.ready")}
           </h2>
           <p className="mt-2 text-balance text-sm text-muted-foreground">
-            Vienen 20 ejercicios en 3 niveles. Si algo no quedó claro, repásalo
-            ahora — toca un tema o escribe tu duda.
+            {tr("inter.dudas.desc")}
           </p>
         </div>
 
@@ -253,7 +255,7 @@ export function DudasInterstitial({
             <input
               value={q}
               onChange={(e) => setQ(e.target.value)}
-              placeholder="Escribe tu duda… (ej. ¿cómo se lee este kanji?)"
+              placeholder={tr("inter.dudas.placeholder")}
               className="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground/50"
             />
           </div>
@@ -270,15 +272,13 @@ export function DudasInterstitial({
                   onClick={() => onJump(result.topic.stepIndex)}
                   className="mt-3 flex items-center gap-1.5 text-xs font-semibold text-neon-cyan transition-colors hover:text-neon-cyan/80"
                 >
-                  Repasar «{result.topic.label}» a fondo
+                  {tr("inter.dudas.reviewDeep", { topic: result.topic.label })}
                   <ArrowRight className="size-3.5" />
                 </button>
               </div>
             ) : (
               <p className="mt-2 rounded-xl bg-muted/40 px-4 py-3 text-xs text-muted-foreground">
-                No encontré ese tema en esta lección. Prueba con el nombre del
-                kanji, la palabra o la partícula (ej. «¿cómo se lee 学?» o «¿para
-                qué sirve は?»), o toca un tema de arriba.
+                {tr("inter.dudas.notFound")}
               </p>
             )
           ) : null}

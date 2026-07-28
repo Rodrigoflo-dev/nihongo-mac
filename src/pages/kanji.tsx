@@ -13,8 +13,11 @@ import { HoloKanji } from "@/components/visual/holo-kanji";
 import { useIntroduceKanji, useKanjiList, useReviewQueue } from "@/hooks/use-kanji";
 import { useUserProfile } from "@/hooks/use-user-profile";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n";
+import { useLanguage } from "@/stores/language";
 
 export default function KanjiPage() {
+  const t = useT();
   const { data: profile } = useUserProfile();
   const level = profile?.currentLevel ?? "N5";
 
@@ -63,7 +66,7 @@ export default function KanjiPage() {
   if (isLoading) {
     return (
       <div className="mx-auto max-w-5xl space-y-10">
-        <PageHeader title="Kanji" />
+        <PageHeader title={t("nav.kanji")} />
       </div>
     );
   }
@@ -75,10 +78,11 @@ export default function KanjiPage() {
           eyebrow={`漢字 — ${level}`}
           title={
             <>
-              Catálogo de <span className="gradient-text">kanji</span>
+              {t("kanji.title.a")}{" "}
+              <span className="gradient-text">{t("kanji.title.b")}</span>
             </>
           }
-          description="Repaso por SRS, nuevos disponibles y los que ya tienes dominados."
+          description={t("kanji.desc")}
           actions={
             <Button
               size="lg"
@@ -89,10 +93,10 @@ export default function KanjiPage() {
               {dueCount > 0 ? (
                 <Link to="/kanji/review">
                   <Sparkles className="size-4" />
-                  Empezar repaso ({dueCount})
+                  {t("kanji.startReview", { n: dueCount })}
                 </Link>
               ) : (
-                <span>Sin repasos pendientes</span>
+                <span>{t("kanji.noReviews")}</span>
               )}
             </Button>
           }
@@ -107,12 +111,12 @@ export default function KanjiPage() {
         <div className="flex items-end justify-between">
           <div>
             <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-neon-cyan">
-              <span className="font-jp">漢字マスター</span> — {level}
+              <span className="font-jp">{t("kanji.masterOf")}</span> — {level}
             </p>
             <h2 className="mt-1 font-display text-2xl font-extrabold tracking-tight">
               {masteredCount}
               <span className="text-base font-medium text-muted-foreground">
-                {" "}/ {total} dominados
+                {" "}{t("kanji.masteredOfTotal", { total })}
               </span>
             </h2>
           </div>
@@ -121,7 +125,7 @@ export default function KanjiPage() {
               {masteryPct}%
             </p>
             <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
-              del nivel
+              {t("kanji.ofLevel")}
             </p>
           </div>
         </div>
@@ -134,26 +138,24 @@ export default function KanjiPage() {
           />
         </div>
         <div className="mt-4 grid grid-cols-3 gap-3">
-          <MasteryStat label="Aprendiendo" value={learningCount} tone="primary" />
-          <MasteryStat label="Por descubrir" value={newAvailable} tone="muted" />
-          <MasteryStat label="Dominados" value={masteredCount} tone="success" />
+          <MasteryStat label={t("kanji.learning")} value={learningCount} tone="primary" />
+          <MasteryStat label={t("kanji.toDiscover")} value={newAvailable} tone="muted" />
+          <MasteryStat label={t("kanji.mastered")} value={masteredCount} tone="success" />
         </div>
         <p className="mt-4 text-xs text-muted-foreground">
           {masteryPct >= 100
-            ? "¡Dominaste todo este nivel! Sube de objetivo en Ajustes para más kanji. 🎉"
+            ? t("kanji.hint.done")
             : dueCount > 0
-              ? `Tienes ${dueCount} repaso${dueCount === 1 ? "" : "s"} listo${dueCount === 1 ? "" : "s"} — cada repaso correcto sube tu dominio.`
-              : "Introduce kanji nuevos y practícalos. Solo cuentan como “dominados” tras repasarlos bien varias veces (SRS)."}
+              ? t("kanji.hint.due", { n: dueCount })
+              : t("kanji.hint.none")}
         </p>
       </HudPanel>
 
       {grouped.learning.length > 0 ? (
         <Section
-          title="Aprendiendo"
-          jp="学習中"
-          description={`${grouped.learning.length} kanji${
-            grouped.learning.length === 1 ? "" : "s"
-          } en tu pool`}
+          title={t("kanji.learning")}
+          jp={t("kanji.learningJp")}
+          description={t("kanji.inPool", { n: grouped.learning.length })}
         >
           <div className="grid grid-cols-4 gap-3">
             {grouped.learning.map((item) => (
@@ -165,9 +167,9 @@ export default function KanjiPage() {
 
       {grouped.new.length > 0 ? (
         <Section
-          title="Nuevos disponibles"
-          jp="新しい漢字"
-          description={`${newAvailable} disponibles para introducir en tu repaso`}
+          title={t("kanji.newAvailable")}
+          jp={t("kanji.newJp")}
+          description={t("kanji.availableToIntro", { n: newAvailable })}
           actions={
             <Button
               size="sm"
@@ -179,7 +181,7 @@ export default function KanjiPage() {
               }}
             >
               <Plus className="size-3.5" />
-              Introducir 1
+              {t("kanji.introduce1")}
             </Button>
           }
         >
@@ -195,7 +197,7 @@ export default function KanjiPage() {
           </div>
           {grouped.new.length > 8 ? (
             <p className="mt-3 text-xs text-muted-foreground">
-              +{grouped.new.length - 8} más disponibles a medida que avances
+              {t("kanji.moreAvailable", { n: grouped.new.length - 8 })}
             </p>
           ) : null}
         </Section>
@@ -203,11 +205,9 @@ export default function KanjiPage() {
 
       {grouped.mastered.length > 0 ? (
         <Section
-          title="Dominados"
-          jp="覚えた"
-          description={`${grouped.mastered.length} kanji${
-            grouped.mastered.length === 1 ? "" : "s"
-          } con repasos consolidados`}
+          title={t("kanji.mastered")}
+          jp={t("kanji.masteredJp")}
+          description={t("kanji.consolidated", { n: grouped.mastered.length })}
         >
           <div className="grid grid-cols-4 gap-3">
             {grouped.mastered.map((item) => (
@@ -302,6 +302,12 @@ function NewKanjiTile({
   onIntroduce: () => void;
   disabled?: boolean;
 }) {
+  const t = useT();
+  const lang = useLanguage((s) => s.lang);
+  const meaning =
+    lang === "en" && item.kanji.meaningEn
+      ? item.kanji.meaningEn
+      : item.kanji.meaningEs;
   return (
     <motion.div
       whileHover={{ y: -3, scale: 1.02 }}
@@ -314,11 +320,11 @@ function NewKanjiTile({
           {item.kanji.character}
         </span>
         <Badge variant="secondary" className="text-[10px]">
-          Nuevo
+          {t("kanjiTile.new")}
         </Badge>
       </div>
       <div className="space-y-0.5">
-        <p className="text-sm font-medium">{item.kanji.meaningEs}</p>
+        <p className="text-sm font-medium">{meaning}</p>
         <p className="font-jp text-xs text-muted-foreground">
           {[...item.kanji.onyomi, ...item.kanji.kunyomi]
             .slice(0, 2)

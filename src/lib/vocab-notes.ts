@@ -24,6 +24,9 @@ export interface VocabNote {
   notesEn: string[];
   /** Real example sentences. */
   examples: VocabExample[];
+  /** Matiz / detalle fino ("En detalle") — opcional. */
+  nuance?: string;
+  nuanceEn?: string;
 }
 
 const NOTES: Record<string, VocabNote> = {
@@ -1570,6 +1573,10 @@ const NOTES: Record<string, VocabNote> = {
 
   // ---- Lugares -------------------------------------------------------------
   家: {
+    nuance:
+      "家 tiene dos lecturas muy usadas con matiz distinto: いえ es la casa como edificio o construcción, mientras que うち es 'mi casa / mi hogar' e incluso 'mi familia o grupo' (うちの会社 = mi empresa), con un tono más cálido y personal. Como sufijo se lee か／や y significa 'especialista o profesional': 音楽家 (おんがくか, músico), 作家 (さっか, escritor). Para 'volver a casa' se usa el verbo específico 帰る (家に帰る), no 行く. Al entrar en casa de alguien se dice おじゃまします.",
+    nuanceEn:
+      "家 has two common readings with different nuances: いえ is the house as a building, while うち is 'my home/household' — even 'my family/group' (うちの会社 = my company) — warmer and more personal. As a suffix it reads か/や, meaning 'specialist/professional': 音楽家 (musician), 作家 (writer). For 'go home' use the specific verb 帰る (家に帰る), not 行く. When entering someone's home you say おじゃまします.",
     usage: "«Casa / hogar». Se lee いえ, y también うち (mi casa, con matiz de «hogar»). 家に帰る = volver a casa.",
     usageEn: "“House / home”. Read いえ, and also うち (my home, warmer nuance). 家に帰る = go home.",
     notes: ["Lecturas: いえ / うち.", "家に帰る = volver a casa."],

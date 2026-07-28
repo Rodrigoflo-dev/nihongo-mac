@@ -25,14 +25,18 @@ import {
 import { useUserProfile } from "@/hooks/use-user-profile";
 import type { ListeningListItem } from "@/lib/api";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n";
+import { useTc } from "@/lib/content-i18n";
 
 const RATES = [
-  { label: "Lento", value: 110 },
-  { label: "Natural", value: 170 },
-  { label: "Rápido", value: 220 },
+  { key: "common.slow", value: 110 },
+  { key: "listening.natural", value: 170 },
+  { key: "common.fast", value: 220 },
 ];
 
 export default function ListeningPage() {
+  const t = useT();
+  const tc = useTc();
   const { data: profile } = useUserProfile();
   const level = profile?.currentLevel ?? "N5";
   const [activeId, setActiveId] = useState<number | undefined>(undefined);
@@ -49,10 +53,11 @@ export default function ListeningPage() {
           eyebrow={`聴解 — ${level}`}
           title={
             <>
-              Listening con <span className="gradient-text">voces nativas de macOS</span>
+              {t("listening.title.a")}{" "}
+              <span className="gradient-text">{t("listening.title.b")}</span>
             </>
           }
-          description="Cada diálogo usa la voz japonesa de tu Mac. Puedes ajustar la velocidad y ver la transcripción si lo necesitas."
+          description={t("listening.desc")}
         />
         <HoloKanji
           size={200}
@@ -65,11 +70,11 @@ export default function ListeningPage() {
         />
       </div>
       {isLoading ? (
-        <p className="text-sm text-muted-foreground">Cargando…</p>
+        <p className="text-sm text-muted-foreground">{t("common.loading")}</p>
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           {list?.map((d, i) => (
-            <DialogueCard key={d.id} item={d} index={i} onOpen={() => setActiveId(d.id)} />
+            <DialogueCard key={d.id} item={d} index={i} onOpen={() => setActiveId(d.id)} tc={tc} />
           ))}
         </div>
       )}
@@ -81,10 +86,12 @@ function DialogueCard({
   item,
   index,
   onOpen,
+  tc,
 }: {
   item: ListeningListItem;
   index: number;
   onOpen: () => void;
+  tc: (s: string) => string;
 }) {
   return (
     <motion.button
@@ -124,14 +131,14 @@ function DialogueCard({
             {item.jlptLevel}
           </p>
           <p className="font-display text-base font-extrabold tracking-tight leading-tight">
-            {item.title}
+            {tc(item.title)}
           </p>
           {item.description ? (
-            <p className="mt-0.5 text-xs text-muted-foreground">{item.description}</p>
+            <p className="mt-0.5 text-xs text-muted-foreground">{tc(item.description)}</p>
           ) : null}
           {item.lastScore !== null ? (
             <Badge variant="outline" className="mt-2 border-neon-violet/40 text-[10px] text-neon-violet">
-              Última: {Math.round(item.lastScore)}%
+              {tc("Última:")} {Math.round(item.lastScore)}%
             </Badge>
           ) : null}
         </div>
@@ -147,6 +154,8 @@ function DialogueView({
   dialogueId: number;
   onBack: () => void;
 }) {
+  const t = useT();
+  const tc = useTc();
   const { data: dialogue } = useListeningDialogue(dialogueId);
   const play = usePlayTts();
   const complete = useCompleteListening();
@@ -163,7 +172,7 @@ function DialogueView({
   if (!dialogue) {
     return (
       <div className="grid h-full place-items-center">
-        <p className="text-sm text-muted-foreground">Cargando…</p>
+        <p className="text-sm text-muted-foreground">{t("common.loading")}</p>
       </div>
     );
   }
@@ -202,10 +211,10 @@ function DialogueView({
     >
       <div className="flex items-center justify-between">
         <Button variant="ghost" size="sm" onClick={onBack}>
-          <ArrowLeft className="size-3.5" /> Volver
+          <ArrowLeft className="size-3.5" /> {t("reading.back")}
         </Button>
         <Badge variant="outline" className="border-neon-cyan/40 font-mono text-[10px] text-neon-cyan">
-          Voz: {dialogue.voice}
+          {t("listening.voice", { name: dialogue.voice })}
         </Badge>
       </div>
 
@@ -213,9 +222,9 @@ function DialogueView({
         <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-neon-cyan">
           {dialogue.jlptLevel}
         </p>
-        <h1 className="font-display text-3xl font-extrabold tracking-tight">{dialogue.title}</h1>
+        <h1 className="font-display text-3xl font-extrabold tracking-tight">{tc(dialogue.title)}</h1>
         {dialogue.description ? (
-          <p className="text-sm text-muted-foreground">{dialogue.description}</p>
+          <p className="text-sm text-muted-foreground">{tc(dialogue.description)}</p>
         ) : null}
       </div>
 
@@ -252,7 +261,7 @@ function DialogueView({
             <span className="absolute inset-0 rounded-full ring-1 ring-white/20" />
           </button>
           <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-neon-cyan">
-            {play.isPending ? "Reproduciendo…" : "Pulsa para escuchar"}
+            {play.isPending ? t("listening.playing") : t("listening.tapToListen")}
           </p>
           <div className="flex gap-2">
             {RATES.map((r) => (
@@ -262,7 +271,7 @@ function DialogueView({
                 variant={rate === r.value ? "default" : "outline"}
                 onClick={() => setRate(r.value)}
               >
-                {r.label}
+                {t(r.key)}
               </Button>
             ))}
           </div>
@@ -282,7 +291,7 @@ function DialogueView({
           onClick={() => setShowTranscript((v) => !v)}
         >
           {showTranscript ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
-          {showTranscript ? "Ocultar transcripción" : "Mostrar transcripción"}
+          {showTranscript ? t("listening.hideTranscript") : t("listening.showTranscript")}
         </Button>
         {dialogue.transcriptTranslation ? (
           <Button
@@ -290,7 +299,7 @@ function DialogueView({
             size="sm"
             onClick={() => setShowTranslation((v) => !v)}
           >
-            {showTranslation ? "Ocultar traducción" : "Traducir"}
+            {showTranslation ? t("listening.hideTranslation") : t("listening.translate")}
           </Button>
         ) : null}
       </div>
@@ -299,7 +308,7 @@ function DialogueView({
           <p className="font-jp text-lg leading-relaxed">{dialogue.transcriptJp}</p>
           {showTranslation && dialogue.transcriptTranslation ? (
             <p className="mt-3 border-t border-border/60 pt-3 text-sm text-muted-foreground">
-              {dialogue.transcriptTranslation}
+              {tc(dialogue.transcriptTranslation)}
             </p>
           ) : null}
         </HudPanel>
@@ -308,13 +317,13 @@ function DialogueView({
       {/* Quiz */}
       <div className="space-y-4">
         <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-neon-cyan">
-          Comprensión auditiva
+          {t("listening.comprehension")}
         </p>
         {dialogue.questions.map((q, qi) => (
           <HudPanel key={q.id} scanline={false} className="p-5">
             <div className="space-y-3">
             <p className="text-sm font-semibold">
-              <span className="font-mono text-neon-cyan">{qi + 1}.</span> {q.prompt}
+              <span className="font-mono text-neon-cyan">{qi + 1}.</span> {tc(q.prompt)}
             </p>
             <div className="grid gap-2">
               {q.options.map((opt, idx) => {
@@ -334,7 +343,7 @@ function DialogueView({
                       reveal && !isCorrect && selected && "border-destructive bg-destructive/10 text-destructive"
                     )}
                   >
-                    {opt.text}
+                    {tc(opt.text)}
                   </button>
                 );
               })}
@@ -348,13 +357,13 @@ function DialogueView({
         <HudPanel glow className="p-6 text-center">
           <p className="font-jp text-xs tracking-[0.3em] text-primary">完了</p>
           <h2 className="mt-2 font-display text-2xl font-extrabold tracking-tight">
-            {submitted.correct} / {submitted.total} correctas
+            {t("listening.correct", { done: submitted.correct, total: submitted.total })}
           </h2>
           <p className="mt-3 inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/10 px-3 py-1.5 text-sm font-medium text-primary">
             +{submitted.xp} XP
           </p>
           <Button onClick={onBack} className="mt-5 w-full">
-            Volver a diálogos
+            {t("listening.backToDialogues")}
           </Button>
         </HudPanel>
       ) : (
@@ -364,7 +373,7 @@ function DialogueView({
           disabled={!allAnswered || complete.isPending}
           onClick={handleSubmit}
         >
-          {complete.isPending ? "Calificando…" : "Confirmar respuestas"}
+          {complete.isPending ? t("listening.grading") : t("listening.confirm")}
         </Button>
       )}
     </motion.div>

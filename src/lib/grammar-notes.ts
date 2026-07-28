@@ -29,16 +29,22 @@ export interface GrammarNote {
   /** Errores frecuentes a evitar. */
   mistakes: string[];
   examples: GrammarExample[];
+  /** Matiz / detalle fino: el "hasta el mínimo detalle" — cómo funciona por
+   *  dentro, comparaciones, excepciones y cuándo NO usarla. */
+  nuance?: string;
   // Optional English versions for the "escuchar en inglés" narration option.
   whyEn?: string;
   whenToUseEn?: string[];
   mistakesEn?: string[];
+  nuanceEn?: string;
 }
 
 export const GRAMMAR_NOTES: Record<string, GrammarNote> = {
   は: {
     jp: "は",
     title: "La partícula は — el tema",
+    nuance:
+      "は marca el TEMA, no el sujeto: 「私は」 puede traducirse como 'yo', 'a mí' o 'para mí' según el verbo. Cuando lo que sería sujeto (が) u objeto (を) se convierte en tema, は los sustituye: 本を読みます → 本は読みます (ese libro sí lo leo). Con verbos de estado como 好き・ある・わかる, el tema va con は y lo que gusta o existe con が: 私は犬が好きです. Detalle clave: un interrogativo (誰・何・どこ) nunca lleva は; la información nueva de la respuesta se marca con が (誰が来ましたか → ジョンが来ました). Y は repetido crea contraste: 日本語は話します (el japonés sí… [otros idiomas no]).",
     why: "Marca el TEMA de la oración: aquello de lo que vas a hablar ('en cuanto a…'). No es exactamente el sujeto, sino el marco de la frase. Se escribe は pero, como partícula, se pronuncia «wa».",
     whyEn: "It marks the TOPIC of the sentence: what you are going to talk about ('as for…'). It is not exactly the subject, but the frame of the sentence. It is written は but, as a particle, is pronounced “wa”.",
     whenToUse: [
@@ -69,6 +75,8 @@ export const GRAMMAR_NOTES: Record<string, GrammarNote> = {
   が: {
     jp: "が",
     title: "La partícula が — el sujeto",
+    nuance:
+      "が presenta información NUEVA o la enfatiza: por eso responde a preguntas con 誰・何 (誰がしましたか → 私がしました). Es obligatoria con la existencia (あります・います), con gusto, habilidad y deseo (好き・上手・できる・ほしい) y con adjetivos de sensación, donde el español usaría un sujeto normal: 水がほしいです (quiero agua, lit. 'el agua es deseada'). En una frase, lo que va antes de が es el foco y lo de después el comentario. Además, が al unir dos oraciones significa 'pero': 高いですが、おいしいです (es caro, pero está rico).",
     why: "Marca el SUJETO gramatical, sobre todo cuando es información nueva o se quiere enfatizar, y con verbos/adjetivos de existencia, gusto y habilidad.",
     whyEn: "It marks the grammatical SUBJECT, especially when it's new information or emphasized, and with verbs/adjectives of existence, liking and ability.",
     whenToUse: [
@@ -101,6 +109,8 @@ export const GRAMMAR_NOTES: Record<string, GrammarNote> = {
   を: {
     jp: "を",
     title: "La partícula を — el objeto directo",
+    nuance:
+      "を marca el objeto directo (lo que recibe la acción), pero tiene un segundo uso importante: el lugar POR el que ocurre un movimiento con verbos de desplazamiento — 公園を散歩します (paseo por el parque), 道を渡ります (cruzo la calle), 家を出ます (salgo de casa). No lo confundas con で (lugar donde se hace algo). Los verbos intransitivos como 行きます・来ます・帰ります no llevan を: usan に o へ para el destino. Como partícula, を se pronuncia 'o'.",
     why: "Marca el OBJETO DIRECTO: la cosa que recibe la acción del verbo. Se escribe を y, como partícula, se pronuncia «o».",
     whyEn: "It marks the DIRECT OBJECT: the thing that receives the verb's action. It is written を and, as a particle, is pronounced “o”.",
     whenToUse: [
@@ -131,6 +141,8 @@ export const GRAMMAR_NOTES: Record<string, GrammarNote> = {
   に: {
     jp: "に",
     title: "La partícula に — destino, tiempo y existencia",
+    nuance:
+      "に es la partícula más versátil de N5. Sus usos: destino (東京に行きます — aquí también vale へ), momento EXACTO en el tiempo (7時に, 月曜日に, 3月に), existencia o ubicación (公園に猫がいます), receptor de una acción (友達に電話します) y entrar/subir (部屋に入る, 電車に乗る). Regla del tiempo: llevan に las horas, fechas y días concretos, pero NO las palabras relativas como 今日・明日・毎日・今. Para frecuencia también se usa に: 週に3回 (tres veces por semana).",
     why: "Muy versátil: marca el destino de un movimiento, el momento exacto en el tiempo, el lugar donde algo EXISTE y el receptor de una acción.",
     whyEn: "Very versatile: it marks a movement's destination, an exact point in time, the place where something EXISTS, and the receiver of an action.",
     whenToUse: [
@@ -163,6 +175,8 @@ export const GRAMMAR_NOTES: Record<string, GrammarNote> = {
   へ: {
     jp: "へ",
     title: "La partícula へ — la dirección",
+    nuance:
+      "へ marca la DIRECCIÓN hacia la que te mueves y, para un destino, es casi intercambiable con に: 東京へ行きます = 東京に行きます. Matiz: へ subraya el 'hacia' (el trayecto), に subraya el punto de llegada. Para existencia, tiempo o receptor solo sirve に, no へ. Como partícula, へ se pronuncia 'e', no 'he'. En cartas y sobres, へ es lo habitual tras el destinatario (田中さんへ).",
     why: "Marca la DIRECCIÓN hacia la que te mueves. Se escribe へ y, como partícula, se pronuncia «e». Es muy parecida a に para el destino, pero subraya el «hacia».",
     whyEn: "It marks the DIRECTION you move toward. It is written へ and, as a particle, is pronounced “e”. It's very close to に for a destination, but stresses the “toward”.",
     whenToUse: [
@@ -191,6 +205,8 @@ export const GRAMMAR_NOTES: Record<string, GrammarNote> = {
   で: {
     jp: "で",
     title: "La partícula で — lugar de la acción y medio",
+    nuance:
+      "で responde a 'dónde ocurre una ACCIÓN' (レストランで食べます), frente a に que marca dónde algo EXISTE (レストランにいます). Su otro gran uso es el MEDIO o instrumento: はしで食べます (como con palillos), 電車で行きます (voy en tren), 日本語で話します (hablo en japonés). También expresa causa (病気で休みます — falto por enfermedad) y cantidad total (全部で千円 — mil yenes en total). Truco: si puedes traducir 'en/con/por medio de', suele ser で; si es 'existir en un lugar', es に.",
     why: "Marca DÓNDE ocurre una acción, o el MEDIO/herramienta con el que se hace algo.",
     whyEn: "It marks WHERE an action happens, or the MEANS/tool used to do something.",
     whenToUse: [
@@ -219,6 +235,8 @@ export const GRAMMAR_NOTES: Record<string, GrammarNote> = {
   の: {
     jp: "の",
     title: "La partícula の — posesión y relación",
+    nuance:
+      "の tiene tres usos. (1) Posesión o relación 'B de A': 私の本, 日本語の先生, 東京の地図. (2) Nominalizador: convierte una frase en sustantivo — 食べるのが好きです (me gusta comer). (3) Sustituye a un sustantivo ya conocido: 赤いのをください (dame el rojo). Se pueden encadenar: 友達の車の色 (el color del coche de mi amigo). En preguntas informales, の al final suaviza el tono: どうしたの？ (¿qué pasó?).",
     why: "Une dos sustantivos indicando posesión o relación: «A の B» = «B de A».",
     whyEn: "It links two nouns showing possession or relation: “A の B” = “B of A”.",
     whenToUse: [
@@ -249,6 +267,8 @@ export const GRAMMAR_NOTES: Record<string, GrammarNote> = {
   と: {
     jp: "と",
     title: "La partícula と — «y» / «con»",
+    nuance:
+      "と como 'y' une una lista COMPLETA y cerrada (パンと牛乳 = pan y leche, solo esos dos); si son ejemplos de una lista abierta, se usa や. と también significa 'con' (友達と行きます) y marca la cita de lo dicho o pensado (「はい」と言いました, 〜と思います). Importante: と no une frases enteras con 'y' — para encadenar acciones se usa la forma て (起きて、食べます), no と.",
     why: "Une sustantivos como «y» (lista completa), o marca con quién haces algo («con»).",
     whyEn: "It links nouns as “and” (a complete list), or marks who you do something with (“with”).",
     whenToUse: [
@@ -277,6 +297,8 @@ export const GRAMMAR_NOTES: Record<string, GrammarNote> = {
   か: {
     jp: "か",
     title: "La partícula か — la pregunta",
+    nuance:
+      "か al final convierte cualquier frase en pregunta sin cambiar el orden ni añadir '¿?': 学生です → 学生ですか. En japonés cortés no hace falta subir la entonación. Entre dos opciones significa 'o': コーヒーか お茶 (café o té). Con interrogativos forma indefinidos: 誰か (alguien), 何か (algo), どこか (en algún lugar). En habla muy casual se omite か y solo se sube el tono (元気？).",
     why: "Convierte la frase en PREGUNTA. Se añade al final; en japonés no hace falta el signo «¿?».",
     whyEn: "It turns the sentence into a QUESTION. Add it at the end; Japanese doesn't need a “?” mark.",
     whenToUse: [
@@ -305,6 +327,8 @@ export const GRAMMAR_NOTES: Record<string, GrammarNote> = {
   です: {
     jp: "です",
     title: "です — la cópula (ser/estar)",
+    nuance:
+      "です es la cópula cortés ('ser/estar') y también da cortesía a los adjetivos. Su pasado es でした, su negativo じゃありません (o el más formal ではありません) y el negativo pasado じゃありませんでした. Detalle crítico: con adjetivos い NO se conjuga です — el adjetivo mismo cambia (高いです → 高かったです, nunca 高いでした). です no aporta acción, solo enlaza sujeto y predicado. Su versión casual es だ (学生だ).",
     why: "Es la cópula cortés: equivale a «ser/estar». Afirma qué es algo y da un tono educado.",
     whyEn: "It's the polite copula: it means “to be”. It states what something is and adds a polite tone.",
     whenToUse: [
@@ -335,6 +359,8 @@ export const GRAMMAR_NOTES: Record<string, GrammarNote> = {
   "adj-i": {
     jp: "い",
     title: "Adjetivos い",
+    nuance:
+      "Los adjetivos い se conjugan SOLOS, sin usar です para el tiempo: presente 高い, pasado 高かった, negativo 高くない, negativo pasado 高くなかった; luego se añade です para cortesía (高かったです). Excepción muy importante: いい (bueno) se conjuga a partir de よい → よかった, よくない (nunca いかった). Antes de un sustantivo van directos: 高い車. Para unir dos adjetivos い se usa la forma くて: 安くておいしい (barato y rico).",
     why: "Los adjetivos terminados en い describen y pueden ir directos antes del nombre o al final de la frase con です.",
     whyEn: "Adjectives ending in い describe things and can go directly before the noun or at the end of the sentence with です.",
     whenToUse: [
@@ -365,6 +391,8 @@ export const GRAMMAR_NOTES: Record<string, GrammarNote> = {
   ます: {
     jp: "ます",
     title: "Verbos en ます — presente, pasado y negativo",
+    nuance:
+      "La forma ます da los cuatro tiempos básicos: presente/futuro 食べます, pasado 食べました, negativo 食べません, negativo pasado 食べませんでした. El presente cubre también el futuro y los hábitos (毎日 食べます). ます es el registro CORTÉS (con desconocidos, en el trabajo); su equivalente casual es la forma diccionario/informal. Para pedir algo educadamente NO se usa ます sino la forma て + ください. La raíz ます (食べ〜) sirve para formar muchas estructuras: 〜たい (querer), 〜ながら (mientras), 〜ましょう (hagamos).",
     why: "La forma ます es la forma cortés del verbo, la que más usarás al empezar. Con ella formas los cuatro tiempos básicos: presente/futuro (ます), pasado (ました), negativo (ません) y pasado negativo (ませんでした).",
     whyEn: "The ます form is the polite verb form, the one you'll use most as a beginner. With it you build the four basic tenses: present/future (ます), past (ました), negative (ません) and past negative (ませんでした).",
     whenToUse: [
@@ -397,6 +425,8 @@ export const GRAMMAR_NOTES: Record<string, GrammarNote> = {
   て: {
     jp: "て",
     title: "La forma て — encadenar y pedir",
+    nuance:
+      "La forma て no tiene tiempo propio: hereda el tiempo del verbo final de la frase. Usos clave en N5: encadenar acciones en orden (起きて、食べて、行きます), pedir de forma cortés (見てください), acción en curso o estado (〜ています = estar haciendo, o resultado: 結婚しています = estar casado) y permiso (〜てもいいです). Su formación depende del grupo del verbo: う・つ・る→って, む・ぶ・ぬ→んで, く→いて, ぐ→いで, す→して; する→して, 来る→来て. Irregular: 行く→行って.",
     why: "La forma て conecta acciones y sirve para pedir cosas con 〜てください («por favor, haz…») y para acciones en curso con 〜ています («estar haciendo»).",
     whyEn: "The て-form links actions and is used to make requests with 〜てください (“please do…”) and ongoing actions with 〜ています (“to be doing”).",
     whenToUse: [
@@ -427,6 +457,8 @@ export const GRAMMAR_NOTES: Record<string, GrammarNote> = {
   "adj-na": {
     jp: "な",
     title: "Adjetivos な",
+    nuance:
+      "Los adjetivos な se comportan como sustantivos: para el tiempo usan です・でした・じゃありません (きれいです → きれいでした → きれいじゃありません), nunca se conjugan solos. Antes de un sustantivo necesitan な: きれいな花, 静かな部屋 (de ahí su nombre). Para unir dos se usa で: きれいで静かです. Cuidado con las trampas: きれい (bonito) y 有名 (famoso) terminan en い pero son な-adjetivos; 嫌い (odiar) también es な.",
     why: "Los adjetivos な describen igual que los い, pero necesitan な para ir antes del nombre y usan です al final sin cambiar su forma.",
     whyEn: "な-adjectives describe just like い-adjectives, but they need な before a noun and use です at the end without changing form.",
     whenToUse: [
@@ -457,6 +489,8 @@ export const GRAMMAR_NOTES: Record<string, GrammarNote> = {
   これ: {
     jp: "これ",
     title: "これ・それ・あれ — esto, eso, aquello",
+    nuance:
+      "El sistema こ・そ・あ・ど se basa en la proximidad: こ (cerca de quien habla), そ (cerca del oyente), あ (lejos de ambos), ど (pregunta). Distingue las series: これ/それ/あれ (cosas, 'esto'), この/その/あの + sustantivo ('este libro'), ここ/そこ/あそこ (lugares, 'aquí'), こちら/そちら/あちら (dirección, y versión más cortés). Error típico: これ本 ✗ → この本 ○ — これ va solo, この acompaña a un sustantivo.",
     why: "Señalan cosas según la distancia: これ (cerca de mí), それ (cerca de ti), あれ (lejos de ambos). Para preguntar «cuál» se usa どれ.",
     whyEn: "They point at things by distance: これ (near me), それ (near you), あれ (far from both). To ask “which one” use どれ.",
     whenToUse: [
@@ -485,6 +519,8 @@ export const GRAMMAR_NOTES: Record<string, GrammarNote> = {
   から: {
     jp: "から",
     title: "から〜まで — desde… hasta…",
+    nuance:
+      "から marca el INICIO (desde) y まで el FIN (hasta), tanto en tiempo como en espacio: 9時から5時まで, 東京から大阪まで. No hace falta usarlos juntos. から tiene un segundo uso muy común: 'porque', al final de la razón — 高いから、買いません (no lo compro porque es caro). まで significa 'hasta (incluido)'; para un plazo límite ('para antes de') se usa までに: 5時までに来てください.",
     why: "から marca el inicio («desde») y まで el final («hasta»), tanto en tiempo como en lugar. から también significa «porque» al final de una frase.",
     whyEn: "から marks the start (“from”) and まで the end (“until”), for both time and place. から also means “because” at the end of a clause.",
     whenToUse: [
@@ -515,6 +551,8 @@ export const GRAMMAR_NOTES: Record<string, GrammarNote> = {
   も: {
     jp: "も",
     title: "La partícula も — «también»",
+    nuance:
+      "も significa 'también/tampoco' y SUSTITUYE a は・が・を (nunca se combinan): 私も学生です (yo también soy estudiante). Repetida hace listas 'tanto… como…': パンも牛乳も買います. Con verbo negativo significa 'ni… ni…' o 'nada/nadie': 何も食べません (no como nada), 誰も来ません (no viene nadie). Con números refuerza 'ni siquiera': 一人も来ませんでした (no vino ni una persona).",
     why: "も sustituye a は/が para decir «también» (o «tampoco» en negativo). Marca que algo se añade a lo ya dicho.",
     whyEn: "も replaces は/が to say “also/too” (or “neither” in the negative). It marks that something is added to what was already said.",
     whenToUse: [
@@ -545,6 +583,8 @@ export const GRAMMAR_NOTES: Record<string, GrammarNote> = {
   jisho: {
     jp: "辞書形",
     title: "La forma diccionario (辞書形)",
+    nuance:
+      "La forma diccionario es la forma BASE del verbo (食べる, 飲む, する, 来る): la que aparece en el diccionario y la base del registro casual. Grupos: ichidan (verbos る, quitan る: 食べる→食べます), godan (verbos う, cambian la última sílaba う→い: 飲む→飲みます) y los dos irregulares する→します, 来る→来ます. Es imprescindible porque muchísimas estructuras se pegan a ella: 〜ことができる, 〜前に, 〜つもり, o 辞書形＋な (prohibición). El reto es distinguir ichidan de godan: 見る・寝る son ichidan, pero 帰る・入る parecen ichidan y en realidad son godan (excepciones que hay que memorizar).",
     why: "Es la forma base e informal del verbo (la que aparece en el diccionario). De ella se construyen casi todas las demás formas. 食べます→食べる, 行きます→行く, します→する.",
     whyEn: "It's the verb's base, informal form (the one in the dictionary). Almost every other form is built from it. 食べます→食べる, 行きます→行く, します→する.",
     whenToUse: [
@@ -575,6 +615,8 @@ export const GRAMMAR_NOTES: Record<string, GrammarNote> = {
   "ta-form": {
     jp: "た形",
     title: "El pasado informal (た形)",
+    nuance:
+      "El pasado informal (た形) se forma igual que la forma て pero con た/だ en lugar de て/で: 食べて→食べた, 飲んで→飲んだ, 行って→行った. Es el pasado CASUAL (con amigos y familia); su versión cortés es ました. Sirve de base para muchas estructuras clave: 〜たり〜たり (hacer cosas como…), 〜たことがある (haber hecho alguna vez), 〜たほうがいい (más vale que…) y 〜たら (condicional). Sigue las mismas reglas de grupo que て, incluida la irregularidad 行く→行った.",
     why: "La forma た es el pasado informal; equivale al pasado cortés 〜ました. 食べた (comí), 行った (fui), した (hice), 来た (vine).",
     whyEn: "The た-form is the informal past; it matches the polite past 〜ました. 食べた (ate), 行った (went), した (did), 来た (came).",
     whenToUse: [
@@ -603,6 +645,8 @@ export const GRAMMAR_NOTES: Record<string, GrammarNote> = {
   tai: {
     jp: "〜たい",
     title: "〜たい — querer hacer algo",
+    nuance:
+      "〜たい expresa el DESEO de quien habla: se pega a la raíz ます del verbo (食べます→食べたい, 行きます→行きたい). Se conjuga como un adjetivo い: 食べたくない (no quiero), 食べたかった (quería). Con たい, el objeto puede llevar が en lugar de を: 水が飲みたい. Detalle importante: no se usa たい para el deseo de OTRA persona (para eso está 〜たがっている), y preguntar 〜たいですか a un superior puede sonar brusco. Para querer una COSA (no una acción) se usa ほしい, no たい.",
     why: "Para decir que QUIERES hacer algo, quita ます del verbo y añade たい. 食べます→食べたい (quiero comer). Se conjuga como un adjetivo い (食べたくない = no quiero comer).",
     whyEn: "To say you WANT to do something, drop ます and add たい. 食べます→食べたい (I want to eat). It conjugates like an い-adjective (食べたくない = I don't want to eat).",
     whenToUse: [
@@ -631,6 +675,8 @@ export const GRAMMAR_NOTES: Record<string, GrammarNote> = {
   tsumori: {
     jp: "つもり",
     title: "〜つもりです — intención / plan",
+    nuance:
+      "〜つもりです expresa una INTENCIÓN o plan firme decidido de antemano: se pega a la forma diccionario (行くつもりです = tengo la intención de ir). El negativo tiene dos formas con matiz distinto: 行かないつもりです (tengo la intención de NO ir) frente a 行くつもりはありません (no tengo ninguna intención de ir, más tajante). Se diferencia de 〜ようと思う (decisión más del momento) y de 〜予定 (plan objetivo ya fijado, como un horario). No se usa para cosas fuera de tu control.",
     why: "La forma diccionario + つもりです expresa un plan o intención firme. 日本に行くつもりです (Pienso ir a Japón). Negativo: 〜ないつもりです.",
     whyEn: "Dictionary form + つもりです expresses a firm plan or intention. 日本に行くつもりです (I plan to go to Japan). Negative: 〜ないつもりです.",
     whenToUse: [
@@ -657,6 +703,8 @@ export const GRAMMAR_NOTES: Record<string, GrammarNote> = {
   temoii: {
     jp: "〜てもいい",
     title: "〜てもいい — permiso (y prohibición)",
+    nuance:
+      "〜てもいいです da o pide PERMISO ('puedes / se puede'): forma て + もいい (見てもいいですか = ¿puedo mirar?). Su opuesto, la PROHIBICIÓN, es 〜てはいけません ('no debes'): ここで食べてはいけません. En habla casual, てはいけない se contrae a 〜ちゃいけない o 〜ちゃだめ. Para conceder permiso se responde どうぞ o はい、いいです; para negarlo, いいえ、だめです. Relacionado: 〜なくてもいいです significa 'no hace falta que…'.",
     why: "La forma て + もいいです pide o da permiso («¿puedo…? / puedes…»). Para PROHIBIR se usa 〜てはいけません («no se debe»).",
     whyEn: "The て-form + もいいです asks or gives permission (“may I…? / you may…”). To FORBID, use 〜てはいけません (“must not”).",
     whenToUse: [
@@ -687,6 +735,8 @@ export const GRAMMAR_NOTES: Record<string, GrammarNote> = {
   nakereba: {
     jp: "〜なければ",
     title: "〜なければなりません — obligación",
+    nuance:
+      "〜なければなりません expresa OBLIGACIÓN ('tener que / deber'): se forma con la base negativa ない → なければ + なりません (行かなければなりません = tengo que ir). Es largo, por eso en el habla real se contrae muchísimo: 〜なきゃ(いけない), 〜ないと. Existe la variante 〜なくてはいけません con el mismo significado. Su 'opuesto' (no hace falta) es 〜なくてもいいです. Literalmente significa 'si no lo hago, no sirve', de ahí ese doble negativo tan característico.",
     why: "Expresa OBLIGACIÓN («tener que»). Se forma con la raíz negativa del verbo + なければなりません. 行く→行かなければなりません (tengo que ir). Coloquial: 〜なきゃ.",
     whyEn: "Expresses OBLIGATION (“have to”). Formed from the verb's negative stem + なければなりません. 行く→行かなければなりません (I have to go). Casual: 〜なきゃ.",
     whenToUse: [
@@ -715,6 +765,8 @@ export const GRAMMAR_NOTES: Record<string, GrammarNote> = {
   yori: {
     jp: "〜より",
     title: "〜より〜のほうが — comparar",
+    nuance:
+      "Para COMPARAR dos cosas: 「Aより Bのほうが〜」 = 'B es más ~ que A'. より marca la referencia (lo que 'pierde') y のほうが marca lo que gana: 電車より車のほうが速いです (el coche es más rápido que el tren). Para preguntar cuál es más ~ se usa 「AとB、どちらのほうが〜ですか」. Ojo: el superlativo ('el más de todos') es distinto — se hace con いちばん (クラスでいちばん背が高い). El orden de A y B es libre mientras cada uno lleve su partícula.",
     why: "Para COMPARAR dos cosas: «B のほうが A より 〜» = «B es más 〜 que A». より marca el punto de comparación («que»).",
     whyEn: "To COMPARE two things: “B のほうが A より 〜” = “B is more 〜 than A”. より marks what you compare against (“than”).",
     whenToUse: [
@@ -743,6 +795,8 @@ export const GRAMMAR_NOTES: Record<string, GrammarNote> = {
   toomou: {
     jp: "〜と思う",
     title: "〜と思います — creo que…",
+    nuance:
+      "〜と思います expresa una OPINIÓN o suposición propia ('creo que…'). La frase que piensas va en forma CASUAL antes de と: 高いと思います, 行くと思います, y con だ para sustantivos y な-adjetivos (学生だと思います). と marca la cita del pensamiento, igual que con 言う. El que opina eres tú; para la opinión de otra persona se usa 〜と思っています. Para preguntar la opinión de alguien: どう思いますか. Suaviza mucho las afirmaciones, por eso se usa para no sonar tajante.",
     why: "Expresa una OPINIÓN o suposición: [frase en forma casual] + と思います («creo que…»). El と marca la cita del pensamiento.",
     whyEn: "Expresses an OPINION or guess: [casual-form clause] + と思います (“I think that…”). と marks the quoted thought.",
     whenToUse: [
@@ -771,6 +825,8 @@ export const GRAMMAR_NOTES: Record<string, GrammarNote> = {
   dekiru: {
     jp: "できる",
     title: "Poder hacer — できる / forma potencial",
+    nuance:
+      "Para expresar CAPACIDAD ('poder hacer') hay dos caminos. (1) 〜ことができる: forma diccionario + ことができます (日本語を話すことができます). (2) La forma potencial del verbo, más natural al hablar: ichidan 食べる→食べられる; godan cambian la う→える (飲む→飲める, 話す→話せる); irregulares する→できる, 来る→来られる. Detalle clave: con la potencial, el objeto suele pasar de を a が (日本語が話せます). En habla casual, los ichidan a menudo pierden la ら (食べれる — el llamado «ら抜き言葉»).",
     why: "Dos formas de decir «poder»: la forma diccionario + ことができる (話すことができる), o la forma potencial del verbo (話す→話せる, 食べる→食べられる, する→できる, 来る→来られる).",
     whyEn: "Two ways to say “can”: dictionary form + ことができる (話すことができる), or the verb's potential form (話す→話せる, 食べる→食べられる, する→できる, 来る→来られる).",
     whenToUse: [
@@ -801,6 +857,8 @@ export const GRAMMAR_NOTES: Record<string, GrammarNote> = {
   tara: {
     jp: "〜たら",
     title: "〜たら — si / cuando (condicional)",
+    nuance:
+      "〜たら es el condicional más flexible ('si / cuando'): se forma sobre el pasado informal た/だ + ら (食べたら, 行ったら, 高かったら, 学生だったら). Sirve para condiciones hipotéticas (雨が降ったら、行きません) y también para 'cuando' con hechos futuros seguros (家に帰ったら、電話します = cuando llegue a casa, llamo). A diferencia de と (resultado automático) y de ば (más abstracto), たら admite peticiones y órdenes en la segunda parte. Es el condicional que más usarás al empezar.",
     why: "La forma た + ら expresa «si / cuando pase algo, entonces…». Es el condicional más versátil. Se forma de la た形: 食べた→食べたら, 行った→行ったら.",
     whyEn: "The た-form + ら expresses “if / when something happens, then…”. It's the most versatile conditional. Formed from the た-form: 食べた→食べたら, 行った→行ったら.",
     whenToUse: [
@@ -829,6 +887,8 @@ export const GRAMMAR_NOTES: Record<string, GrammarNote> = {
   ba: {
     jp: "〜ば",
     title: "〜ば — condicional «si»",
+    nuance:
+      "〜ば subraya que A es la CONDICIÓN necesaria para B ('si A, entonces B'). Formación: godan う→えば (行く→行けば), ichidan る→れば (食べる→食べれば), adjetivos い→ければ (安ければ), negativo なければ. Se usa mucho en refranes y verdades generales (安ければ買います) y en la estructura 〜ばよかった ('ojalá hubiera…'). Restricción importante: si la segunda parte es una orden, petición o permiso, se prefiere たら en lugar de ば (salvo con verbos de estado).",
     why: "El condicional 〜ば expresa una condición general o hipotética. う-verbs: 行く→行けば; る-verbs: 食べる→食べれば; adjetivos い: 安い→安ければ.",
     whyEn: "The 〜ば conditional expresses a general or hypothetical condition. う-verbs: 行く→行けば; る-verbs: 食べる→食べれば; い-adjectives: 安い→安ければ.",
     whenToUse: [
@@ -857,6 +917,8 @@ export const GRAMMAR_NOTES: Record<string, GrammarNote> = {
   yarimorai: {
     jp: "あげる・くれる・もらう",
     title: "Dar y recibir — あげる・くれる・もらう",
+    nuance:
+      "El japonés elige el verbo de 'dar' según la DIRECCIÓN respecto a ti. あげる = dar (yo→otro, u otro→un tercero): 私は友達にプレゼントをあげます. くれる = dar HACIA MÍ o mi grupo (otro→yo): 友達が私にプレゼントをくれます (aquí nunca あげる). もらう = recibir (yo obtengo de alguien, marcado con に/から): 友達にプレゼントをもらいます. La partícula clave: に marca al receptor con あげる/くれる, y al dador con もらう. Sus versiones corteses son さしあげる, くださる e いただく.",
     why: "Tres verbos de intercambio según la dirección: あげる (YO u otro DOY a otro), くれる (alguien ME da a mí), もらう (YO RECIBO de alguien).",
     whyEn: "Three exchange verbs by direction: あげる (I/someone GIVE to another), くれる (someone gives TO ME), もらう (I RECEIVE from someone).",
     whenToUse: [

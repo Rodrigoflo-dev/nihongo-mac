@@ -254,6 +254,8 @@ export type Activity =
       kind: "order_sentence";
       tokens: string[];
       meaning: string;
+      /** Decoy tiles that don't belong (harder variant) — optional. */
+      decoys?: string[];
       reading?: string | null;
       explanation?: string | null;
     }

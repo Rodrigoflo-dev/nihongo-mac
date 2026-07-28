@@ -27,10 +27,17 @@ export interface KanjiNote {
   words: KanjiWord[];
   /** Real-life example sentences. */
   examples: KanjiWord[];
+  /** Matiz / detalle fino ("En detalle") — opcional. */
+  nuance?: string;
+  nuanceEn?: string;
 }
 
 const NOTES: Record<string, KanjiNote> = {
   私: {
+    nuance:
+      "私 se lee わたし en el uso diario y significa 'yo' de forma neutra y educada, válido para hombres y mujeres. En contextos muy formales, las mujeres pueden leerlo わたくし. Su lectura on'yomi シ aparece en compuestos como 私立 (しりつ, privado). Detalle cultural: en japonés se omite 私 casi siempre si el contexto ya deja claro que hablas de ti — repetir 私は… suena poco natural. En habla casual, los hombres suelen usar 僕 (ぼく) u 俺 (おれ) en vez de 私.",
+    nuanceEn:
+      "私 is read わたし and means 'I' in a neutral, polite way — fine for men and women. In very formal settings women may read it わたくし. Its on'yomi シ shows up in compounds like 私立 (しりつ, private). Note: Japanese usually drops 私 when context already makes it clear — repeating 私は… sounds unnatural. In casual speech men often use 僕 (ぼく) or 俺 (おれ) instead.",
     usage:
       "私 (わたし) es la forma neutra y cortés de decir «yo». Sirve para hombres y mujeres en casi cualquier situación. En contextos muy formales las mujeres pueden leerlo «わたくし». Su lectura on'yomi シ aparece en palabras como 私立 (しりつ, privado).",
     usageEn:
@@ -58,6 +65,10 @@ const NOTES: Record<string, KanjiNote> = {
     ],
   },
   学: {
+    nuance:
+      "学 transmite la idea de 'aprender / estudio'. Su kun'yomi es まな(ぶ) — 学ぶ (aprender) — y su on'yomi ガク・ガッ aparece en muchísimas palabras del ámbito educativo: 学生 (がくせい, estudiante), 学校 (がっこう, escuela), 大学 (だいがく, universidad), 科学 (かがく, ciencia). Fíjate en el cambio fonético: 学 + 校 → がっこう (la く se vuelve っ). Es uno de los kanji más productivos para formar vocabulario, así que reconocerlo te abre decenas de palabras.",
+    nuanceEn:
+      "学 carries the idea of 'learning / study'. Its kun'yomi is まな(ぶ) — 学ぶ (to learn) — and its on'yomi ガク・ガッ appears in many school words: 学生 (student), 学校 (school), 大学 (university), 科学 (science). Note the sound change: 学 + 校 → がっこう. It's one of the most productive kanji for building vocabulary.",
     usage:
       "学 significa «estudiar / aprender / conocimiento». Casi nunca va solo: forma palabras (compuestos). Como verbo se usa 学ぶ (まなぶ, aprender). Su on'yomi ガク es el que verás en la mayoría de las palabras.",
     usageEn:
@@ -86,6 +97,10 @@ const NOTES: Record<string, KanjiNote> = {
     ],
   },
   日: {
+    nuance:
+      "日 significa 'día' y también 'sol'. Tiene muchas lecturas: ひ (día, sol: 日が昇る), か en fechas (三日, みっか, día 3), にち・じつ en compuestos (日曜日 にちようび domingo, 本日 ほんじつ hoy formal). Es la raíz de 日本 (にほん／にっぽん, Japón, lit. 'origen del sol'). Cuidado con las fechas del 1 al 10, que son irregulares (ついたち, ふつか, みっか…). Aparece en incontables palabras de tiempo, así que es de los primeros kanji imprescindibles.",
+    nuanceEn:
+      "日 means 'day' and also 'sun'. It has many readings: ひ (day/sun), か in dates (三日 みっか, the 3rd), にち・じつ in compounds (日曜日 Sunday, 本日 today, formal). It's the root of 日本 (Japan, lit. 'origin of the sun'). Careful with dates 1–10, which are irregular (ついたち, ふつか, みっか…).",
     usage:
       "日 significa «día» y «sol». Es uno de los kanji más frecuentes. Se lee de varias formas según la palabra: ニチ / ジツ (on'yomi) y ひ / か (kun'yomi). En fechas, el «día del mes» usa lecturas especiales.",
     usageEn:
@@ -114,6 +129,10 @@ const NOTES: Record<string, KanjiNote> = {
     ],
   },
   月: {
+    nuance:
+      "月 significa 'luna' y 'mes'. Kun'yomi つき (luna: 月がきれい); on'yomi ゲツ・ガツ para meses y días: 月曜日 (げつようび, lunes), 一月 (いちがつ, enero), 今月 (こんげつ, este mes). Detalle clave: para 'el mes número X' se usa ガツ (三月 さんがつ = marzo), pero para 'X meses de duración' se usa かげつ (三か月 = tres meses). Es la pareja de 日 en el calendario y aparece en todos los días de la semana y meses del año.",
+    nuanceEn:
+      "月 means 'moon' and 'month'. Kun'yomi つき (moon); on'yomi ゲツ・ガツ for months and days: 月曜日 (Monday), 一月 (January), 今月 (this month). Key detail: for 'the Nth month' use ガツ (三月 = March), but for 'a span of N months' use かげつ (三か月 = three months). It's the partner of 日 in the calendar.",
     usage:
       "月 significa «luna» y «mes». Con un número indica el mes del año usando ガツ: 一月 (enero), 二月 (febrero)… Con la lectura つき significa la luna. 月曜日 (げつようび) es lunes.",
     usageEn:
@@ -142,6 +161,10 @@ const NOTES: Record<string, KanjiNote> = {
     ],
   },
   一: {
+    nuance:
+      "一 es el número 'uno' y el trazo más simple, pero sus lecturas cambian mucho según lo que cuentes: いち (uno abstracto, 一番 いちばん = número uno / el más…), ひと(つ) al contar cosas (一つ ひとつ), ついたち para el día 1 del mes. También significa 'el mismo / único' en 一緒 (いっしょ, juntos). Fíjate en los cambios sonoros: 一杯 (いっぱい, un vaso / lleno), 一分 (いっぷん, un minuto). Dominar 一 te prepara para el patrón de los contadores japoneses.",
+    nuanceEn:
+      "一 is the number 'one' and the simplest stroke, but its readings vary a lot with what you count: いち (abstract one, 一番 = number one/most), ひと(つ) when counting things (一つ), ついたち for the 1st of the month. It also means 'same/single' in 一緒 (いっしょ, together). Note the sound changes: 一杯 (いっぱい), 一分 (いっぷん).",
     usage:
       "一 es el número «uno»: una sola línea horizontal. Como número se lee いち; al contar objetos con 〜つ se lee ひと: 一つ (ひとつ, una cosa). Aparece en muchísimas palabras.",
     usageEn:
@@ -169,6 +192,10 @@ const NOTES: Record<string, KanjiNote> = {
     ],
   },
   行: {
+    nuance:
+      "行 transmite 'ir / desplazarse'. Su kun'yomi い(く) da 行く (ir), y おこな(う) da 行う (llevar a cabo, formal). Su on'yomi コウ・ギョウ aparece en 旅行 (りょこう, viaje), 銀行 (ぎんこう, banco) y 行動 (こうどう, acción). Recuerda que 行く es irregular en la forma て/た: 行く→行って／行った (no 行いて). Como verbo de movimiento, el destino se marca con に o へ, y el lugar por el que pasas con を (道を行く).",
+    nuanceEn:
+      "行 conveys 'go / move'. Its kun'yomi い(く) gives 行く (to go), and おこな(う) gives 行う (to carry out, formal). Its on'yomi コウ・ギョウ appears in 旅行 (trip), 銀行 (bank), 行動 (action). Remember 行く is irregular in the て/た form: 行く→行って／行った. As a motion verb, the destination takes に or へ.",
     usage:
       "行 significa «ir». El verbo es 行く (いく). Su on'yomi コウ aparece en palabras como 銀行 (ぎんこう, banco) y 旅行 (りょこう, viaje). Con verbos de movimiento se usa la partícula に (destino) o へ (dirección).",
     usageEn:

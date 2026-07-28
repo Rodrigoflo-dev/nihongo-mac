@@ -26,6 +26,8 @@ import {
   weeklyFeatured,
 } from "@/lib/minigames";
 import { cn } from "@/lib/utils";
+import { useT, type TFn } from "@/lib/i18n";
+import { useTc } from "@/lib/content-i18n";
 
 const ICONS: Record<MinigameDef["icon"], LucideIcon> = {
   sparkles: Sparkles,
@@ -35,6 +37,8 @@ const ICONS: Record<MinigameDef["icon"], LucideIcon> = {
 };
 
 export default function PlayPage() {
+  const t = useT();
+  const tc = useTc();
   const featuredDaily = dailyFeatured();
   const featuredWeekly = weeklyFeatured();
 
@@ -42,13 +46,14 @@ export default function PlayPage() {
     <div className="mx-auto max-w-5xl space-y-10">
       <div className="relative">
         <PageHeader
-          eyebrow="ミニゲーム — Mini-juegos"
+          eyebrow={t("play.eyebrow")}
           title={
             <>
-              Aprende <span className="gradient-text-warm">jugando</span>
+              {t("play.title.a")}{" "}
+              <span className="gradient-text-warm">{t("play.title.b")}</span>
             </>
           }
-          description="Cada juego entrena un skill específico. La dificultad alta da más XP. Bate tu récord para ganar estrellas extra."
+          description={t("play.desc")}
         />
         <HoloKanji
           size={130}
@@ -64,20 +69,24 @@ export default function PlayPage() {
       {/* Featured */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <FeaturedCard
-          label="Juego del día"
+          label={t("play.gameOfDay")}
           jp="今日の一推し"
           icon={Flame}
           game={featuredDaily}
           accent="from-streak/50 via-warning/30 to-neon-pink/20"
-          bonusLabel="+25% XP hoy"
+          bonusLabel={t("play.bonusDaily")}
+          t={t}
+          tc={tc}
         />
         <FeaturedCard
-          label="Reto de la semana"
+          label={t("play.weekChallenge")}
           jp="今週の挑戦"
           icon={CalendarDays}
           game={featuredWeekly}
           accent="from-primary/50 via-neon-violet/30 to-neon-cyan/20"
-          bonusLabel="+50% XP semanal"
+          bonusLabel={t("play.bonusWeekly")}
+          t={t}
+          tc={tc}
         />
       </div>
 
@@ -85,15 +94,15 @@ export default function PlayPage() {
       <section className="space-y-4">
         <div>
           <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-neon-cyan">
-            カタログ — Catálogo
+            {t("play.catalog.jp")}
           </p>
           <h2 className="font-display text-lg font-extrabold tracking-tight">
-            Catálogo
+            {t("play.catalog")}
           </h2>
         </div>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {MINIGAMES.map((g) => (
-            <GameCard key={g.key} game={g} />
+            <GameCard key={g.key} game={g} t={t} tc={tc} />
           ))}
         </div>
       </section>
@@ -108,6 +117,8 @@ function FeaturedCard({
   game,
   accent,
   bonusLabel,
+  t,
+  tc,
 }: {
   label: string;
   jp: string;
@@ -115,6 +126,8 @@ function FeaturedCard({
   game: MinigameDef;
   accent: string;
   bonusLabel: string;
+  t: TFn;
+  tc: (s: string) => string;
 }) {
   const GameIcon = ICONS[game.icon];
   return (
@@ -157,20 +170,20 @@ function FeaturedCard({
                 {jp}
               </p>
               <p className="font-display text-lg font-extrabold tracking-tight">
-                {game.title}
+                {tc(game.title)}
               </p>
               <p className="mt-1 text-xs text-muted-foreground">
-                {game.description}
+                {tc(game.description)}
               </p>
             </div>
           </div>
           <div>
             <p className="mb-1.5 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
-              Elige dificultad
+              {t("play.chooseDifficulty")}
             </p>
             <div className="grid grid-cols-3 gap-1.5">
               {game.difficulties.map((d) => (
-                <DifficultyButton key={d} game={game} difficulty={d} />
+                <DifficultyButton key={d} game={game} difficulty={d} tc={tc} />
               ))}
             </div>
           </div>
@@ -180,7 +193,15 @@ function FeaturedCard({
   );
 }
 
-function GameCard({ game }: { game: MinigameDef }) {
+function GameCard({
+  game,
+  t,
+  tc,
+}: {
+  game: MinigameDef;
+  t: TFn;
+  tc: (s: string) => string;
+}) {
   const Icon = ICONS[game.icon];
   return (
     <motion.div
@@ -203,7 +224,7 @@ function GameCard({ game }: { game: MinigameDef }) {
             <Icon className="size-6" />
           </div>
           <Badge variant="outline" className="text-[10px]">
-            {game.difficulties.length} niveles
+            {t("play.levels", { n: game.difficulties.length })}
           </Badge>
         </div>
         <div>
@@ -211,19 +232,19 @@ function GameCard({ game }: { game: MinigameDef }) {
             {game.jp}
           </p>
           <p className="font-display text-lg font-extrabold tracking-tight">
-            {game.title}
+            {tc(game.title)}
           </p>
           <p className="mt-1 text-xs text-muted-foreground">
-            {game.description}
+            {tc(game.description)}
           </p>
         </div>
         <div>
           <p className="mb-1.5 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
-            Elige dificultad
+            {t("play.chooseDifficulty")}
           </p>
           <div className="grid grid-cols-3 gap-1.5">
             {game.difficulties.map((d) => (
-              <DifficultyButton key={d} game={game} difficulty={d} />
+              <DifficultyButton key={d} game={game} difficulty={d} tc={tc} />
             ))}
           </div>
         </div>
@@ -235,10 +256,13 @@ function GameCard({ game }: { game: MinigameDef }) {
 function DifficultyButton({
   game,
   difficulty,
+  tc,
 }: {
   game: MinigameDef;
   difficulty: Difficulty;
+  tc: (s: string) => string;
 }) {
+  const t = useT();
   const { data: best } = useMinigameBest(`${game.key}_${difficulty}`);
   return (
     <Link
@@ -251,15 +275,15 @@ function DifficultyButton({
       <span
         className={cn("text-[12px] font-bold", DIFFICULTY_COLORS[difficulty])}
       >
-        {DIFFICULTY_LABELS[difficulty]}
+        {tc(DIFFICULTY_LABELS[difficulty])}
       </span>
       {typeof best === "number" && best > 0 ? (
         <span className="inline-flex items-center gap-0.5 text-[9px] text-warning">
           <Trophy className="size-2.5" />
-          récord {best}
+          {t("play.record", { n: best })}
         </span>
       ) : (
-        <span className="text-[9px] font-medium text-primary/80">Jugar ▸</span>
+        <span className="text-[9px] font-medium text-primary/80">{t("play.playArrow")}</span>
       )}
     </Link>
   );

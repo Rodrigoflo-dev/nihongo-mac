@@ -9,6 +9,8 @@ import { HudPanel } from "@/components/visual/hud-panel";
 import { HoloKanji } from "@/components/visual/holo-kanji";
 import { useTheme } from "@/providers/theme-provider";
 import { UI_SCALE_OPTIONS, useUiScale } from "@/providers/ui-scale";
+import { useLanguage, type LangMode } from "@/stores/language";
+import { useT } from "@/lib/i18n";
 import { useUpdateUserProfile, useUserProfile } from "@/hooks/use-user-profile";
 import {
   getPreferredVoiceName,
@@ -21,6 +23,7 @@ import {
 } from "@/lib/tts";
 
 export default function SettingsPage() {
+  const t = useT();
   const { theme, setTheme } = useTheme();
   const { scale, setScale } = useUiScale();
   const { data: profile } = useUserProfile();
@@ -40,7 +43,7 @@ export default function SettingsPage() {
   if (!profile) {
     return (
       <div className="mx-auto max-w-3xl">
-        <PageHeader title="Ajustes" />
+        <PageHeader title={t("nav.settings")} />
       </div>
     );
   }
@@ -49,13 +52,9 @@ export default function SettingsPage() {
     <div className="mx-auto max-w-3xl space-y-10">
       <div className="flex items-start justify-between gap-8">
         <PageHeader
-          eyebrow="設定 — Ajustes"
-          title={
-            <>
-              Tus <span className="gradient-text">Ajustes</span>
-            </>
-          }
-          description="Personaliza tu experiencia y tus objetivos diarios."
+          eyebrow={t("settings.eyebrow")}
+          title={<span className="gradient-text">{t("settings.title")}</span>}
+          description={t("settings.desc")}
         />
         <HoloKanji
           size={160}
@@ -72,28 +71,28 @@ export default function SettingsPage() {
         <div className="space-y-6">
           <div>
             <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-neon-cyan">
-              プロフィール
+              {t("settings.profile.jp")}
             </p>
             <h2 className="mt-1 font-display text-xl font-extrabold tracking-tight">
-              Perfil
+              {t("settings.profile.title")}
             </h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              Cómo te llamamos y tus objetivos.
+              {t("settings.profile.desc")}
             </p>
           </div>
           <div className="space-y-4">
             <div className="grid gap-2">
-              <Label htmlFor="name">Nombre</Label>
+              <Label htmlFor="name">{t("settings.profile.name")}</Label>
               <Input
                 id="name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="Tu nombre"
+                placeholder={t("settings.profile.namePh")}
               />
             </div>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="grid gap-2">
-                <Label htmlFor="goal">Minutos diarios objetivo</Label>
+                <Label htmlFor="goal">{t("settings.profile.goal")}</Label>
                 <Input
                   id="goal"
                   type="number"
@@ -104,7 +103,7 @@ export default function SettingsPage() {
                 />
               </div>
               <div className="grid gap-2">
-                <Label>Hora de recordatorio</Label>
+                <Label>{t("settings.profile.reminder")}</Label>
                 <ReminderTimePicker
                   value={reminderTime}
                   onChange={setReminderTime}
@@ -114,12 +113,12 @@ export default function SettingsPage() {
             <div className="flex items-center justify-end gap-3">
               {updateProfile.isSuccess && !updateProfile.isPending ? (
                 <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-success">
-                  ✓ Guardado
+                  {t("settings.saved")}
                 </span>
               ) : null}
               {updateProfile.isError ? (
                 <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-destructive">
-                  Error al guardar
+                  {t("settings.saveError")}
                 </span>
               ) : null}
               <Button
@@ -132,7 +131,7 @@ export default function SettingsPage() {
                   })
                 }
               >
-                {updateProfile.isPending ? "Guardando…" : "Guardar cambios"}
+                {updateProfile.isPending ? t("settings.saving") : t("common.save")}
               </Button>
             </div>
           </div>
@@ -143,24 +142,24 @@ export default function SettingsPage() {
         <div className="space-y-6">
           <div>
             <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-neon-cyan">
-              外観
+              {t("settings.appearance.jp")}
             </p>
             <h2 className="mt-1 font-display text-xl font-extrabold tracking-tight">
-              Apariencia
+              {t("settings.appearance.title")}
             </h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              Tema visual de la aplicación.
+              {t("settings.appearance.desc")}
             </p>
           </div>
           <div className="flex gap-2">
-            {(["light", "dark", "system"] as const).map((t) => (
+            {(["light", "dark", "system"] as const).map((th) => (
               <Button
-                key={t}
-                variant={theme === t ? "default" : "outline"}
+                key={th}
+                variant={theme === th ? "default" : "outline"}
                 size="sm"
-                onClick={() => setTheme(t)}
+                onClick={() => setTheme(th)}
               >
-                {t === "light" ? "Claro" : t === "dark" ? "Oscuro" : "Sistema"}
+                {t(`settings.theme.${th}`)}
               </Button>
             ))}
           </div>
@@ -170,14 +169,13 @@ export default function SettingsPage() {
             <div className="flex items-center justify-between gap-3">
               <div>
                 <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-neon-cyan">
-                  文字サイズ
+                  {t("settings.size.jp")}
                 </p>
                 <h3 className="mt-1 font-display text-base font-bold tracking-tight">
-                  Tamaño de letra y cuadros
+                  {t("settings.size.title")}
                 </h3>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Agranda todo de golpe — útil para leer cómodo o pantallas
-                  grandes. Se guarda en tu equipo.
+                  {t("settings.size.desc")}
                 </p>
               </div>
               <span
@@ -206,18 +204,33 @@ export default function SettingsPage() {
       </HudPanel>
 
       <HudPanel className="p-6">
+        <div className="space-y-5">
+          <div>
+            <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-neon-cyan">
+              {t("settings.language.jp")}
+            </p>
+            <h2 className="mt-1 font-display text-xl font-extrabold tracking-tight">
+              {t("settings.language.title")}
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {t("settings.language.desc")}
+            </p>
+          </div>
+          <LanguageSettings />
+        </div>
+      </HudPanel>
+
+      <HudPanel className="p-6">
         <div className="space-y-6">
           <div>
             <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-neon-cyan">
-              音声 — Voz
+              {t("settings.voice.jp")}
             </p>
             <h2 className="mt-1 font-display text-xl font-extrabold tracking-tight">
-              Voz del botón «Escuchar»
+              {t("settings.voice.title")}
             </h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              Elige la voz para cada idioma — de hombre o mujer, más suave o más
-              natural. Se usa al escuchar japonés, español e inglés. Se guarda en
-              tu equipo.
+              {t("settings.voice.desc")}
             </p>
           </div>
           <VoiceSettings />
@@ -227,15 +240,53 @@ export default function SettingsPage() {
   );
 }
 
-const VOICE_ROWS: { kind: VoiceKind; label: string; jp: string; sample: string }[] =
+const LANG_OPTIONS: { value: LangMode }[] = [
+  { value: "es" },
+  { value: "en" },
+  { value: "system" },
+];
+
+/** App language picker (Spanish / English / follow system). */
+function LanguageSettings() {
+  const t = useT();
+  const mode = useLanguage((s) => s.mode);
+  const lang = useLanguage((s) => s.lang);
+  const setMode = useLanguage((s) => s.setMode);
+  return (
+    <div>
+      <div className="flex flex-wrap gap-2">
+        {LANG_OPTIONS.map((o) => (
+          <Button
+            key={o.value}
+            variant={mode === o.value ? "default" : "outline"}
+            size="sm"
+            onClick={() => setMode(o.value)}
+          >
+            {t(`lang.${o.value}`)}
+          </Button>
+        ))}
+      </div>
+      <p className="mt-3 text-xs text-muted-foreground">
+        {t("settings.language.now")}{" "}
+        <span className="font-semibold text-foreground">
+          {t(lang === "es" ? "settings.language.pair.es" : "settings.language.pair.en")}
+        </span>
+        {mode === "system" ? ` ${t("settings.language.system")}` : ""}.
+      </p>
+    </div>
+  );
+}
+
+const VOICE_ROWS: { kind: VoiceKind; labelKey: string; jp: string; sample: string }[] =
   [
-    { kind: "ja", label: "Japonés", jp: "日本語", sample: "こんにちは。日本語を勉強しましょう。" },
-    { kind: "es", label: "Español", jp: "スペイン語", sample: "Hola, así se escucha la voz en español." },
-    { kind: "en", label: "Inglés", jp: "英語", sample: "Hello, this is how the English voice sounds." },
+    { kind: "ja", labelKey: "settings.voice.ja", jp: "日本語", sample: "こんにちは。日本語を勉強しましょう。" },
+    { kind: "es", labelKey: "settings.voice.es", jp: "スペイン語", sample: "Hola, así se escucha la voz en español." },
+    { kind: "en", labelKey: "settings.voice.en", jp: "英語", sample: "Hello, this is how the English voice sounds." },
   ];
 
 /** Per-language voice picker + "Probar" preview. */
 function VoiceSettings() {
+  const t = useT();
   const [voices, setVoices] = useState<Record<
     VoiceKind,
     SpeechSynthesisVoice[]
@@ -283,7 +334,7 @@ function VoiceSettings() {
             className="flex flex-wrap items-center gap-3 border-t border-border/40 pt-4 first:border-t-0 first:pt-0"
           >
             <div className="w-24 shrink-0">
-              <p className="font-display text-sm font-bold">{row.label}</p>
+              <p className="font-display text-sm font-bold">{t(row.labelKey)}</p>
               <p className="font-jp text-[11px] text-muted-foreground">
                 {row.jp}
               </p>
@@ -291,12 +342,12 @@ function VoiceSettings() {
             {list.length > 0 ? (
               <>
                 <select
-                  aria-label={`Voz de ${row.label}`}
+                  aria-label={t(row.labelKey)}
                   value={selected[row.kind]}
                   onChange={(e) => change(row.kind, e.target.value)}
                   className="min-w-0 flex-1 rounded-lg border border-input bg-card/60 px-3 py-2 text-sm outline-none focus:border-primary"
                 >
-                  <option value="">Automática (recomendada)</option>
+                  <option value="">{t("settings.voice.auto")}</option>
                   {list.map((v) => (
                     <option key={v.name} value={v.name}>
                       {v.name} · {v.lang}
@@ -308,13 +359,12 @@ function VoiceSettings() {
                   size="sm"
                   onClick={() => test(row.kind, row.sample)}
                 >
-                  <Volume2 className="size-3.5" /> Probar
+                  <Volume2 className="size-3.5" /> {t("settings.test")}
                 </Button>
               </>
             ) : (
               <p className="flex-1 text-xs text-muted-foreground">
-                No hay voces de {row.label.toLowerCase()} instaladas. Añádelas en
-                Ajustes del sistema → Accesibilidad → Contenido hablado → Voces.
+                {t("settings.voice.none", { lang: t(row.labelKey).toLowerCase() })}
               </p>
             )}
           </div>

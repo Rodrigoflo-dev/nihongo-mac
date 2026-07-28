@@ -5,6 +5,8 @@ import { Brain, ChevronRight } from "lucide-react";
 
 import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n";
+import { useTc } from "@/lib/content-i18n";
 
 /**
  * Adaptive learning card: shows per-skill accuracy computed from the user's
@@ -12,6 +14,8 @@ import { cn } from "@/lib/utils";
  * the app respond to *how each person is doing* rather than a fixed path.
  */
 export function InsightsCard() {
+  const t = useT();
+  const tc = useTc();
   const navigate = useNavigate();
   const { data: insights } = useQuery({
     queryKey: ["skill-insights"],
@@ -38,12 +42,12 @@ export function InsightsCard() {
           <p className="font-jp text-[10px] tracking-[0.3em] text-muted-foreground">
             {insights.jpHeadline}
           </p>
-          <h3 className="text-sm font-semibold">Tu plan personalizado</h3>
+          <h3 className="text-sm font-semibold">{t("home.insights.title")}</h3>
         </div>
       </div>
 
       <p className="mt-3 text-sm leading-relaxed text-foreground/85">
-        {insights.headline}
+        {tc(insights.headline)}
       </p>
 
       {insights.focusPath ? (
@@ -61,7 +65,9 @@ export function InsightsCard() {
               className="absolute inset-x-0 top-0 h-px bg-white/70"
             />
             <span className="shimmer pointer-events-none absolute inset-0 opacity-40" />
-            <span className="relative">Reforzar {insights.focusLabel}</span>
+            <span className="relative">
+              {t("home.insights.reinforce", { skill: tc(insights.focusLabel ?? "") })}
+            </span>
             <ChevronRight className="relative size-4 transition-transform group-hover:translate-x-0.5" />
           </button>
         </div>
@@ -76,7 +82,7 @@ export function InsightsCard() {
               className="flex w-full items-center gap-3 text-left"
             >
               <span className="w-20 shrink-0 text-xs text-muted-foreground">
-                {s.label}
+                {tc(s.label)}
               </span>
               <span className="relative h-2 flex-1 overflow-hidden rounded-full bg-secondary/50">
                 <span

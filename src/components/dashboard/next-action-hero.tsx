@@ -18,6 +18,8 @@ import {
 import { Button } from "@/components/ui/button";
 import type { NextAction } from "@/lib/api";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n";
+import { useTc } from "@/lib/content-i18n";
 
 const KanjiOrb = lazy(() =>
   import("@/components/visual/kanji-orb").then((m) => ({ default: m.KanjiOrb }))
@@ -45,6 +47,8 @@ const URGENCY_TONE: Record<NextAction["urgency"], string> = {
 };
 
 export function NextActionHero({ action }: NextActionHeroProps) {
+  const t = useT();
+  const tc = useTc();
   const Icon = ICONS[action.icon] ?? Sparkles;
 
   return (
@@ -99,7 +103,7 @@ export function NextActionHero({ action }: NextActionHeroProps) {
                   action.urgency === "low" && "bg-neon-cyan"
                 )}
               />
-              Tu próximo paso
+              {t("home.nextStep")}
             </div>
 
             <div className="space-y-3">
@@ -107,10 +111,10 @@ export function NextActionHero({ action }: NextActionHeroProps) {
                 {action.jpSubtitle}
               </p>
               <h2 className="font-display text-3xl font-extrabold leading-tight tracking-tight text-balance md:text-4xl">
-                {action.title}
+                {tc(action.title)}
               </h2>
               <p className="max-w-md text-balance text-sm text-muted-foreground">
-                {action.subtitle}
+                {tc(action.subtitle)}
               </p>
             </div>
 
@@ -146,14 +150,14 @@ export function NextActionHero({ action }: NextActionHeroProps) {
                       className="absolute bottom-1.5 left-1.5 size-2.5 border-b-2 border-l-2 border-background/40"
                     />
                     <Icon className="relative size-5" />
-                    <span className="relative">{action.ctaLabel}</span>
+                    <span className="relative">{tc(action.ctaLabel)}</span>
                     <ArrowRight className="relative size-4 transition-transform group-hover:translate-x-0.5" />
                   </Link>
                 </Button>
               </div>
               <span className="inline-flex items-center gap-1.5 rounded-full border border-border/50 bg-background/50 px-3 py-1 font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground backdrop-blur">
                 <Clock className="size-3" />
-                ~{action.estimatedMinutes} min
+                ~{action.estimatedMinutes} {t("home.min")}
               </span>
             </div>
           </div>

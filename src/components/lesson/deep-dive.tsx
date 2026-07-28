@@ -12,6 +12,8 @@ import {
   type NarrationSegment,
 } from "@/lib/tts";
 import { cn } from "@/lib/utils";
+import { useLanguage } from "@/stores/language";
+import { useT } from "@/lib/i18n";
 
 /**
  * Tiny "play this Japanese" button — a self-contained module so each reading /
@@ -62,10 +64,10 @@ export function JaSpeakButton({
 /** Builds the ordered narration for a given language (Japanese parts stay JP). */
 export type SegmentBuilder = (lang: NarrationLang) => NarrationSegment[];
 
-const SPEEDS: { label: string; rate: number }[] = [
-  { label: "Lento", rate: 0.75 },
-  { label: "Normal", rate: 1 },
-  { label: "Rápido", rate: 1.3 },
+const SPEEDS: { key: string; rate: number }[] = [
+  { key: "common.slow", rate: 0.75 },
+  { key: "common.normal", rate: 1 },
+  { key: "common.fast", rate: 1.3 },
 ];
 
 /** Small segmented pill control. */
@@ -108,16 +110,16 @@ function Segmented<T>({
 export function AudioBar({
   getSegments,
   className,
-  hideLang = false,
-  label = "Escuchar",
+  label,
 }: {
   getSegments: SegmentBuilder;
   className?: string;
-  /** Hide the Español/English toggle (e.g. a Japanese-only button). */
-  hideLang?: boolean;
   label?: string;
 }) {
-  const [lang, setLang] = useState<NarrationLang>("es");
+  const t = useT();
+  // Narration language comes from the global preference (chosen at onboarding,
+  // changed in Ajustes) — no per-card Español/English toggle anymore.
+  const lang = useLanguage((s) => s.lang);
   const [rate, setRate] = useState(1);
   const [playing, setPlaying] = useState(false);
 
@@ -137,11 +139,7 @@ export function AudioBar({
       .catch(() => {})
       .finally(() => setPlaying(false));
   };
-  // Changing language/speed mid-playback stops it; the learner presses play again.
-  const changeLang = (l: NarrationLang) => {
-    if (playing) stop();
-    setLang(l);
-  };
+  // Changing speed mid-playback stops it; the learner presses play again.
   const changeRate = (r: number) => {
     if (playing) stop();
     setRate(r);
@@ -158,28 +156,18 @@ export function AudioBar({
       >
         {playing ? (
           <>
-            <Square className="size-3.5 fill-current" /> Detener
+            <Square className="size-3.5 fill-current" /> {t("common.stop")}
           </>
         ) : (
           <>
-            <Volume2 className="size-3.5" /> {label}
+            <Volume2 className="size-3.5" /> {label ?? t("common.listen")}
           </>
         )}
       </Button>
-      {!hideLang ? (
-        <Segmented<NarrationLang>
-          value={lang}
-          onChange={(v) => changeLang(v)}
-          options={[
-            { label: "Español", value: "es" },
-            { label: "English", value: "en" },
-          ]}
-        />
-      ) : null}
       <Segmented
         value={rate}
         onChange={(v) => changeRate(v)}
-        options={SPEEDS.map((s) => ({ label: s.label, value: s.rate }))}
+        options={SPEEDS.map((s) => ({ label: t(s.key), value: s.rate }))}
       />
     </div>
   );
@@ -208,6 +196,7 @@ export function DeepDive({
   jp: string;
   pages: DeepDivePage[];
 }) {
+  const t = useT();
   const [page, setPage] = useState(0);
   const total = pages.length;
   if (total === 0) return null;
@@ -233,7 +222,7 @@ export function DeepDive({
           </span>
           <div>
             <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-neon-cyan">
-              詳しく · A fondo
+              詳しく · {t("deepdive.eyebrow")}
             </p>
             <p className="font-display text-base font-bold leading-tight">
               {title}
@@ -269,7 +258,7 @@ export function DeepDive({
             disabled={page === 0}
             onClick={() => setPage((p) => Math.max(0, p - 1))}
           >
-            <ChevronLeft className="size-4" /> Anterior
+            <ChevronLeft className="size-4" /> {t("common.previous")}
           </Button>
           <div className="flex items-center gap-1.5">
             {pages.map((_, i) => (
@@ -292,7 +281,7 @@ export function DeepDive({
             disabled={page >= total - 1}
             onClick={() => setPage((p) => Math.min(total - 1, p + 1))}
           >
-            Siguiente <ChevronRight className="size-4" />
+            {t("common.next")} <ChevronRight className="size-4" />
           </Button>
         </div>
       ) : null}
