@@ -158,7 +158,7 @@ function LessonView({
       </HudPanel>
 
       <article className="prose-sm max-w-none text-sm leading-relaxed text-foreground">
-        {lesson.explanationMd.replace(/\\n/g, "\n").split("\n").map((line, i) => {
+        {tc(lesson.explanationMd).replace(/\\n/g, "\n").split("\n").map((line, i) => {
           if (line.startsWith("## ")) {
             return (
               <h2

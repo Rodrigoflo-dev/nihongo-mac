@@ -11,6 +11,8 @@ import { JaSpeakButton } from "@/components/lesson/deep-dive";
 import { useLevelExam, useCompleteLevelExam } from "@/hooks/use-exams";
 import type { Activity, LevelExamResult } from "@/lib/api";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n";
+import { useTc } from "@/lib/content-i18n";
 
 interface ExamQuestion {
   jp?: string;
@@ -44,6 +46,8 @@ function toQuestion(a: Activity): ExamQuestion | null {
 }
 
 export default function LevelExamPage() {
+  const t = useT();
+  const tc = useTc();
   const { level = "N5" } = useParams<{ level: string }>();
   const navigate = useNavigate();
   const { data: exam, isLoading } = useLevelExam(level);
@@ -140,7 +144,7 @@ export default function LevelExamPage() {
               )}
             </div>
             <h1 className="mt-4 font-display text-3xl font-extrabold tracking-tight">
-              {result.passed ? "¡Examen aprobado!" : "No aprobado"}
+              {result.passed ? t("exam.passedTitle") : t("exam.notPassed")}
             </h1>
             <p className="mt-2 text-5xl font-black tabular-nums">
               <span
@@ -150,8 +154,7 @@ export default function LevelExamPage() {
               </span>
             </p>
             <p className="mt-2 text-sm text-muted-foreground">
-              Necesitas {exam.passThreshold}% para aprobar el examen final de{" "}
-              {level}.
+              {t("lexam.needPct", { n: exam.passThreshold, level })}
             </p>
 
             {result.unlockedNext && result.nextLevel ? (
@@ -161,21 +164,17 @@ export default function LevelExamPage() {
                   レベルアップ
                 </p>
                 <h2 className="mt-1 font-display text-xl font-extrabold">
-                  ¡Estás listo para el siguiente nivel!
+                  {t("lexam.readyNext")}
                 </h2>
                 <p className="mt-2 text-sm text-muted-foreground">
-                  Desbloqueaste{" "}
-                  <span className="font-bold text-neon-cyan">
-                    {result.nextLevel}
-                  </span>
-                  . Aparecerá en tu curso.
+                  {t("lexam.unlocked", { next: result.nextLevel })}
                 </p>
                 <Button
                   size="lg"
                   className="mt-5 w-full"
                   onClick={() => navigate("/learn")}
                 >
-                  Comenzar con {result.nextLevel}
+                  {t("lexam.startWith", { next: result.nextLevel })}
                   <ArrowRight className="size-4" />
                 </Button>
               </HudPanel>
@@ -192,11 +191,11 @@ export default function LevelExamPage() {
                       setChecked(false);
                     }}
                   >
-                    Reintentar
+                    {t("exam.retry")}
                   </Button>
                 ) : null}
                 <Button onClick={() => navigate("/learn")}>
-                  Volver al curso
+                  {t("lexam.backToCourse")}
                 </Button>
               </div>
             )}
@@ -213,7 +212,7 @@ export default function LevelExamPage() {
       <div className="mb-6">
         <div className="flex items-center justify-between">
           <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-neon-cyan">
-            試験 · Examen final {level}
+            {t("lexam.jp", { level })}
           </p>
           <p className="font-mono text-xs tabular-nums text-muted-foreground">
             {idx + 1} / {total}
@@ -240,7 +239,7 @@ export default function LevelExamPage() {
               </div>
             ) : null}
             <p className="mt-3 text-center text-lg font-medium">
-              {current.prompt}
+              {tc(current.prompt)}
             </p>
 
             <div className="mt-6 grid gap-3">
@@ -282,7 +281,7 @@ export default function LevelExamPage() {
                         String.fromCharCode(65 + i)
                       )}
                     </span>
-                    <span className="font-jp">{opt}</span>
+                    <span className="font-jp">{tc(opt)}</span>
                   </button>
                 );
               })}
@@ -293,7 +292,7 @@ export default function LevelExamPage() {
 
       <div className="mt-6 flex items-center justify-between">
         <Button variant="ghost" onClick={() => navigate("/learn")}>
-          Salir
+          {t("common.exit")}
         </Button>
         {checked ? (
           <p
@@ -302,7 +301,7 @@ export default function LevelExamPage() {
               isCorrect ? "text-success" : "text-warning"
             )}
           >
-            {isCorrect ? "¡Correcto!" : "Respuesta incorrecta"}
+            {isCorrect ? t("exam.correct") : t("exam.wrongAnswer")}
           </p>
         ) : null}
         <Button
@@ -311,12 +310,12 @@ export default function LevelExamPage() {
           onClick={check}
         >
           {!checked
-            ? "Comprobar"
+            ? t("exam.check")
             : idx + 1 >= total
               ? complete.isPending
-                ? "Calificando…"
-                : "Ver resultado"
-              : "Siguiente"}
+                ? t("exam.grading")
+                : t("exam.seeResult")
+              : t("common.next")}
         </Button>
       </div>
     </div>

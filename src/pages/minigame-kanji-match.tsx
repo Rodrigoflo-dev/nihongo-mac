@@ -21,6 +21,8 @@ import {
   isWeeklyFeatured,
 } from "@/lib/minigames";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n";
+import { useTc } from "@/lib/content-i18n";
 
 const ALL_PAIRS = [
   { kanji: "一", meaning: "uno" },
@@ -77,6 +79,8 @@ function buildDeck(pairCount: number): CardData[] {
 }
 
 export default function KanjiMatchGame() {
+  const t = useT();
+  const tc = useTc();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const difficulty: Difficulty =
@@ -201,12 +205,12 @@ export default function KanjiMatchGame() {
     <div className="mx-auto max-w-3xl space-y-6">
       <div className="flex items-center justify-between">
         <Button variant="ghost" size="sm" onClick={() => navigate("/play")}>
-          <ArrowLeft className="size-3.5" /> Salir
+          <ArrowLeft className="size-3.5" /> {t("common.exit")}
         </Button>
         <div className="flex items-center gap-3 text-xs text-muted-foreground">
           <Badge variant="outline" className="text-[10px]">
             <span className={DIFFICULTY_COLORS[difficulty]}>
-              {DIFFICULTY_LABELS[difficulty]}
+              {tc(DIFFICULTY_LABELS[difficulty])}
             </span>
           </Badge>
           {isFeatured ||
@@ -216,7 +220,7 @@ export default function KanjiMatchGame() {
               +{difficultyBonusPercent(difficulty)}% XP
             </Badge>
           ) : null}
-          <span className="font-mono text-neon-cyan">Mov: {moves}</span>
+          <span className="font-mono text-neon-cyan">{t("mg.moves")}: {moves}</span>
           {typeof best === "number" && best > 0 ? (
             <span className="inline-flex items-center gap-1 text-neon-amber">
               <Trophy className="size-3" /> {best}
@@ -227,9 +231,9 @@ export default function KanjiMatchGame() {
 
       <div>
         <div className="flex items-center justify-between font-mono text-[11px] uppercase tracking-[0.25em] text-neon-cyan">
-          <span className="font-jp tracking-[0.2em]">漢字あわせ · {config.label}</span>
+          <span className="font-jp tracking-[0.2em]">漢字あわせ · {tc(config.label)}</span>
           <span>
-            {matchedCount / 2} / {config.pairs} pares
+            {matchedCount / 2} / {config.pairs} {t("gs.unit.pairs")}
           </span>
         </div>
         <Progress value={(matchedCount / cards.length) * 100} className="mt-1 h-1" />
@@ -318,6 +322,7 @@ function ResultCard({
   onPlayAgain: () => void;
   onExit: () => void;
 }) {
+  const t = useT();
   return (
     <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
       <HudPanel glow className="p-8 text-center">
@@ -333,18 +338,18 @@ function ResultCard({
             ゲームクリア
           </p>
           <h2 className="mt-2 font-display text-2xl font-extrabold tracking-tight">
-            ¡Ganaste!
+            {t("mg.win")}
           </h2>
           <div className="mt-5 grid grid-cols-2 gap-3">
             <div className="rounded-xl border border-primary/20 glass px-4 py-3">
               <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-neon-cyan">
-                Puntuación
+                {t("mg.score")}
               </p>
               <p className="mt-1 text-2xl font-bold tabular-nums">{score}</p>
             </div>
             <div className="rounded-xl border border-primary/20 glass px-4 py-3">
               <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-neon-cyan">
-                {newBest ? "¡Nuevo récord!" : "Tu récord"}
+                {newBest ? t("mg.newRecord") : t("mg.yourRecord")}
               </p>
               <p
                 className={cn(
@@ -368,16 +373,16 @@ function ResultCard({
           </div>
 
           <div className="mt-5">
-            <GameSummary correct={correct} wrong={wrong} unit="pares" />
+            <GameSummary correct={correct} wrong={wrong} unit={t("gs.unit.pairs")} />
           </div>
 
           <div className="mt-7 flex gap-2">
             <Button variant="outline" className="flex-1" onClick={onExit}>
-              Salir
+              {t("common.exit")}
             </Button>
             <Button className="flex-1" onClick={onPlayAgain}>
               <RotateCcw className="size-3.5" />
-              Otra ronda
+              {t("mg.anotherRound")}
             </Button>
           </div>
         </div>

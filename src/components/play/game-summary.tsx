@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n";
 
 /**
  * End-of-game stats panel shared by all mini-games: correct / incorrect, the
@@ -8,17 +9,19 @@ export function GameSummary({
   correct,
   wrong,
   targetAccuracy = 0.8,
-  unit = "respuestas",
+  unit,
   className,
 }: {
   correct: number;
   wrong: number;
   /** Accuracy you're expected to reach (0–1). */
   targetAccuracy?: number;
-  /** What's being counted, e.g. "respuestas" / "pares". */
+  /** What's being counted (a translated string). Defaults to "answers". */
   unit?: string;
   className?: string;
 }) {
+  const t = useT();
+  const unitText = unit ?? t("gs.unit.answers");
   const total = correct + wrong;
   const accuracy = total > 0 ? Math.round((correct / total) * 100) : 0;
   const expected = Math.max(1, Math.ceil(total * targetAccuracy));
@@ -26,20 +29,20 @@ export function GameSummary({
 
   const verdict =
     total === 0
-      ? { label: "Sin respuestas", tone: "text-muted-foreground", bar: "bg-muted-foreground/40" }
+      ? { label: t("gs.noAnswers"), tone: "text-muted-foreground", bar: "bg-muted-foreground/40" }
       : accuracy >= 90
-        ? { label: "¡Excelente!", tone: "text-success", bar: "bg-gradient-to-r from-success to-neon-cyan" }
+        ? { label: t("gs.excellent"), tone: "text-success", bar: "bg-gradient-to-r from-success to-neon-cyan" }
         : accuracy >= 70
-          ? { label: "¡Bien!", tone: "text-primary", bar: "bg-gradient-to-r from-primary to-neon-violet" }
+          ? { label: t("gs.good"), tone: "text-primary", bar: "bg-gradient-to-r from-primary to-neon-violet" }
           : accuracy >= 50
-            ? { label: "Vas mejorando", tone: "text-warning", bar: "bg-gradient-to-r from-warning to-streak" }
-            : { label: "Sigue practicando", tone: "text-destructive", bar: "bg-gradient-to-r from-destructive to-warning" };
+            ? { label: t("gs.improving"), tone: "text-warning", bar: "bg-gradient-to-r from-warning to-streak" }
+            : { label: t("gs.keepGoing"), tone: "text-destructive", bar: "bg-gradient-to-r from-destructive to-warning" };
 
   return (
     <div className={cn("rounded-xl border border-border/50 glass p-4 text-left", className)}>
       <div className="flex items-center justify-between">
         <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-neon-cyan">
-          Resumen
+          {t("gs.summary")}
         </p>
         <span className={cn("font-display text-sm font-extrabold", verdict.tone)}>
           {verdict.label}
@@ -49,7 +52,7 @@ export function GameSummary({
       {/* Accuracy bar */}
       <div className="mt-3">
         <div className="flex items-center justify-between text-xs">
-          <span className="text-muted-foreground">Precisión</span>
+          <span className="text-muted-foreground">{t("gs.accuracy")}</span>
           <span className="font-bold tabular-nums">{accuracy}%</span>
         </div>
         <div className="mt-1 h-2 overflow-hidden rounded-full bg-secondary/50">
@@ -61,17 +64,17 @@ export function GameSummary({
       </div>
 
       <div className="mt-3 grid grid-cols-3 gap-2 text-center">
-        <Stat label="Correctas" value={correct} tone="text-success" />
-        <Stat label="Incorrectas" value={wrong} tone="text-destructive" />
-        <Stat label={`Meta (${Math.round(targetAccuracy * 100)}%)`} value={`${expected}`} tone="text-neon-cyan" />
+        <Stat label={t("gs.correct")} value={correct} tone="text-success" />
+        <Stat label={t("gs.wrong")} value={wrong} tone="text-destructive" />
+        <Stat label={t("gs.goal", { pct: Math.round(targetAccuracy * 100) })} value={`${expected}`} tone="text-neon-cyan" />
       </div>
 
       <p className="mt-3 text-center text-xs text-muted-foreground">
         {total === 0
-          ? `Responde para ver tu desempeño.`
+          ? t("gs.answerToSee")
           : passed
-            ? `¡Lograste ${correct}/${total} ${unit}! Pasaste la meta de ${expected}.`
-            : `${correct}/${total} ${unit}. Apunta a ${expected} para superar la meta.`}
+            ? t("gs.passed", { c: correct, t: total, unit: unitText, goal: expected })
+            : t("gs.notPassed", { c: correct, t: total, unit: unitText, goal: expected })}
       </p>
     </div>
   );

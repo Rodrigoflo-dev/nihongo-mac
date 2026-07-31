@@ -21,6 +21,8 @@ import {
 } from "@/lib/minigames";
 import type { PhraseItem } from "@/lib/play-extra";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n";
+import { useTc } from "@/lib/content-i18n";
 
 const COUNT: Record<Difficulty, number> = { easy: 6, medium: 8, hard: 12 };
 
@@ -57,6 +59,8 @@ export function PhraseQuizGame({
   audio: boolean;
   accentChar: string;
 }) {
+  const t = useT();
+  const tc = useTc();
   const navigate = useNavigate();
   const play = usePlayTts();
   const [searchParams] = useSearchParams();
@@ -142,19 +146,19 @@ export function PhraseQuizGame({
             <HoloKanji size={140} interval={2600} items={[{ char: accentChar, meaning: title }]} />
           </div>
           <p className="font-jp text-[11px] tracking-[0.4em] text-neon-cyan">{titleJp}</p>
-          <h2 className="mt-1 font-display text-2xl font-extrabold tracking-tight">{title}</h2>
-          <p className="mt-2 text-sm text-muted-foreground">{description}</p>
+          <h2 className="mt-1 font-display text-2xl font-extrabold tracking-tight">{tc(title)}</h2>
+          <p className="mt-2 text-sm text-muted-foreground">{tc(description)}</p>
           {best && best > 0 ? (
             <p className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-neon-amber/40 bg-warning/15 px-3 py-1.5 text-sm text-neon-amber">
-              <Trophy className="size-3.5" /> Tu récord: {best}
+              <Trophy className="size-3.5" /> {t("mg.yourRecordN", { n: best })}
             </p>
           ) : null}
           <div className="mt-6 flex gap-2">
             <Button variant="outline" className="flex-1" onClick={() => navigate("/play")}>
-              Salir
+              {t("common.exit")}
             </Button>
             <Button className="flex-1" onClick={start}>
-              Empezar
+              {t("mg.start")}
             </Button>
           </div>
         </HudPanel>
@@ -174,7 +178,7 @@ export function PhraseQuizGame({
               </div>
             ) : null}
             <p className="font-jp text-xs tracking-[0.4em] text-neon-cyan">おわり</p>
-            <h2 className="mt-2 font-display text-2xl font-extrabold tracking-tight">¡Listo!</h2>
+            <h2 className="mt-2 font-display text-2xl font-extrabold tracking-tight">{t("mg.finished")}</h2>
             <div className="mt-4 flex justify-center gap-2">
               <div className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-3 py-1.5 text-sm text-neon-cyan">
                 <Sparkles className="size-3.5" /> +{submitted?.xp ?? 0} XP
@@ -190,10 +194,10 @@ export function PhraseQuizGame({
             </div>
             <div className="mt-7 flex gap-2">
               <Button variant="outline" className="flex-1" onClick={() => navigate("/play")}>
-                Salir
+                {t("common.exit")}
               </Button>
               <Button className="flex-1" onClick={start}>
-                <RotateCcw className="size-3.5" /> Otra ronda
+                <RotateCcw className="size-3.5" /> {t("mg.anotherRound")}
               </Button>
             </div>
           </HudPanel>
@@ -207,11 +211,11 @@ export function PhraseQuizGame({
     <div className="mx-auto max-w-2xl space-y-6">
       <div className="flex items-center justify-between">
         <Button variant="ghost" size="sm" onClick={() => setPhase("idle")}>
-          <ArrowLeft className="size-3.5" /> Cancelar
+          <ArrowLeft className="size-3.5" /> {t("common.cancel")}
         </Button>
         <div className="flex items-center gap-2 text-xs">
           <Badge variant="outline" className="text-[10px]">
-            <span className={DIFFICULTY_COLORS[difficulty]}>{DIFFICULTY_LABELS[difficulty]}</span>
+            <span className={DIFFICULTY_COLORS[difficulty]}>{tc(DIFFICULTY_LABELS[difficulty])}</span>
           </Badge>
           {isDailyFeatured(baseKey) || isWeeklyFeatured(baseKey) ? (
             <Badge variant="warning" className="text-[10px]">
@@ -232,7 +236,7 @@ export function PhraseQuizGame({
                 play.mutate({ text: current.item.promptJp, voice: "Kyoko", rate: 160 })
               }
               className="mx-auto mb-4 flex size-16 items-center justify-center rounded-full bg-gradient-to-br from-primary via-neon-violet to-neon-cyan text-primary-foreground shadow-[0_16px_40px_-12px_color-mix(in_oklch,var(--color-primary)_60%,transparent)] transition-transform hover:scale-105"
-              title="Escuchar"
+              title={t("common.listen")}
             >
               <Volume2 className={cn("size-7", play.isPending && "animate-pulse")} />
             </button>
@@ -243,7 +247,7 @@ export function PhraseQuizGame({
           >
             {current.item.promptJp}
           </p>
-          <p className="mt-3 text-sm text-muted-foreground">{current.item.promptMeaning}</p>
+          <p className="mt-3 text-sm text-muted-foreground">{tc(current.item.promptMeaning)}</p>
 
           <div className="mt-6 grid gap-2.5">
             {current.options.map((opt) => {
@@ -262,7 +266,7 @@ export function PhraseQuizGame({
                     picked && !isCorrect && !isPicked && "opacity-50"
                   )}
                 >
-                  {opt}
+                  {tc(opt)}
                 </button>
               );
             })}
@@ -270,8 +274,8 @@ export function PhraseQuizGame({
 
           {picked && picked !== current.item.correct ? (
             <p className="mt-4 rounded-xl border border-warning/30 bg-warning/5 p-3 text-left text-sm text-foreground/85">
-              <span className="font-semibold text-success">{current.item.correct}</span>{" "}
-              — {current.item.explanation}
+              <span className="font-semibold text-success">{tc(current.item.correct)}</span>{" "}
+              — {tc(current.item.explanation)}
             </p>
           ) : null}
         </HudPanel>

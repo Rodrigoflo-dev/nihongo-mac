@@ -21,6 +21,8 @@ import {
   isWeeklyFeatured,
 } from "@/lib/minigames";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n";
+import { useTc } from "@/lib/content-i18n";
 
 const BASIC_HIRAGANA: { kana: string; romaji: string }[] = [
   { kana: "あ", romaji: "a" },
@@ -176,6 +178,8 @@ function pickQuestion(
 type Phase = "idle" | "playing" | "done";
 
 export default function HiraganaSpeedGame() {
+  const t = useT();
+  const tc = useTc();
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
@@ -331,7 +335,7 @@ export default function HiraganaSpeedGame() {
               +{difficultyBonusPercent(difficulty)}% XP
             </Badge>
           ) : null}
-          <span className="font-mono text-neon-cyan">Puntos: {score}</span>
+          <span className="font-mono text-neon-cyan">{t("mg.points")}: {score}</span>
           {combo >= 3 ? (
             <motion.span
               key={combo}
@@ -347,7 +351,7 @@ export default function HiraganaSpeedGame() {
 
       <div>
         <div className="flex items-center justify-between font-mono text-[11px] uppercase tracking-[0.25em] text-neon-cyan">
-          <span className="font-jp tracking-[0.2em]">{titleJp} · {config.label}</span>
+          <span className="font-jp tracking-[0.2em]">{titleJp} · {tc(config.label)}</span>
           <span className="tabular-nums">{timeLeft}s</span>
         </div>
         <Progress
@@ -415,6 +419,8 @@ function IntroCard({
   onStart: () => void;
   onExit: () => void;
 }) {
+  const t = useT();
+  const tc = useTc();
   return (
     <div className="mx-auto max-w-md py-8">
       <HudPanel glow className="p-8 text-center">
@@ -431,27 +437,26 @@ function IntroCard({
             {titleJp}
           </p>
           <h2 className="mt-1 font-display text-2xl font-extrabold tracking-tight">
-            {title}
+            {tc(title)}
           </h2>
           <p className="mt-2 text-sm text-muted-foreground">
-            Time attack. Identifica el romaji del {kanaName} que aparece. Combo
-            de 5 correctas seguidas duplica los puntos.
+            {t("mg.speedDesc", { kana: kanaName })}
           </p>
           {best > 0 ? (
             <p className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-neon-amber/40 bg-warning/15 px-3 py-1.5 text-sm text-neon-amber">
-              <Trophy className="size-3.5" /> Tu récord: {best}
+              <Trophy className="size-3.5" /> {t("mg.yourRecordN", { n: best })}
             </p>
           ) : null}
           <div className="mt-6 flex gap-2">
             <Button variant="outline" className="flex-1" onClick={onExit}>
-              Salir
+              {t("common.exit")}
             </Button>
             <Button
               className="flex-1 bg-gradient-to-br from-warning to-streak text-warning-foreground shadow-[0_0_24px_-6px_color-mix(in_oklch,var(--color-neon-amber)_70%,transparent)]"
               onClick={onStart}
             >
               <Play className="size-4" />
-              ¡Empezar!
+              {t("mg.start")}
             </Button>
           </div>
         </div>
@@ -481,6 +486,7 @@ function ResultCard({
   onPlayAgain: () => void;
   onExit: () => void;
 }) {
+  const t = useT();
   return (
     <div className="mx-auto max-w-md py-8">
       <motion.div
@@ -500,18 +506,18 @@ function ResultCard({
             ) : null}
             <p className="font-jp text-xs tracking-[0.4em] text-neon-amber">時間切れ</p>
             <h2 className="mt-2 font-display text-2xl font-extrabold tracking-tight">
-              ¡Tiempo!
+              {t("mg.timeUp")}
             </h2>
             <div className="mt-5 grid grid-cols-2 gap-3">
               <div className="rounded-xl border border-primary/20 glass px-4 py-3">
                 <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-neon-cyan">
-                  Puntuación
+                  {t("mg.score")}
                 </p>
                 <p className="mt-1 text-3xl font-bold tabular-nums">{score}</p>
               </div>
               <div className="rounded-xl border border-primary/20 glass px-4 py-3">
                 <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-neon-cyan">
-                  {newBest ? "¡Nuevo récord!" : "Tu récord"}
+                  {newBest ? t("mg.newRecord") : t("mg.yourRecord")}
                 </p>
                 <p
                   className={cn(
@@ -539,11 +545,11 @@ function ResultCard({
             </div>
             <div className="mt-7 flex gap-2">
               <Button variant="outline" className="flex-1" onClick={onExit}>
-                Salir
+                {t("common.exit")}
               </Button>
               <Button className="flex-1" onClick={onPlayAgain}>
                 <RotateCcw className="size-3.5" />
-                Otra ronda
+                {t("mg.anotherRound")}
               </Button>
             </div>
           </div>
